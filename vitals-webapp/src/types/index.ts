@@ -6,17 +6,20 @@ export interface RegisterFormData {
     lastName: string;
     email:  string;
     password: string
-    phoneNumber: number;
+    phoneNumber: string;
+    confirmPassword: string;
 }
 
 export interface InputFieldProps {
-    label: string
-    type: string
-    value: string | number
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-    name?: string
-    placeholder?: string
-    required?: boolean
+  label: string;
+  type: string;
+  name: string; // Make this required
+  value: string; // Keep this as string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  required?: boolean;
+  pattern?: string;
+  className?: string;
 }
 
 export interface ButtonProps {

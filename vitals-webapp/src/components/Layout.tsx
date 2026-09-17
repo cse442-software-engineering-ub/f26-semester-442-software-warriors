@@ -4,20 +4,23 @@ import React from 'react'
 interface SplitLayoutProps {
     leftContent: React.ReactNode
     rightContent: React.ReactNode
+    left_css?: string
+    right_css?: string
 }
 
-const SplitLayout: React.FC<SplitLayoutProps> = ({ leftContent, rightContent }) => {
+const SplitLayout: React.FC<SplitLayoutProps> = ({ leftContent, rightContent, left_css, right_css }) => {
     return (
-        <div className="min-h-screen flex flex-row">
+        <div className="max-h-screen flex flex-col lg:flex-row">
             { /* Left Side: Information plus image*/ }
-            <div className="w-1/2 bg-gray-50 flex items-center justify-center p-7">
-                <div className="max-w-md w-full">
+            <div className={`${left_css}`}>
+                <div>
                     {leftContent}
                 </div>
             </div>
 
+            <div className='p-10'/>
             { /* Right Side: For the Registration Form */ }
-            <div className="w-1/2 bg-white flex items-center justify-center p-8">
+            <div className={`${right_css}`}>
                 <div className="max-w-md w-full">
                     {rightContent}
                 </div>
