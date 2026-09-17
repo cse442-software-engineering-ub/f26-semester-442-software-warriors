@@ -23,12 +23,33 @@ const RegisterPage: React.FC = () => {
   //const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+
+  //allows for user to only type numbers when putting in their phone number
+  //fills in the rest to follow the regex
+  const formatPhoneNumber = (value: string) => {
+  // Remove all non-digit characters
+    const phoneNumber = value.replace(/\D/g, '');
+    
+    // Format based on length
+    if (phoneNumber.length === 0) return '';
+    if (phoneNumber.length <= 3) return `(${phoneNumber}`;
+    if (phoneNumber.length <= 6) return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+  }
+
   //e is the event, the type is specified after the ':'
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+    
+    let newValue = value
+
+    if (name == 'phoneNumber') {
+      newValue = formatPhoneNumber(value)
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: newValue
     }))
 
     if (errors[name]) {
@@ -47,6 +68,7 @@ const RegisterPage: React.FC = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
+      alert('Please enter a valid email address')
     }
 
     // Phone Regex validation
@@ -82,27 +104,32 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
           <SplitLayout
-            left_css="w-full lg:w-1/2 bg-blue-800 flex items-center justify-center p-45 lg:h-screen min-h-[300px]"
-            right_css="w-full lg:w-1/2 bg-white flex items-center justify-center p-8 lg:h-screen min-h-[300px]"
+            left_css="lg:w-1/2 bg-blue-800 flex items-center justify-center lg:p-45 lg:h-screen"
+            left_css_mobile="w-full sm:p-60 min-h-[500px]"
+            right_css="lg:w-1/2 bg-white flex items-center justify-center lg:p-8 lg:h-screen"
+            right_css_mobile="w-full sm:p-40 min-h-[500px]"
+            
             leftContent={
-              <div className="flex items-center justify-center p-8">
+              <div className="flex p-8">
                 <div className="max-w-md w-full text-white">
-                  <div className="text-center ">
                     <img 
                       src={VitalLogo}
                       alt="Vital Logo Illustration"
-                      className="w-full h-auto rounded-lg mb-6"
+                      className="w-full h-auto rounded-lg mb-6 p-6 justify-items-start"
                     />
-                    <h1 className="text-3xl font-bold text-white mb-4">Track and Manage Your Health, Effortlessly.</h1>
-                    <p className="text-gray-200">
-                      Create an account to start logging your vitals, medications, and appointment schedules.
-                      All in one place.
-                    </p>
+                    <div className="text-center">
+                      <h1 className="text-3xl font-bold text-white mb-4">Track and Manage Your Health, Effortlessly.</h1>
+                      <p className="text-gray-200">
+                        Create an account to start logging your vitals, medications, and appointment schedules.
+                        All in one place.
+                      </p>
+                    </div>
                     <img
                       src={RegisterIcon}
                       alt="Blood Pressure 120/80 updated today and Lisinopril (10mg): Taken at 8:00 AM"
+                      className="p-4 mb-6"
                     />
-                  </div>
+                  
                 </div>
               </div>
             }
@@ -120,6 +147,7 @@ const RegisterPage: React.FC = () => {
                       onChange={handleChange}
                       placeholder="John"
                       required
+                      error={errors.firstName}
                     />
                     <InputField
                       label="Last Name"
@@ -129,6 +157,7 @@ const RegisterPage: React.FC = () => {
                       onChange={handleChange}
                       placeholder="Doe"
                       required
+                      error={errors.lastName}
                     />
                   </div>
 
@@ -140,7 +169,8 @@ const RegisterPage: React.FC = () => {
                       onChange={handleChange}
                       placeholder="(123) 345-5678"
                       required
-                      pattern="^\(\d{3}\) \d{3}-\d{4}$"
+                      isPhone={true}
+                      error={errors.phoneNumber}
                   />
 
                   <InputField
@@ -151,7 +181,7 @@ const RegisterPage: React.FC = () => {
                       onChange={handleChange}
                       placeholder="john.doe@example.com"
                       required
-                      pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+                      error={errors.email}
                   />
 
                   <InputField
@@ -161,6 +191,7 @@ const RegisterPage: React.FC = () => {
                       value={formData.password}
                       onChange={handleChange}
                       required
+                      error={errors.password}
                   />
 
                   <InputField
@@ -170,6 +201,7 @@ const RegisterPage: React.FC = () => {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       required
+                      error={errors.confirmPassword}
                   />
 
                   <Button type="submit" variant="primary">

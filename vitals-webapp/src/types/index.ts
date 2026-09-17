@@ -20,6 +20,8 @@ export interface InputFieldProps {
   required?: boolean;
   pattern?: string;
   className?: string;
+  isPhone?: boolean;
+  error?: string;
 }
 
 export interface ButtonProps {
