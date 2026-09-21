@@ -68,7 +68,6 @@ const RegisterPage: React.FC = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
-      alert('Please enter a valid email address')
     }
 
     // Phone Regex validation
