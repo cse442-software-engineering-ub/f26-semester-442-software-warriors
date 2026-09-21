@@ -1,3 +1,11 @@
+@import "tailwindcss";
+
+
+.theme {
+  --color-primary: #2563eb;
+  --color-secondary: #1d4ed8;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
