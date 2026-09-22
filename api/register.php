@@ -30,6 +30,14 @@ if ($phone === '' || !preg_match('/^\d{7,15}$/', $phone)) {
 }
 if (strlen($password) < 8) {
   $errors['password'] = 'Password must be at least 8 characters.';
+} elseif (!preg_match('/[A-Z]/', $password)) {
+  $errors['password'] = 'Password must contain at least one uppercase letter.';
+} elseif (!preg_match('/[a-z]/', $password)) {
+  $errors['password'] = 'Password must contain at least one lowercase letter.';
+} elseif (!preg_match('/\d/', $password)) {
+  $errors['password'] = 'Password must contain at least one number.';
+} elseif (!preg_match('/[!@#$%^&*]/', $password)) {
+  $errors['password'] = 'Password must contain at least one special character.';
 }
 
 if (!empty($errors)) {
