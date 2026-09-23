@@ -1,5 +1,5 @@
 // src/pages/RegisterPage.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SplitLayout from "../components/Layout";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
@@ -47,6 +47,24 @@ const RegisterPage: React.FC = () => {
   //const [showPassword, setShowPassword] = useState(false);
   //const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000); // Clear success message after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (generalError) {
+      const timer = setTimeout(() => {
+        setGeneralError("");
+      }, 3000); // Clear general error after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [generalError]);
 
   //allows for user to only type numbers when putting in their phone number
   //fills in the rest to follow the regex
@@ -285,13 +303,13 @@ const RegisterPage: React.FC = () => {
               </Button>
               {successMessage && (
                 <div className="mt-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
-                  <span className="font-bold">Thank you!</span>
+                  <span className="font-bold">Thank you!</span>{" "}
                   {successMessage.replace("Thank you! ", "")}
                 </div>
               )}
               {generalError && (
                 <div className="mt-4 p-4 rounded-lg bg-red-50 text-red-600 text-sm">
-                  <span className="font-bold">Something went wrong.</span>
+                  <span className="font-bold">Something went wrong.</span>{" "}
                   {generalError.replace("Something went wrong. ", "")}
                 </div>
               )}
