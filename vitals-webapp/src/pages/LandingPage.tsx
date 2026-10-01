@@ -61,9 +61,9 @@ const LandingPage: React.FC = () => {
 
             {/*disclaimer at the bottom of the page*/}
             <div className="text-center text-[16px] md:text-[28px] text-[#9EACCD] px-6 pb-2"> 
-                *This app is a tracker and reminder tool, not a source of medical advice.
-                <br />
-                Please consult a health professional with any questions or concerns.*
+                *This app is a tracker and reminder tool, not a source of medical advice. 
+                <br className="hidden md:block " />
+                 {" "}Please consult a health professional with any questions or concerns.*
             </div>
 
         </div>
