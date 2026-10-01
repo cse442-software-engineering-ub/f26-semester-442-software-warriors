@@ -1,49 +1,48 @@
 <?php
-require_once 'config.php';
-header('Content-Type: application/json');
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+require __DIR__ . '/cors.php';
+require __DIR__ . '/db.php';
 session_start();
 
-// Check for OTP and email set in session
+header('Content-Type: application/json');
+
+// Check for OTP and email in session
 if (!isset($_SESSION['reset_otp']) || !isset($_SESSION['reset_email'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'OTP session not found. Please request a new OTP.']);
-    exit;
+    http_response_code(403);
+    echo json_encode(['error' => 'No active OTP session found. Please request a new OTP.']);
+    exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed. Use POST.']);
-    exit;
+    exit();
 }
 
-$input = json_decode(file_get_contents('php://input'), true);
-$entered_otp = $input['otp'] ?? '';
+$entered_otp = $_POST['otp'] ?? '';
+$stored_otp  = $_SESSION['reset_otp'];
+$otp_time    = $_SESSION['otp_time'];
 
-if (empty($entered_otp)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'OTP is required']);
-    exit;
-}
-
-$stored_otp = $_SESSION['reset_otp'];
-$otp_time = $_SESSION['otp_time'];
-
-// Check OTP expiration (600 seconds = 10 minutes)
+// Check OTP expiration (600 seconds == 10 minutes)
 if (time() - $otp_time > 600) {
-    unset($_SESSION['reset_otp']);
-    unset($_SESSION['otp_time']);
+    unset($_SESSION['reset_otp'], $_SESSION['otp_time']);
     http_response_code(400);
     echo json_encode(['error' => 'OTP has expired. Please request a new one.']);
-    exit;
+    exit();
 }
-else if ($entered_otp == $stored_otp) {
+
+// Compare entered OTP with stored OTP (cast to string to avoid type mismatches)
+if ((string)$entered_otp === (string)$stored_otp) {
     $_SESSION['otp_verified'] = true;
+    http_response_code(200);
     echo json_encode([
-        'success' => true,
-        'message' => 'OTP verified successfully. You can now set a new password.'
+        'status' => 'success',
+        'message' => 'OTP verified successfully. You may now reset your password.'
     ]);
+    exit();
 } else {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid OTP. Please try again.']);
+    exit();
 }
-?>
