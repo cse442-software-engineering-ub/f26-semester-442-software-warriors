@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleCreateAccount}
-                        className="w-full h-[45px] md:h-[89.5px] bg-white text-blue-800 text-[12px] md:text-[30px] font-bold rounded-lg"
+                        className="w-full h-[45px] md:h-[89.5px] bg-white text-blue-800 text-[16px] md:text-[30px] font-bold rounded-lg"
                         >
                         Create Account
                     </button>
@@ -52,7 +52,7 @@ const LandingPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleExistingUser}
-                        className="w-full h-[45px] md:h-[89.5px] bg-transparent text-white text-[12px] md:text-[30px] font-bold rounded-lg border-2 border-white"
+                        className="w-full h-[45px] md:h-[89.5px] bg-transparent text-white text-[16px] md:text-[30px] font-bold rounded-lg border-2 border-white"
                         >
                             Existing User
                     </button>
