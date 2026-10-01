@@ -19,43 +19,53 @@ const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-blue-800 text-white flex flex-col">
-            <div className="text-center pt-6 text-[30px] text-[#9EACCD]">    
+            <div className="text-center pt-2 text-[16px] md:text-[28px] text-[#9EACCD]">    
                 © Vitals Health, Inc.
             </div>   
 
             {/*main content*/}
             <div className="flex-1 flex flex-col items-center justify-center px-6">
+
                 {/*logo and tagline*/}
-                <img src={VitalsLogo} alt="Vitals Logo" className="w-[705px] max-w-full h-[176px] mb-4"/>
-                <h1 className="text-[36px] font-bold text-center mb-10"> 
+                <img 
+                    src={VitalsLogo} 
+                    alt="Vitals Logo" 
+                    className="w-[400px] h-auto md:w-[705px] md:h-[176px] mb-6 md:mb-4"
+                    />
+                <h1 className="text-[20px] md:text-[36px] font-bold text-center mb-10"> 
                     Track and Manage Your Health Easier
                 </h1>
+
                 {/*button area to put buttons*/}
                 <div className="w-full max-w-[629px] flex flex-col gap-4">
+
                     {/*button to create an account*/}
                     <button 
                         type="button"
                         onClick={handleCreateAccount}
-                        className="w-full h-[89.5px] bg-white text-blue-800 text-[30px] font-bold rounded-lg"
+                        className="w-full h-[45px] md:h-[89.5px] bg-white text-blue-800 text-[12px] md:text-[30px] font-bold rounded-lg"
                         >
                         Create Account
                     </button>
+
                     {/*button to login*/}
                     <button 
                         type="button"
                         onClick={handleExistingUser}
-                        className="w-full h-[89.5px] bg-transparent text-white text-[30px] font-bold rounded-lg border-2 border-white"
+                        className="w-full h-[45px] md:h-[89.5px] bg-transparent text-white text-[12px] md:text-[30px] font-bold rounded-lg border-2 border-white"
                         >
                             Existing User
                     </button>
                 </div>
             </div>
+
             {/*disclaimer at the bottom of the page*/}
-            <div className="text-center text-[30px] text-[#9EACCD] px-6 pb-6"> 
+            <div className="text-center text-[16px] md:text-[28px] text-[#9EACCD] px-6 pb-2"> 
                 *This app is a tracker and reminder tool, not a source of medical advice.
                 <br />
                 Please consult a health professional with any questions or concerns.*
             </div>
+
         </div>
     );
 };
