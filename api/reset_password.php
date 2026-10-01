@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 $password = $_POST['password'] ?? '';
-$confirm_password = $_POST['confirm_password'] ?? '';
+$confirm_password = $_POST['confirmPassword'] ?? '';
 
 if (empty($password) || empty($confirm_password)) {
     http_response_code(400);
@@ -36,14 +36,32 @@ if ($password !== $confirm_password) {
     exit();
 }
 
+if (strlen($password) < 8) {
+  $errors['password'] = 'Invalid password, passwords should be at least 8 characters long';
+  exit();
+} elseif (!preg_match('/[A-Z]/', $password)) {
+  $errors['password'] = 'Invalid password, passwords must contain at least one uppercase letter.';
+} elseif (!preg_match('/[a-z]/', $password)) {
+  $errors['password'] = 'Invalid password, passwords must contain at least one lowercase letter.';
+} elseif (!preg_match('/\d/', $password)) {
+  $errors['password'] = 'Invalid password, passwords should contain at least 1 number';
+} elseif (!preg_match('/[!@#$%^&*_]/', $password)) {
+  $errors['password'] = 'Invalid password, passwords should contain at least 1 special character';
+}
+
+if (!empty($errors)) {
+  http_response_code(400);
+  echo json_encode(['errors' => $errors]);
+  exit;
+}
+
 $email = $_SESSION['reset_email'];
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Update password in the database
-$stmt = $pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
-$stmt->bind_param("ss", $hashed_password, $email);
+$stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE email = ?");
 
-if ($stmt->execute()) {
+if ($stmt->execute([$hashed_password, $email])) {
     // Clear reset session variables
     session_unset();
     session_destroy();

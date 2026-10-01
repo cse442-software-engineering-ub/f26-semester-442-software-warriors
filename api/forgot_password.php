@@ -8,9 +8,9 @@ session_start();
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/PHPMailer/src/Exception.php';
-require_once __DIR__ . '/PHPMailer/src/PHPMailer.php';
-require_once __DIR__ . '/PHPMailer/src/SMTP.php';
+require_once __DIR__ . '/PHPMailer/PHPMailer/src/Exception.php';
+require_once __DIR__ . '/PHPMailer/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/PHPMailer/PHPMailer/src/SMTP.php';
 
 header('Content-Type: application/json');
 
@@ -30,12 +30,10 @@ if (empty($email)) {
 
 // Check for email and retrieve the user's name
 $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ?");
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
+$stmt->execute([$email]);
+$user = $stmt->fetch();
 
-if ($result->num_rows > 0) {
-    $user = $result->fetch_assoc();
+if ($user) {
     $name = $user['name'] ?? 'User';
 
     // Generate 6-digit OTP code
@@ -54,7 +52,7 @@ if ($result->num_rows > 0) {
         $mail->Port = 465;
         $mail->Username = "442.warriors@gmail.com";
         // NOTE: Replace this with an environment variable or secure config
-        $mail->Password = "HGKr$ay^@1Amq8ny";
+        $mail->Password = 'vlfqqdftkbjhrgpg';
 
         $mail->addAddress($email, $name);
         $mail->setFrom("442.warriors@gmail.com", "VITALS, 442 Warriors");
@@ -68,7 +66,7 @@ if ($result->num_rows > 0) {
         echo json_encode([
             'status' => 'success',
             'message' => 'An OTP has been sent to your email address.',
-            'debug_otp' => $otp // Capturable by Postman tests
+            'debug_otp' => $otp // Capturable by Postman tewsts
         ]);
         exit();
     } catch (Exception $e) {
