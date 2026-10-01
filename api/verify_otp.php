@@ -1,38 +1,49 @@
 <?php
-require_once 'config.php'; 
+require_once 'config.php';
+header('Content-Type: application/json');
+session_start();
 
 // Check for OTP and email set in session
-// if not exit
-if (!isset($_SESSION['reset_otp'] || !isset($_SESSION['reset_email']))) {
-    header("Location: forgot_password.php")
-    exit();
+if (!isset($_SESSION['reset_otp']) || !isset($_SESSION['reset_email'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'OTP session not found. Please request a new OTP.']);
+    exit;
 }
 
-//Capture and clear status message from forgot_password.php
-$status = null;
-if (isset($_SESSION['status'])) {
-    $status = $_SESSION['status'];
-    unset($_SESSION['status']);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed. Use POST.']);
+    exit;
 }
 
-// Handle form submission 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $entered_otp = $_POST['otp']; //grabs user inputted otp
-    $stored_otp = $_SESSION['reset_otp']; //grabs generated otp
-    $otp_time = $_SESSION['otp_time']; // grabs time when OTP was generated
+$input = json_decode(file_get_contents('php://input'), true);
+$entered_otp = $input['otp'] ?? '';
 
-    //Check OTP expiration (600 == 10 minutes)
-    if (time() - $otp_time > 600) {
-        $error = "OTP has expired. Please request a new one.";
-        unset($_SESSION['reset_otp']);
-        unset($_SESSION['otp_time']);
-    }
-    else if ($entered_otp == $stored_otp) { //otp verification
-        $_SESSION['otp_verified'] = true;
-        header("Location: reset_password.php");
-        exit();
-    } else {
-        $error = "Invalid OTP. Please try again.";
-    }
-
+if (empty($entered_otp)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'OTP is required']);
+    exit;
 }
+
+$stored_otp = $_SESSION['reset_otp'];
+$otp_time = $_SESSION['otp_time'];
+
+// Check OTP expiration (600 seconds = 10 minutes)
+if (time() - $otp_time > 600) {
+    unset($_SESSION['reset_otp']);
+    unset($_SESSION['otp_time']);
+    http_response_code(400);
+    echo json_encode(['error' => 'OTP has expired. Please request a new one.']);
+    exit;
+}
+else if ($entered_otp == $stored_otp) {
+    $_SESSION['otp_verified'] = true;
+    echo json_encode([
+        'success' => true,
+        'message' => 'OTP verified successfully. You can now set a new password.'
+    ]);
+} else {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid OTP. Please try again.']);
+}
+?>
