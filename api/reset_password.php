@@ -37,22 +37,25 @@ if ($password !== $confirm_password) {
 }
 
 if (strlen($password) < 8) {
-  $errors['password'] = 'Invalid password, passwords should be at least 8 characters long';
-  exit();
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid password, passwords should be at least 8 characters long']);
+    exit();
 } elseif (!preg_match('/[A-Z]/', $password)) {
-  $errors['password'] = 'Invalid password, passwords must contain at least one uppercase letter.';
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid password, passwords must contain at least one uppercase letter.']);
+    exit();
 } elseif (!preg_match('/[a-z]/', $password)) {
-  $errors['password'] = 'Invalid password, passwords must contain at least one lowercase letter.';
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid password, passwords must contain at least one lowercase letter.']);
+    exit();
 } elseif (!preg_match('/\d/', $password)) {
-  $errors['password'] = 'Invalid password, passwords should contain at least 1 number';
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid password, passwords must contain at least one number']);
+    exit();
 } elseif (!preg_match('/[!@#$%^&*_]/', $password)) {
-  $errors['password'] = 'Invalid password, passwords should contain at least 1 special character';
-}
-
-if (!empty($errors)) {
-  http_response_code(400);
-  echo json_encode(['errors' => $errors]);
-  exit;
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid password, passwords must contain at least one special character.']);
+    exit();
 }
 
 $email = $_SESSION['reset_email'];
