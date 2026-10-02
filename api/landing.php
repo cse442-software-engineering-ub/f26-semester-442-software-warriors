@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/cors.php';
+require __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
 
