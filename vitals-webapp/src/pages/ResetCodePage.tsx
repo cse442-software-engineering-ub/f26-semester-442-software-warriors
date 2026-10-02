@@ -1,4 +1,4 @@
-// src/pages/ForgotPasswordPage.tsx
+// src/pages/ResetCodePage.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SplitLayout from "../components/Layout";
@@ -8,18 +8,19 @@ import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
 import "./forgotPass.css";
 
-const ForgotPasswordPage: React.FC = () => {
+const ResetCodePage: React.FC = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+    setCode(e.target.value);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // BACKEND: call the password-reset endpoint with `email` here.
+    // BACKEND: verify `code` with the backend, then go to the set new password page.
   };
+
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -53,39 +54,32 @@ const ForgotPasswordPage: React.FC = () => {
         }
         rightContent={
           <div className="formBox">
-            <h2 className="formTitle">
-              Forgot Password?
-            </h2>
+            <h2 className="formTitle">Reset Code</h2>
             <h3 className="formSubtitle">
-              No worries, enter your account's email here and we'll send you a
-              link to reset it
+              Enter the code we sent to your email address to be directed to set
+              your new password.
             </h3>
             <form onSubmit={handleSubmit} noValidate>
               <InputField
-                label="Email Address"
-                type="email"
-                name="email"
-                value={email}
+                label="Enter Reset Code"
+                type="text"
+                name="code"
+                value={code}
                 onChange={handleChange}
-                placeholder="example.address@email.com"
+                placeholder="12345678"
               />
 
-              <Button 
-                type="submit" 
-                variant="primary" 
-                className="submitBtn"
-                onClick={() => navigate("/reset-code")}
-                >
-                Send Reset Code
+              <Button type="submit" variant="primary" className="submitBtn">
+                Submit Reset Code
               </Button>
 
               <div className="btnRow">
                 <button
                   type="button"
                   className="outlineBtn"
-                  onClick={() => navigate("/register")}
+                  onClick={() => navigate("/forgot-password")}
                 >
-                  Create Account
+                  Re-Send Code
                 </button>
                 <button
                   type="button"
@@ -98,8 +92,8 @@ const ForgotPasswordPage: React.FC = () => {
             </form>
 
             <p className="helpNote">
-              Don't have an account yet? You can create one! Or, head back to
-              login if you remembered your password after all.
+              Didn't receive a code yet? It may take a moment. If you do not
+              receive within 10 minutes, click the resend code button above.
             </p>
           </div>
         }
@@ -108,4 +102,4 @@ const ForgotPasswordPage: React.FC = () => {
   );
 };
 
-export default ForgotPasswordPage;
+export default ResetCodePage;
