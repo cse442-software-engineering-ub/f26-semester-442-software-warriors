@@ -1,5 +1,6 @@
 // src/pages/NewPasswordPage.tsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SplitLayout from "../components/Layout";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
@@ -8,12 +9,33 @@ import RegisterIcon from "../assets/register_page_icon.png";
 import "./forgotPass.css";
 
 const NewPasswordPage: React.FC = () => {
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const newErrors: { password?: string; confirmPassword?: string } = {};
+
+    if (!password) {
+      newErrors.password = "This field is required";
+    } else if (password.length < 8 || !/\d/.test(password)) {
+      newErrors.password =
+        "Password must be at least 8 characters, including at least one number";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "This field is required";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     // BACKEND: send the new password to the backend to update the account.
+    navigate("/login");
   };
 
   return (
@@ -50,7 +72,7 @@ const NewPasswordPage: React.FC = () => {
           <div className="formBox">
             <h2 className="formTitle">Set New Password</h2>
             <h3 className="formSubtitle">
-              Please enter your new password below.
+              Please fill in your new password bellow.
             </h3>
             <form onSubmit={handleSubmit} noValidate>
               <InputField
@@ -58,7 +80,11 @@ const NewPasswordPage: React.FC = () => {
                 type="password"
                 name="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setErrors((prev) => ({ ...prev, password: undefined }));
+                }}
+                error={errors.password}
               />
 
               <InputField
@@ -66,7 +92,11 @@ const NewPasswordPage: React.FC = () => {
                 type="password"
                 name="confirmPassword"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                }}
+                error={errors.confirmPassword}
               />
 
               <Button type="submit" variant="primary" className="submitBtn">

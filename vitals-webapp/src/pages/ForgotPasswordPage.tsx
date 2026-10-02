@@ -11,14 +11,26 @@ import "./forgotPass.css";
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
+    if (error) setError("");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const value = email.trim();
+    if (!value) {
+      setError("This field is required");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setError("Please enter a valid email address");
+      return;
+    }
     // BACKEND: call the password-reset endpoint with `email` here.
+    navigate("/reset-code");
   };
 
   return (
@@ -68,14 +80,14 @@ const ForgotPasswordPage: React.FC = () => {
                 value={email}
                 onChange={handleChange}
                 placeholder="example.address@email.com"
+                error={error}
               />
 
-              <Button 
-                type="submit" 
-                variant="primary" 
+              <Button
+                type="submit"
+                variant="primary"
                 className="submitBtn"
-                onClick={() => navigate("/reset-code")}
-                >
+              >
                 Send Reset Code
               </Button>
 

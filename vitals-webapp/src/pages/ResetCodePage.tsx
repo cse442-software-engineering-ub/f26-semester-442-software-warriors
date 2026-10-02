@@ -11,13 +11,19 @@ import "./forgotPass.css";
 const ResetCodePage: React.FC = () => {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCode(e.target.value);
+    setCode(e.target.value.replace(/\D/g, ""));
+    if (error) setError("");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!code) {
+      setError("This field is required");
+      return;
+    }
     // BACKEND: verify `code` with the backend, then go to the set new password page.
     navigate("/new-password");
   };
@@ -68,14 +74,14 @@ const ResetCodePage: React.FC = () => {
                 value={code}
                 onChange={handleChange}
                 placeholder="12345678"
+                error={error}
               />
 
-              <Button 
-                type="submit" 
-                variant="primary" 
+              <Button
+                type="submit"
+                variant="primary"
                 className="submitBtn"
-                onClick={() => navigate("/new-password")}
-                >
+              >
                 Submit Reset Code
               </Button>
 
