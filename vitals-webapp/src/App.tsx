@@ -5,7 +5,7 @@ import {BrowserRouter, Routes, Route} from "react-router-dom";
 //each individual page is imported here.
 import RegisterPage from "./pages/RegisterPage";
 import LandingPage from "./pages/LandingPage";
-
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
@@ -14,6 +14,7 @@ function App() {
         {/*add route to other pages here with "<Route path="/page-name" element={<"page-name"/>}/> as shown*/}
         {/*landing page is first page seen so its route is just "/" the rest are named*/}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
