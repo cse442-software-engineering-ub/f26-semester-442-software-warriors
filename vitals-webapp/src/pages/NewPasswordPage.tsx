@@ -1,6 +1,5 @@
-// src/pages/ResetCodePage.tsx
+// src/pages/NewPasswordPage.tsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import SplitLayout from "../components/Layout";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
@@ -8,20 +7,14 @@ import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
 import "./forgotPass.css";
 
-const ResetCodePage: React.FC = () => {
-  const navigate = useNavigate();
-  const [code, setCode] = useState("");
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCode(e.target.value);
-  };
+const NewPasswordPage: React.FC = () => {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // BACKEND: verify `code` with the backend, then go to the set new password page.
-    navigate("/new-password");
+    // BACKEND: send the new password to the backend to update the account.
   };
-
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
@@ -55,51 +48,35 @@ const ResetCodePage: React.FC = () => {
         }
         rightContent={
           <div className="formBox">
-            <h2 className="formTitle">Reset Code</h2>
+            <h2 className="formTitle">Set New Password</h2>
             <h3 className="formSubtitle">
-              Enter the code we sent to your email address to be directed to set
-              your new password.
+              Please enter your new password below.
             </h3>
             <form onSubmit={handleSubmit} noValidate>
               <InputField
-                label="Enter Reset Code"
-                type="text"
-                name="code"
-                value={code}
-                onChange={handleChange}
-                placeholder="12345678"
+                label="New Password"
+                type="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
 
-              <Button 
-                type="submit" 
-                variant="primary" 
-                className="submitBtn"
-                onClick={() => navigate("/new-password")}
-                >
-                Submit Reset Code
-              </Button>
+              <InputField
+                label="Confirm Password"
+                type="password"
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
 
-              <div className="btnRow">
-                <button
-                  type="button"
-                  className="outlineBtn"
-                  onClick={() => navigate("/forgot-password")}
-                >
-                  Re-Send Code
-                </button>
-                <button
-                  type="button"
-                  className="outlineBtn"
-                  onClick={() => navigate("/login")}
-                >
-                  Back to Login
-                </button>
-              </div>
+              <Button type="submit" variant="primary" className="submitBtn">
+                Set Password
+              </Button>
             </form>
 
             <p className="helpNote">
-              Didn't receive a code yet? It may take a moment. If you do not
-              receive within 10 minutes, click the resend code button above.
+              Create a new password for your account. Use at least 8
+              characters, including at least one number.
             </p>
           </div>
         }
@@ -108,4 +85,4 @@ const ResetCodePage: React.FC = () => {
   );
 };
 
-export default ResetCodePage;
+export default NewPasswordPage;

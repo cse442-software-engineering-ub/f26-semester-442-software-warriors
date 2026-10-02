@@ -7,6 +7,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LandingPage from "./pages/LandingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetCodePage from "./pages/ResetCodePage";
+import NewPasswordPage from "./pages/NewPasswordPage";
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-code" element={<ResetCodePage />} />
+        <Route path="/new-password" element={<NewPasswordPage />} />
       </Routes>
     </BrowserRouter>
     );
