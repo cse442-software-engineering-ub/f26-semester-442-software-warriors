@@ -190,3 +190,208 @@
     border-right-color: var(--border);
   }
 }
+
+
+
+/* Forgot Password page styles */
+
+.leftPanel {
+  width: 100%;
+  min-height: 500px;
+  background: #1e40af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rightPanel {
+  width: 100%;
+  min-height: 500px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leftWrap {
+  display: flex;
+  padding: 2rem;
+}
+
+.leftBox {
+  width: 100%;
+  max-width: 28rem;
+  color: #fff;
+}
+
+.logoImg {
+  width: 100%;
+  height: auto;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.infoText {
+  text-align: center;
+}
+
+.leftTitle {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.leftSubtitle {
+  color: #e5e7eb;
+}
+
+.previewImg {
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.formBox {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.formTitle {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  text-align: center;
+}
+
+.formSubtitle {
+  font-weight: 700;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.submitBtn {
+  width: 100%;
+}
+
+.btnRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.outlineBtn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #1e40af;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #1e40af;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.outlineBtn:hover {
+  background: #eff6ff;
+}
+
+.outlineBtn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #3b82f6;
+}
+
+.helpNote {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.formBox label {
+  color: #1e40af;
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
+  .leftPanel {
+    padding: 15rem;
+  }
+  .rightPanel {
+    padding: 10rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .leftPanel {
+    width: 50%;
+    height: 100vh;
+    padding: 11.25rem;
+  }
+  .rightPanel {
+    width: 50%;
+    height: 100vh;
+    padding: 2rem;
+  }
+}
+
+/* Mobile: white page, blue logo on top, buttons stacked */
+@media (max-width: 767px) {
+  .leftPanel {
+    min-height: 0;
+    background: #fff;
+  }
+
+  .leftWrap {
+    width: 100%;
+    padding: 1.5rem 1rem 0;
+  }
+
+  .infoText,
+  .previewImg {
+    display: none;
+  }
+
+  /* Zero-width padding box hides the white logo; the masked background shows it in blue. */
+  .logoImg {
+    box-sizing: border-box;
+    display: block;
+    width: 11rem;
+    height: 2.25rem;
+    margin: 0 auto;
+    padding: 0 0 0 11rem;
+    background-color: #1e40af;
+    -webkit-mask: url("../assets/logo.png") center / contain no-repeat;
+    mask: url("../assets/logo.png") center / contain no-repeat;
+  }
+
+  .rightPanel {
+    min-height: 0;
+    padding: 0 1.5rem 2rem;
+  }
+
+  .formTitle {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .formSubtitle {
+    margin-bottom: 1.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .btnRow {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .helpNote {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+}
