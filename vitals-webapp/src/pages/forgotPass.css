@@ -115,7 +115,12 @@
   color: #4b5563;
 }
 
-@media (min-width: 640px) {
+.formBox label {
+  color: #1e40af;
+  text-transform: uppercase;
+}
+
+@media (min-width: 768px) {
   .leftPanel {
     padding: 15rem;
   }
@@ -134,5 +139,64 @@
     width: 50%;
     height: 100vh;
     padding: 2rem;
+  }
+}
+
+/* Mobile: white page, blue logo on top, buttons stacked */
+@media (max-width: 767px) {
+  .leftPanel {
+    min-height: 0;
+    background: #fff;
+  }
+
+  .leftWrap {
+    width: 100%;
+    padding: 1.5rem 1rem 0;
+  }
+
+  .infoText,
+  .previewImg {
+    display: none;
+  }
+
+  /* Zero-width padding box hides the white logo; the masked background shows it in blue. */
+  .logoImg {
+    box-sizing: border-box;
+    display: block;
+    width: 11rem;
+    height: 2.25rem;
+    margin: 0 auto;
+    padding: 0 0 0 11rem;
+    background-color: #1e40af;
+    -webkit-mask: url("../assets/logo.png") center / contain no-repeat;
+    mask: url("../assets/logo.png") center / contain no-repeat;
+  }
+
+  .rightPanel {
+    min-height: 0;
+    padding: 0 1.5rem 2rem;
+  }
+
+  .formTitle {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .formSubtitle {
+    margin-bottom: 1.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .btnRow {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .helpNote {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
   }
 }
