@@ -5,6 +5,7 @@ import {BrowserRouter, Routes, Route} from "react-router-dom";
 //each individual page is imported here.
 import RegisterPage from "./pages/RegisterPage";
 import LandingPage from "./pages/LandingPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         {/*landing page is first page seen so its route is just "/" the rest are named*/}
         <Route path="/" element={<LandingPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       </Routes>
     </BrowserRouter>
     );
