@@ -6,7 +6,6 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
-import "./forgotPass.css";
 
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
