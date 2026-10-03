@@ -190,3 +190,8 @@
     border-right-color: var(--border);
   }
 }
+
+.login-password-input::-ms-reveal,
+.login-password-input::-ms-clear {
+  display: none;
+}
