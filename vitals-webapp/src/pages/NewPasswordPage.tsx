@@ -6,6 +6,7 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
+import { resetPassword } from "../api";
 
 const NewPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const NewPasswordPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors: { password?: string; confirmPassword?: string } = {};
 
@@ -34,7 +35,12 @@ const NewPasswordPage: React.FC = () => {
     if (Object.keys(newErrors).length > 0) return;
 
     // BACKEND: send the new password to the backend to update the account.
-    navigate("/login");
+    const data = await resetPassword(password, confirmPassword);
+    if (data.status === "success") {
+      navigate("/login");
+    } else {
+      setErrors(data.message || "Failed to reset password.");
+    }
   };
 
   return (

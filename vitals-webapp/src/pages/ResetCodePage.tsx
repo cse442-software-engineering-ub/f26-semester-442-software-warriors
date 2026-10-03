@@ -6,6 +6,7 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
+import { verifyOtp } from "../api";
 
 const ResetCodePage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,14 +18,20 @@ const ResetCodePage: React.FC = () => {
     if (error) setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!code) {
       setError("This field is required");
       return;
     }
     // BACKEND: verify `code` with the backend, then go to the set new password page.
-    navigate("/new-password");
+    const data = await verifyOtp(code);
+    if (data.status === "success") {
+      navigate("/new-password");
+    } 
+    else {
+      setError(data.message || "Invalid or expired code.");
+    }
   };
 
 

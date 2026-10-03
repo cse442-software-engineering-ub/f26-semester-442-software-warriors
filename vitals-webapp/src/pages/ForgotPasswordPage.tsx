@@ -6,6 +6,7 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
+import { forgotPassword } from "../api";
 
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const ForgotPasswordPage: React.FC = () => {
     if (error) setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const value = email.trim();
     if (!value) {
@@ -29,7 +30,13 @@ const ForgotPasswordPage: React.FC = () => {
       return;
     }
     // BACKEND: call the password-reset endpoint with `email` here.
-    navigate("/reset-code");
+    const data = await forgotPassword(email);
+    if (data.status === "success" || data.status === "warning") {
+      navigate("/reset-code");
+    }
+    else {
+      setError(data.message || "Something went wrong.");
+    }
   };
 
   return (

@@ -22,6 +22,46 @@ export interface RegisterGeneralError {
   error: string;
 }
 
+// Forgot Password — Step 1: Send email
+export async function forgotPassword(email: string) {
+  const formData = new FormData();
+  formData.append("email", email);
+
+  const res = await fetch(`${API_BASE}/forgot_password.php`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // required — backend uses PHP sessions
+  });
+  return res.json();
+}
+
+// Forgot Password — Step 2: Verify OTP
+export async function verifyOtp(otp: string) {
+  const formData = new FormData();
+  formData.append("otp", otp);
+
+  const res = await fetch(`${API_BASE}/verify_otp.php`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // required — session must persist
+  });
+  return res.json();
+}
+
+// Forgot Password — Step 3: Reset password
+export async function resetPassword(password: string, confirmPassword: string) {
+  const formData = new FormData();
+  formData.append("password", password);
+  formData.append("confirmPassword", confirmPassword);
+
+  const res = await fetch(`${API_BASE}/reset_password.php`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // required — backend checks session for otp_verified
+  });
+  return res.json();
+}
+
 export async function registerUser(
   formData: RegisterFormData,
 ): Promise<RegisterSuccess> {
