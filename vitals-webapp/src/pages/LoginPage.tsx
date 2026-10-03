@@ -10,6 +10,12 @@ interface LoginFormValues {
   password: string;
 }
 
+const INPUT_MAX_LENGTH: Record<keyof LoginFormValues, number> = {
+  email: 254,
+  password: 128,
+};
+const CHARACTER_LIMIT_ERROR = "Character limit exceeded";
+
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<LoginFormValues>({
@@ -22,16 +28,22 @@ const LoginPage: React.FC = () => {
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
+    if (!(name in INPUT_MAX_LENGTH)) return;
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const field = name as keyof LoginFormValues;
+    const limit = INPUT_MAX_LENGTH[field];
 
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => {
-        const nextErrors = { ...prev };
-        delete nextErrors[name as keyof typeof nextErrors];
-        return nextErrors;
-      });
-    }
+    setFormData((prev) => ({ ...prev, [field]: value.slice(0, limit) }));
+
+    setErrors((prev) => {
+      const nextErrors = { ...prev };
+      if (value.length > limit) {
+        nextErrors[field] = CHARACTER_LIMIT_ERROR;
+      } else {
+        delete nextErrors[field];
+      }
+      return nextErrors;
+    });
 
     if (serverError) {
       setServerError("");
@@ -42,13 +54,17 @@ const LoginPage: React.FC = () => {
     const nextErrors: { email?: string; password?: string } = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!formData.email.trim()) {
+    if (errors.email === CHARACTER_LIMIT_ERROR) {
+      nextErrors.email = CHARACTER_LIMIT_ERROR;
+    } else if (!formData.email.trim()) {
       nextErrors.email = "Email address is required.";
     } else if (!emailRegex.test(formData.email)) {
       nextErrors.email = "Please enter a valid email address.";
     }
 
-    if (!formData.password) {
+    if (errors.password === CHARACTER_LIMIT_ERROR) {
+      nextErrors.password = CHARACTER_LIMIT_ERROR;
+    } else if (!formData.password) {
       nextErrors.password = "Password is required.";
     }
 
