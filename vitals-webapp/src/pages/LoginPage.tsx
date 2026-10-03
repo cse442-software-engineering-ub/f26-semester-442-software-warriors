@@ -106,10 +106,11 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <SplitLayout
-        left_css="lg:w-1/2 bg-blue-800 flex items-center justify-center lg:p-45 lg:h-screen"
+        left_css="hidden lg:w-1/2 lg:bg-blue-800 lg:flex lg:items-center lg:justify-center lg:p-45 lg:h-screen"
         left_css_mobile="w-full sm:p-60 min-h-[500px]"
         right_css="lg:w-1/2 bg-white flex items-center justify-center lg:p-8 lg:h-screen"
-        right_css_mobile="w-full sm:p-40 min-h-[500px]"
+        right_css_mobile="w-full min-h-screen px-7 py-10 lg:min-h-0"
+        spacer_css="hidden lg:block p-10"
         leftContent={
           <div className="flex p-8">
             <div className="max-w-md w-full text-white">
@@ -136,10 +137,25 @@ const LoginPage: React.FC = () => {
           </div>
         }
         rightContent={
-          <div className="w-full max-w-md">
+          <div className="mx-auto w-full max-w-[18rem] lg:max-w-md">
+          <div
+            role="img"
+            aria-label="Vitals"
+            className="mx-auto mb-16 h-[36px] w-[166px] bg-blue-800 lg:hidden"
+            style={{
+              maskImage: `url(${VitalLogo})`,
+              maskPosition: "center",
+              maskRepeat: "no-repeat",
+              maskSize: "contain",
+              WebkitMaskImage: `url(${VitalLogo})`,
+              WebkitMaskPosition: "center",
+              WebkitMaskRepeat: "no-repeat",
+              WebkitMaskSize: "contain",
+            }}
+          />
           <div className="mb-6 text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="mt-1 text-sm font-semibold text-gray-600">
+            <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">Welcome Back</h1>
+            <p className="mt-1 text-xs font-semibold text-gray-600 lg:text-sm">
               Enter your details to access your dashboard.
             </p>
           </div>
@@ -155,7 +171,7 @@ const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="mb-4">
-              <label htmlFor="email" className="mb-2 block text-xs font-bold text-blue-800">
+              <label htmlFor="email" className="mb-2 block text-base font-bold leading-5 text-blue-800 lg:text-xs lg:leading-normal">
                 EMAIL ADDRESS
               </label>
               <input
@@ -166,7 +182,7 @@ const LoginPage: React.FC = () => {
                 onChange={handleChange}
                 autoComplete="email"
                 aria-describedby={errors.email ? "email-error" : undefined}
-                className={`w-full rounded-lg border px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+                  className={`w-full rounded-xl border px-4 py-2 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 lg:rounded-lg lg:py-2.5 lg:text-sm ${
                   errors.email ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"
                 }`}
               />
@@ -178,7 +194,7 @@ const LoginPage: React.FC = () => {
             </div>
 
             <div className="mb-4">
-              <label htmlFor="password" className="mb-2 block text-xs font-bold text-blue-800">
+              <label htmlFor="password" className="mb-2 block text-base font-bold leading-5 text-blue-800 lg:text-xs lg:leading-normal">
                 PASSWORD
               </label>
               <div className="relative">
@@ -190,7 +206,7 @@ const LoginPage: React.FC = () => {
                   onChange={handleChange}
                   autoComplete="current-password"
                   aria-describedby={errors.password ? "password-error" : undefined}
-                  className={`login-password-input w-full rounded-lg border px-4 py-2.5 pr-12 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 ${
+                  className={`login-password-input w-full rounded-xl border px-4 py-2 pr-12 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 lg:rounded-lg lg:py-2.5 lg:text-sm ${
                     errors.password ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-blue-500"
                   }`}
                 />
@@ -219,28 +235,28 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 w-full rounded-lg bg-blue-800 px-6 py-2.5 font-semibold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full rounded-xl bg-blue-800 px-6 py-2.5 text-base font-semibold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 lg:rounded-lg"
             >
               {isSubmitting ? "Signing in..." : "Sign In"}
             </button>
           </form>
 
-          <div className="mt-2 flex gap-3">
+          <div className="mt-3 flex flex-col gap-3 lg:mt-2 lg:flex-row">
             <Link
               to="/register"
-              className="flex flex-1 items-center justify-center rounded-lg border border-blue-800 px-3 py-2.5 text-center text-sm font-semibold text-blue-800 transition hover:bg-blue-50"
+              className="flex flex-1 items-center justify-center rounded-xl border border-blue-800 px-3 py-2.5 text-center text-base font-semibold text-blue-800 transition hover:bg-blue-50 lg:rounded-lg lg:text-sm"
             >
               Create Account
             </Link>
             <button
               type="button"
-              className="flex-1 rounded-lg border border-blue-800 px-3 py-2.5 text-sm font-semibold text-blue-800 transition hover:bg-blue-50"
+              className="flex-1 rounded-xl border border-blue-800 px-3 py-2.5 text-base font-semibold text-blue-800 transition hover:bg-blue-50 lg:rounded-lg lg:text-sm"
             >
               Forgot Password
             </button>
           </div>
 
-          <p className="mt-4 text-center text-xs font-semibold text-gray-600">
+          <p className="mt-4 hidden text-center text-xs font-semibold text-gray-600 lg:block">
             Don&apos;t have an account yet? You can create one above, or reset your
             password if you&apos;re having trouble signing in.
           </p>
