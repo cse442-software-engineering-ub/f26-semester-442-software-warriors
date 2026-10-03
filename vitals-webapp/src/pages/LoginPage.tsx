@@ -86,7 +86,8 @@ const LoginPage: React.FC = () => {
     try {
       const result = await loginUser(formData);
       if (result.login) {
-        navigate("/");
+        // TODO: Add the Dashboard route to App.tsx when that page is implemented.
+        navigate("/dashboard");
       }
     } catch (error: any) {
       const message = error?.error || "Something went wrong. Please try again later.";
@@ -248,12 +249,13 @@ const LoginPage: React.FC = () => {
             >
               Create Account
             </Link>
-            <button
-              type="button"
-              className="flex-1 rounded-xl border border-blue-800 px-3 py-2.5 text-base font-semibold text-blue-800 transition hover:bg-blue-50 lg:rounded-lg lg:text-sm"
+            {/* TODO: Add the Forgot Password route to App.tsx when that page is implemented. */}
+            <Link
+              to="/forgot-password"
+              className="flex flex-1 items-center justify-center rounded-xl border border-blue-800 px-3 py-2.5 text-center text-base font-semibold text-blue-800 transition hover:bg-blue-50 lg:rounded-lg lg:text-sm"
             >
               Forgot Password
-            </button>
+            </Link>
           </div>
 
           <p className="mt-4 hidden text-center text-xs font-semibold text-gray-600 lg:block">
