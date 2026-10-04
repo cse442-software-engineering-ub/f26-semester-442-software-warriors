@@ -30,7 +30,7 @@ const LandingPage: React.FC = () => {
                 <img 
                     src={VitalsLogo} 
                     alt="Vitals Logo" 
-                    className="w-[400px] h-auto md:w-[500px] md:h-[100px] mb-6 md:mb-4"
+                    className="w-[400px] h-auto md:w-[550px] md:h-[140px] mb-6 md:mb-4"
                     />
                 <h1 className="text-[20px] md:text-[28px] font-bold text-center mb-10"> 
                     Track and Manage Your Health Easier
