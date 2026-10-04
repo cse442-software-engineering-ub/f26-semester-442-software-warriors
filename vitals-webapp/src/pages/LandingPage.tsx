@@ -19,7 +19,7 @@ const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-blue-800 text-white flex flex-col">
-            <div className="text-center pt-2 text-[16px] md:text-[28px] text-[#9EACCD]">    
+            <div className="text-center pt-2 text-[16px] md:text-[24px] text-[#9EACCD]">    
                 © Vitals Health, Inc.
             </div>   
 
@@ -30,9 +30,9 @@ const LandingPage: React.FC = () => {
                 <img 
                     src={VitalsLogo} 
                     alt="Vitals Logo" 
-                    className="w-[400px] h-auto md:w-[705px] md:h-[176px] mb-6 md:mb-4"
+                    className="w-[400px] h-auto md:w-[500px] md:h-[100px] mb-6 md:mb-4"
                     />
-                <h1 className="text-[20px] md:text-[36px] font-bold text-center mb-10"> 
+                <h1 className="text-[20px] md:text-[28px] font-bold text-center mb-10"> 
                     Track and Manage Your Health Easier
                 </h1>
 
@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleCreateAccount}
-                        className="w-full h-[45px] md:h-[89.5px] bg-white text-blue-800 text-[16px] md:text-[30px] font-bold rounded-lg"
+                        className="w-full h-[45px] md:h-[60px] md:w-[550px] mx-auto bg-white text-blue-800 text-[16px] md:text-[26px] font-bold rounded-lg"
                         >
                         Create Account
                     </button>
@@ -52,7 +52,7 @@ const LandingPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleExistingUser}
-                        className="w-full h-[45px] md:h-[89.5px] bg-transparent text-white text-[16px] md:text-[30px] font-bold rounded-lg border-2 border-white"
+                        className="w-full h-[45px] md:h-[60px] md:w-[550px] mx-auto bg-transparent text-white text-[16px] md:text-[26px] font-bold rounded-lg border-2 border-white"
                         >
                             Existing User
                     </button>
@@ -60,7 +60,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/*disclaimer at the bottom of the page*/}
-            <div className="text-center text-[16px] md:text-[28px] text-[#9EACCD] px-6 pb-2"> 
+            <div className="text-center text-[16px] md:text-[20px] text-[#9EACCD] px-6 pb-2"> 
                 *This app is a tracker and reminder tool, not a source of medical advice. 
                 <br className="hidden md:block " />
                  {" "}Please consult a health professional with any questions or concerns.*
