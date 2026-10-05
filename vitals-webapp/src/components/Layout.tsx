@@ -8,9 +8,10 @@ interface SplitLayoutProps {
     right_css?: string
     left_css_mobile?: string
     right_css_mobile?: string
+    spacer_css?: string
 }
 
-const SplitLayout: React.FC<SplitLayoutProps> = ({ leftContent, rightContent, left_css='', right_css='', left_css_mobile='', right_css_mobile='' }) => {
+const SplitLayout: React.FC<SplitLayoutProps> = ({ leftContent, rightContent, left_css='', right_css='', left_css_mobile='', right_css_mobile='', spacer_css='p-10' }) => {
     return (
         <div className="max-h-screen flex flex-col lg:flex-row">
             { /* Left Side: Information plus image*/ }
@@ -20,7 +21,7 @@ const SplitLayout: React.FC<SplitLayoutProps> = ({ leftContent, rightContent, le
                 </div>
             </div>
 
-            <div className='p-10'/>
+            <div className={spacer_css}/>
             { /* Right Side: For the Registration Form */ }
             <div className={`${right_css} ${right_css_mobile}`}>
                 <div className="max-w-md w-full">

@@ -5,11 +5,11 @@ require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 session_set_cookie_params([
     'lifetime' => 0,
-    'path'     => '/',
-    'domain'   => '',
-    'secure'   => true,   // required when SameSite=None
+    'path'     => '/CSE442/2026-Fall/cse-442ab/',
+    'domain'   => 'aptitude.cse.buffalo.edu',
+    'secure'   => true,
     'httponly' => true,
-    'samesite' => 'None'  // allows cross-site cookie sending
+    'samesite' => 'None',
 ]);
 session_start();
 
