@@ -3,6 +3,14 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'domain'   => '',
+    'secure'   => true,   // required when SameSite=None
+    'httponly' => true,
+    'samesite' => 'None'  // allows cross-site cookie sending
+]);
 session_start();
 
 header('Content-Type: application/json');
