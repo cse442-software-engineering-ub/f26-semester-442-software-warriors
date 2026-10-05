@@ -30,7 +30,7 @@ const ResetCodePage: React.FC = () => {
       navigate("/new-password");
     } 
     else {
-      setError(data.message || "Invalid or expired code.");
+      setError(data.message || data.error || "Invalid or expired code.");
     }
   };
 

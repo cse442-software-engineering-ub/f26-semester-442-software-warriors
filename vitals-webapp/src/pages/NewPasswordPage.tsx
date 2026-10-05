@@ -39,7 +39,7 @@ const NewPasswordPage: React.FC = () => {
     if (data.status === "success") {
       navigate("/login");
     } else {
-      setErrors(data.message || "Failed to reset password.");
+      setErrors(data.message || data.error || "Failed to reset password.");
     }
   };
 

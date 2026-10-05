@@ -35,7 +35,7 @@ const ForgotPasswordPage: React.FC = () => {
       navigate("/reset-code");
     }
     else {
-      setError(data.message || "Something went wrong.");
+      setError(data.message || data.error || "Something went wrong.");
     }
   };
 
