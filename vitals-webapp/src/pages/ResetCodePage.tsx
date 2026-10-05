@@ -12,18 +12,40 @@ const ResetCodePage: React.FC = () => {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
 
+  const [overflow, setOverflow] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCode(e.target.value.replace(/\D/g, ""));
-    if (error) setError("");
+    const digits = e.target.value.replace(/\D/g, "");
+    const tooLong = digits.length > 8;
+    setCode(tooLong ? digits.slice(0, 8) : digits);
+    setOverflow(tooLong);
+    setError(tooLong ? "Character limit exceeded." : "");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (overflow) {
+      setError("Character limit exceeded.");
+      return;
+    }
     if (!code) {
       setError("This field is required");
       return;
     }
-    // BACKEND: verify `code` with the backend, then go to the set new password page.
+    // BACKEND (once connected):
+    // - Make this handler `async` with an `isSubmitting` state (disable the
+    //   button while the request is in flight, reset in `finally`).
+    // - Read the email passed from the forgot-password page with
+    //   `useLocation().state?.email` if the backend needs it.
+    // - Add `verifyResetCode(code)` to src/api.ts: POST JSON { otp: code },
+    //   throw { status, ...data } when !response.ok.
+    // - try { await verifyResetCode(code); navigate("/new-password", { state: { email } }); }
+    //   catch (err: any) { setError(err.error ?? "Something went wrong. Please try again."); }
+    //   (failure returns { error: "Invalid OTP. Please try again.", debug_entered }).
+    // - Confirm the real OTP length with the backend; the tests use 6 digits
+    //   (000000) but the limit here is 8.
+    // - "Re-Send Code" could call requestResetCode(email) again instead of
+    //   navigating back to /forgot-password.
     navigate("/new-password");
   };
 

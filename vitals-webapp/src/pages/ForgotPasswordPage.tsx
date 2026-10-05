@@ -12,13 +12,22 @@ const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
+  const [overflow, setOverflow] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (error) setError("");
+    const raw = e.target.value;
+    const tooLong = raw.length > 254;
+    setEmail(tooLong ? raw.slice(0, 254) : raw);
+    setOverflow(tooLong);
+    setError(tooLong ? "Character limit exceeded." : "");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (overflow) {
+      setError("Character limit exceeded.");
+      return;
+    }
     const value = email.trim();
     if (!value) {
       setError("This field is required");
@@ -28,7 +37,18 @@ const ForgotPasswordPage: React.FC = () => {
       setError("Please enter a valid email address");
       return;
     }
-    // BACKEND: call the password-reset endpoint with `email` here.
+    // BACKEND (once connected):
+    // - Make this handler `async` and add an `isSubmitting` state; set it true
+    //   here, disable the submit button while true, reset it in `finally`.
+    // - Add `requestResetCode(email)` to src/api.ts, following `registerUser`:
+    //   POST `${API_BASE}/<endpoint>` with JSON { email: value }, parse the
+    //   JSON, and throw { status, ...data } when !response.ok.
+    // - try { await requestResetCode(value);
+    //         navigate("/reset-code", { state: { email: value } }); }
+    //   catch (err: any) { setError(err.error ?? "Something went wrong. Please try again."); }
+    //   (success returns { status: "success", message }; failure returns
+    //   { error: "Email address not found!" }).
+    // - Do NOT use or display `debug_otp` from the response in the UI.
     navigate("/reset-code");
   };
 

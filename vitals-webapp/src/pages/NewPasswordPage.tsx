@@ -13,9 +13,32 @@ const NewPasswordPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
+  const [overflow, setOverflow] = useState({ password: false, confirmPassword: false });
+
+  const limit = (
+    field: "password" | "confirmPassword",
+    raw: string,
+    set: (v: string) => void
+  ) => {
+    const tooLong = raw.length > 254;
+    set(tooLong ? raw.slice(0, 254) : raw);
+    setOverflow((prev) => ({ ...prev, [field]: tooLong }));
+    setErrors((prev) => ({
+      ...prev,
+      [field]: tooLong ? "Character limit exceeded." : undefined,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors: { password?: string; confirmPassword?: string } = {};
+
+    if (overflow.password || overflow.confirmPassword) {
+      if (overflow.password) newErrors.password = "Character limit exceeded.";
+      if (overflow.confirmPassword) newErrors.confirmPassword = "Character limit exceeded.";
+      setErrors(newErrors);
+      return;
+    }
 
     if (!password) {
       newErrors.password = "This field is required";
@@ -33,7 +56,20 @@ const NewPasswordPage: React.FC = () => {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    // BACKEND: send the new password to the backend to update the account.
+    // BACKEND (once connected):
+    // - Make this handler `async` with an `isSubmitting` state (disable the
+    //   button while the request is in flight, reset in `finally`).
+    // - Match the local password rules to the backend (min 8 characters, one
+    //   uppercase, one lowercase, one number, one special character), as
+    //   RegisterPage's validateForm does, and confirm the allowed special set.
+    // - Add `resetPassword(password, confirmPassword)` to src/api.ts: POST JSON
+    //   { password, confirmPassword }, throw { status, ...data } when !response.ok.
+    // - try { await resetPassword(password, confirmPassword); navigate("/login"); }
+    //   catch (err: any) {
+    //     setErrors({ password: err.error ?? "Something went wrong. Please try again." });
+    //   }
+    //   (success returns { status: "success", message: "Password has been
+    //   updated successfully." }; failures return { error: "Invalid password, ..." }).
     navigate("/login");
   };
 
@@ -79,10 +115,7 @@ const NewPasswordPage: React.FC = () => {
                 type="password"
                 name="password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, password: undefined }));
-                }}
+                onChange={(e) => limit("password", e.target.value, setPassword)}
                 error={errors.password}
               />
 
@@ -91,10 +124,7 @@ const NewPasswordPage: React.FC = () => {
                 type="password"
                 name="confirmPassword"
                 value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                }}
+                onChange={(e) => limit("confirmPassword", e.target.value, setConfirmPassword)}
                 error={errors.confirmPassword}
               />
 
