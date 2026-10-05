@@ -29,7 +29,7 @@ const NewPasswordPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors: { password?: string; confirmPassword?: string } = {};
 
@@ -55,22 +55,24 @@ const NewPasswordPage: React.FC = () => {
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
-
-    // BACKEND (once connected):
-    // - Make this handler `async` with an `isSubmitting` state (disable the
-    //   button while the request is in flight, reset in `finally`).
-    // - Match the local password rules to the backend (min 8 characters, one
-    //   uppercase, one lowercase, one number, one special character), as
-    //   RegisterPage's validateForm does, and confirm the allowed special set.
-    // - Add `resetPassword(password, confirmPassword)` to src/api.ts: POST JSON
-    //   { password, confirmPassword }, throw { status, ...data } when !response.ok.
-    // - try { await resetPassword(password, confirmPassword); navigate("/login"); }
-    //   catch (err: any) {
-    //     setErrors({ password: err.error ?? "Something went wrong. Please try again." });
-    //   }
-    //   (success returns { status: "success", message: "Password has been
-    //   updated successfully." }; failures return { error: "Invalid password, ..." }).
-    navigate("/login");
+    
+    try {
+      const res = await fetch("api/reset_password.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, confirmPassword }),
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        navigate("/login");
+      } else {
+        setErrors({
+          password: data.error ?? "Something went wrong. Please try again.",
+        });
+      }
+    } catch {
+      setErrors({ password: "Could not reach the server. Please try again." });
+    }
   };
 
   return (

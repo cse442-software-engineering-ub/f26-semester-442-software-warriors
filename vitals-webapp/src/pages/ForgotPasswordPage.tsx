@@ -22,7 +22,7 @@ const ForgotPasswordPage: React.FC = () => {
     setError(tooLong ? "Character limit exceeded." : "");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (overflow) {
       setError("Character limit exceeded.");
@@ -37,19 +37,22 @@ const ForgotPasswordPage: React.FC = () => {
       setError("Please enter a valid email address");
       return;
     }
-    // BACKEND (once connected):
-    // - Make this handler `async` and add an `isSubmitting` state; set it true
-    //   here, disable the submit button while true, reset it in `finally`.
-    // - Add `requestResetCode(email)` to src/api.ts, following `registerUser`:
-    //   POST `${API_BASE}/<endpoint>` with JSON { email: value }, parse the
-    //   JSON, and throw { status, ...data } when !response.ok.
-    // - try { await requestResetCode(value);
-    //         navigate("/reset-code", { state: { email: value } }); }
-    //   catch (err: any) { setError(err.error ?? "Something went wrong. Please try again."); }
-    //   (success returns { status: "success", message }; failure returns
-    //   { error: "Email address not found!" }).
-    // - Do NOT use or display `debug_otp` from the response in the UI.
-    navigate("/reset-code");
+    
+    try {
+    const res = await fetch("api/forgot_password.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: value }),
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        navigate("/reset-code", { state: { email: value } });
+      } else {
+        setError(data.error ?? "Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    }
   };
 
   return (
