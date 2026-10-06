@@ -12,25 +12,36 @@ const ResetCodePage: React.FC = () => {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [overflow, setOverflow] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCode(e.target.value.replace(/\D/g, ""));
-    if (error) setError("");
+    const digits = e.target.value.replace(/\D/g, "");
+    const tooLong = digits.length > 8;
+    setCode(tooLong ? digits.slice(0, 8) : digits);
+    setOverflow(tooLong);
+    setError(tooLong ? "Character limit exceeded." : "");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (overflow) {
+      setError("Character limit exceeded.");
+      return;
+    }
     if (!code) {
       setError("This field is required");
       return;
     }
-    // BACKEND: verify `code` with the backend, then go to the set new password page.
-    const data = await verifyOtp(code);
-    if (data.status === "success") {
-      navigate("/new-password");
-    } 
-    else {
-      setError(data.message || data.error || "Invalid or expired code.");
+    try {
+      const data = await verifyOtp(code);
+      if (data.status === "success") {
+            navigate("/new-password");
+      } 
+      else {
+        setError(data.message || data.error || "Invalid or expired code.");
+      }
+    } catch {
+      setError("Could not reach the server. Please try again.");
     }
   };
 

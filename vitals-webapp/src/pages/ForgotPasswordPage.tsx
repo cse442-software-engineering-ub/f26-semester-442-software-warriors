@@ -13,13 +13,22 @@ const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
+  const [overflow, setOverflow] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (error) setError("");
+    const raw = e.target.value;
+    const tooLong = raw.length > 254;
+    setEmail(tooLong ? raw.slice(0, 254) : raw);
+    setOverflow(tooLong);
+    setError(tooLong ? "Character limit exceeded." : "");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (overflow) {
+      setError("Character limit exceeded.");
+      return;
+    }
     const value = email.trim();
     if (!value) {
       setError("This field is required");
@@ -29,13 +38,17 @@ const ForgotPasswordPage: React.FC = () => {
       setError("Please enter a valid email address");
       return;
     }
-    // BACKEND: call the password-reset endpoint with `email` here.
-    const data = await forgotPassword(email);
-    if (data.status === "success" || data.status === "warning") {
-      navigate("/reset-code");
-    }
-    else {
-      setError(data.message || data.error || "Something went wrong.");
+    
+    try {
+      const data = await forgotPassword(email);
+      if (data.status === "success" || data.status === "warning") {
+        navigate("/reset-code", { state: { email: value } });
+      }
+      else {
+        setError(data.message || data.error || "Something went wrong.");
+      }
+    } catch {
+      setError("Could not reach the server. Please try again.");
     }
   };
 

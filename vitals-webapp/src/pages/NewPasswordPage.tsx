@@ -14,9 +14,32 @@ const NewPasswordPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
 
+  const [overflow, setOverflow] = useState({ password: false, confirmPassword: false });
+
+  const limit = (
+    field: "password" | "confirmPassword",
+    raw: string,
+    set: (v: string) => void
+  ) => {
+    const tooLong = raw.length > 254;
+    set(tooLong ? raw.slice(0, 254) : raw);
+    setOverflow((prev) => ({ ...prev, [field]: tooLong }));
+    setErrors((prev) => ({
+      ...prev,
+      [field]: tooLong ? "Character limit exceeded." : undefined,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const newErrors: { password?: string; confirmPassword?: string } = {};
+
+    if (overflow.password || overflow.confirmPassword) {
+      if (overflow.password) newErrors.password = "Character limit exceeded.";
+      if (overflow.confirmPassword) newErrors.confirmPassword = "Character limit exceeded.";
+      setErrors(newErrors);
+      return;
+    }
 
     if (!password) {
       newErrors.password = "This field is required";
@@ -33,13 +56,16 @@ const NewPasswordPage: React.FC = () => {
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
-
-    // BACKEND: send the new password to the backend to update the account.
-    const data = await resetPassword(password, confirmPassword);
-    if (data.status === "success") {
-      navigate("/login");
-    } else {
-      setErrors(data.message || data.error || "Failed to reset password.");
+    
+    try {
+      const data = await resetPassword(password, confirmPassword);
+      if (data.status === "success") {
+            navigate("/login");
+      } else {
+        setErrors(data.message || data.error || "Failed to reset password.");
+      }
+    } catch {
+      setErrors({ password: "Could not reach the server. Please try again." });
     }
   };
 
@@ -85,10 +111,7 @@ const NewPasswordPage: React.FC = () => {
                 type="password"
                 name="password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, password: undefined }));
-                }}
+                onChange={(e) => limit("password", e.target.value, setPassword)}
                 error={errors.password}
               />
 
@@ -97,10 +120,7 @@ const NewPasswordPage: React.FC = () => {
                 type="password"
                 name="confirmPassword"
                 value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                }}
+                onChange={(e) => limit("confirmPassword", e.target.value, setConfirmPassword)}
                 error={errors.confirmPassword}
               />
 
