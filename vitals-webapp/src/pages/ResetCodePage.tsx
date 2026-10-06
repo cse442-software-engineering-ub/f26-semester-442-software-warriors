@@ -6,6 +6,7 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
+import { verifyOtp } from "../api";
 
 const ResetCodePage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,16 +33,12 @@ const ResetCodePage: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch("api/verify_otp.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp: code }),
-      });
-      const data = await res.json();
+      const data = await verifyOtp(code);
       if (data.status === "success") {
-        navigate("/new-password");
-      } else {
-        setError(data.error ?? "Something went wrong. Please try again.");
+            navigate("/new-password");
+      } 
+      else {
+        setError(data.message || data.error || "Invalid or expired code.");
       }
     } catch {
       setError("Could not reach the server. Please try again.");

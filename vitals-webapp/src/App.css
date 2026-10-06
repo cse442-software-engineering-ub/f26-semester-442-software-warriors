@@ -395,6 +395,7 @@
     line-height: 1rem;
   }
 }
+
 .login-password-input::-ms-reveal,
 .login-password-input::-ms-clear {
   display: none;

@@ -6,6 +6,7 @@ import InputField from "../components/InputField";
 import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
+import { resetPassword } from "../api";
 
 const NewPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -57,18 +58,11 @@ const NewPasswordPage: React.FC = () => {
     if (Object.keys(newErrors).length > 0) return;
     
     try {
-      const res = await fetch("api/reset_password.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, confirmPassword }),
-      });
-      const data = await res.json();
+      const data = await resetPassword(password, confirmPassword);
       if (data.status === "success") {
-        navigate("/login");
+            navigate("/login");
       } else {
-        setErrors({
-          password: data.error ?? "Something went wrong. Please try again.",
-        });
+        setErrors(data.message || data.error || "Failed to reset password.");
       }
     } catch {
       setErrors({ password: "Could not reach the server. Please try again." });

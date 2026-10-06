@@ -8,7 +8,6 @@ import LandingPage from "./pages/LandingPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetCodePage from "./pages/ResetCodePage";
 import NewPasswordPage from "./pages/NewPasswordPage";
-
 import LoginPage from "./pages/LoginPage";
 
 function App() {
