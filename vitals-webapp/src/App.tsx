@@ -5,6 +5,10 @@ import {HashRouter, Routes, Route} from "react-router-dom";
 //each individual page is imported here.
 import RegisterPage from "./pages/RegisterPage";
 import LandingPage from "./pages/LandingPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetCodePage from "./pages/ResetCodePage";
+import NewPasswordPage from "./pages/NewPasswordPage";
+
 import LoginPage from "./pages/LoginPage";
 
 function App() {
@@ -16,6 +20,9 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-code" element={<ResetCodePage />} />
+        <Route path="/new-password" element={<NewPasswordPage />} />
       </Routes>
     </HashRouter>
     );
