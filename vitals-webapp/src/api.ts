@@ -1,6 +1,15 @@
 import type { RegisterFormData } from "./types";
 
-const API_BASE = import.meta.env.VITE_API_URL as string;
+const API_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost") as string;
+
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface LoginSuccessResponse {
+  login: true;
+}
 
 export interface RegisterSuccess {
   message: string;
@@ -20,6 +29,45 @@ export interface RegisterFieldErrors {
 export interface RegisterGeneralError {
   status: number;
   error: string;
+}
+
+export async function loginUser(formData: LoginFormData): Promise<LoginSuccessResponse> {
+  const params = new URLSearchParams();
+  params.append("email", formData.email.trim());
+  params.append("password", formData.password);
+
+  const response = await fetch(`${API_BASE}/login.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    credentials: "include",
+    body: params.toString(),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+    };
+  }
+
+  if (data?.login === true) {
+    return data as LoginSuccessResponse;
+  }
+
+  throw {
+    status: response.status,
+    error:
+      typeof data?.error === "string"
+        ? data.error
+        : "Something went wrong. Please try again later.",
+  };
 }
 
 export async function registerUser(
