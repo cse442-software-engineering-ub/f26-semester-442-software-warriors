@@ -24,7 +24,7 @@ if ($method === 'GET') {
     $user = $stmt->fetch();
 
     if (!$user) {
-        accountFail(404, 'Account not found');
+        accountFail(401, 'You must be logged in to view your account.');
     }
 
     echo json_encode([
@@ -104,13 +104,13 @@ if($method === 'POST') {
     $phone = $hasPhone ? trim($_POST['phone']) : $currentUser['phone'];
 
     if($name === ''){
-        accountFail(400, 'Name is required');
+        accountFail(400, 'Name is required.');
     }
     if($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)){
-        accountFail(400, 'A valid email is required');
+        accountFail(400, 'A valid email is required.');
     }
     if($phone === '' || !preg_match('/^\d{7,15}$/', $phone)){
-        accountFail(400, 'A valid phone number (digits only) is required');
+        accountFail(400, 'A valid phone number (digits only) is required.');
     }
 
     //Make sure account information is unique
@@ -135,9 +135,9 @@ if($method === 'DELETE') {
     $stmt->execute([$userId]);
 
     if($stmt->rowCount() === 0) {
-        accountFail(404, 'You must be logged in to delete your account.');
+        accountFail(401, 'You must be logged in to delete your account.');
     }
-    
+
     //clears the session and returns successful account deletion message
     $_SESSION = [];
     session_destroy();
@@ -145,3 +145,6 @@ if($method === 'DELETE') {
     echo json_encode(['message' => 'Account deleted successfully.']);
     exit;
 }
+
+header('Allow: GET, POST, DELETE');
+accountFail(405, 'Method not allowed. Use GET, POST, or DELETE.');
