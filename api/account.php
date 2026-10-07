@@ -129,3 +129,19 @@ if($method === 'POST') {
     exit;
 }
 
+//handle DELETE requests
+if($method === 'DELETE') {
+    $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+
+    if($stmt->rowCount() === 0) {
+        accountFail(404, 'You must be logged in to delete your account.');
+    }
+    
+    //clears the session and returns successful account deletion message
+    $_SESSION = [];
+    session_destroy();
+    http_response_code(200);
+    echo json_encode(['message' => 'Account deleted successfully.']);
+    exit;
+}
