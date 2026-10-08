@@ -59,7 +59,7 @@ if($method === 'POST') {
         elseif (!preg_match('/[A-Z]/', $newPassword) || !preg_match('/[a-z]/', $newPassword)) {
             accountFail(400, 'Invalid password, passwords must contain at least one uppercase and lowercase letter.');
         }
-        elseif (!preg_match('/\d/', $newPassword) || !preg_match('/[!@#$%^&*_]/', $newPassword)) {
+        elseif (!preg_match('/\d/', $newPassword) || !preg_match('/[!@#$%^&*]/', $newPassword)) {
             accountFail(400, 'Invalid password, passwords must contain at least one number and special character');
         } 
 
