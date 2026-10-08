@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetCodePage from "./pages/ResetCodePage";
 import NewPasswordPage from "./pages/NewPasswordPage";
 import LoginPage from "./pages/LoginPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-code" element={<ResetCodePage />} />
         <Route path="/new-password" element={<NewPasswordPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </HashRouter>
     );

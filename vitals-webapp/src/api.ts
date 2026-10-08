@@ -1,6 +1,7 @@
 import type { RegisterFormData } from "./types";
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? "/CSE442/2026-Fall/cse-442ab/api") as string;
+// Default to the API folder beside the deployed frontend; local development can override it.
+const API_BASE = import.meta.env.VITE_API_URL as string;
 
 export interface LoginFormData {
   email: string;
@@ -29,6 +30,75 @@ export interface RegisterFieldErrors {
 export interface RegisterGeneralError {
   status: number;
   error: string;
+}
+
+export interface AccountInfo {
+  name: string;
+  phone: string;
+  email: string;
+  photoUrl: string | null;
+  caregiverName: string;
+}
+
+export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
+
+// Keep settings requests consistent with the existing fetch-and-JSON helpers.
+async function settingsRequest<T>(fileName: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_BASE}/${fileName}`, {
+    ...options,
+    credentials: "include",
+  });
+  const data = await response.json();
+  if (!response.ok) throw { status: response.status, ...data };
+  return data as T;
+}
+
+export async function getAccount(): Promise<AccountInfo> {
+  return settingsRequest<AccountInfo>("account.php");
+}
+
+export async function updateAccount(account: AccountUpdate): Promise<{ message: string }> {
+  return settingsRequest("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(account),
+  });
+}
+
+export async function uploadAccountPhoto(file: File): Promise<{ photoUrl: string }> {
+  const formData = new FormData();
+  formData.append("photo", file);
+  return settingsRequest("upload-photo.php", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "DELETE",
+  });
+}
+
+export async function logoutUser(): Promise<void> {
+  await settingsRequest<{ message: string }>("logout.php", {
+    method: "POST",
+  });
+}
+
+export async function changeAccountPassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await settingsRequest<{ message: string }>("change-password.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ oldPassword, newPassword }),
+  });
 }
 
 export async function loginUser(formData: LoginFormData): Promise<LoginSuccessResponse> {
