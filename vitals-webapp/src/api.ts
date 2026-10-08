@@ -48,8 +48,30 @@ async function settingsRequest<T>(fileName: string, options: RequestInit = {}): 
     ...options,
     credentials: "include",
   });
-  const data = await response.json();
-  if (!response.ok) throw { status: response.status, ...data };
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data?.errors,
+    };
+  }
+
+  if (data?.error || data?.errors) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data.errors,
+    };
+  }
+
   return data as T;
 }
 

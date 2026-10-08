@@ -25,6 +25,9 @@ interface SettingsApiError {
 const isSettingsApiError = (error: unknown): error is SettingsApiError =>
   typeof error === "object" && error !== null && "status" in error && typeof error.status === "number";
 
+const isUnauthorized = (error: unknown) =>
+  isSettingsApiError(error) && (error.status === 401 || error.error === "Not logged in.");
+
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error
     ? error.message
@@ -116,7 +119,7 @@ const SettingsPage = () => {
       })
       .catch((error: unknown) => {
         if (!isCurrent) return;
-        if (isSettingsApiError(error) && error.status === 401) {
+        if (isUnauthorized(error)) {
           navigate("/login", { replace: true });
           return;
         }
@@ -234,7 +237,7 @@ const SettingsPage = () => {
       });
       setModal("saved");
     } catch (error: unknown) {
-      if (isSettingsApiError(error) && error.status === 401) {
+      if (isUnauthorized(error)) {
         navigate("/login", { replace: true });
         return;
       }
