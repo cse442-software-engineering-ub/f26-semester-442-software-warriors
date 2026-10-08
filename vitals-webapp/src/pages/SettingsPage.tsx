@@ -86,7 +86,6 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
   const [caregiverName, setCaregiverName] = useState("");
-  const [notifications, setNotifications] = useState(true);
   const [photo, setPhoto] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -342,83 +341,79 @@ const SettingsPage = () => {
         <header className="settings-page-heading">
           <div>
             <h1>Account Settings</h1>
-            <p className="settings-intro">Make sure you save all changes by pressing the "save changes" button at the bottom of the page</p>
+            <p className="settings-intro">View and modify your account information. Make sure you save all changes by pressing the "Save Changes" button at the bottom of the page.</p>
           </div>
         </header>
 
-        <form className="settings-card" onSubmit={saveChanges} noValidate>
-          <div className="settings-profile-row">
-            <div className="settings-photo-label-group">
-              <span className="settings-photo-label">Profile Photo</span>
-              <div className="settings-photo-controls">
-                {renderProfilePhoto("settings-avatar-large")}
-                <button className="settings-button settings-button-outline settings-photo-button" type="button" onClick={() => showModal("photo")}>
-                  <span className="settings-photo-button-desktop">Change</span>
-                  <span className="settings-photo-button-mobile">Change Profile Photo</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <p className="settings-loading" role="status">Loading account information...</p>
-          ) : (
-            <>
-              <div className="settings-fields">
-                <SettingsField id="name" label="NAME" value={profile.name} error={fieldErrors.name} onChange={updateProfile} />
-                <SettingsField id="phone" label="PHONE NUMBER" value={profile.phone} error={fieldErrors.phone} onChange={updateProfile} />
-                <SettingsField id="email" label="EMAIL ADDRESS" type="text" value={profile.email} error={fieldErrors.email} onChange={updateProfile} />
-              </div>
-
-              <div className="settings-card-divider" />
-
-              <section className="settings-preference-row" id="notification-settings" aria-labelledby="notification-title">
-                <div>
-                  <h2 id="notification-title">Notifications</h2>
-                  <p>Receive reminders and important account updates.</p>
-                </div>
-                <label className="settings-toggle settings-notification-toggle">
-                  <input type="checkbox" checked={notifications} onChange={(event) => setNotifications(event.target.checked)} />
-                  <span className="settings-toggle-track" aria-hidden="true" />
-                  <span className="settings-sr-only">Enable notifications</span>
-                </label>
-                <button className="settings-button settings-button-outline settings-notification-button" type="button" onClick={() => navigate("/notification-settings")}>
-                  Go To Notification Settings
-                </button>
-              </section>
-
-              <div className="settings-card-divider" />
-
-              <section className="settings-preference-row settings-security-row">
-                <div>
-                  <h2>Password</h2>
-                  <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => showModal("password")}>
-                    Change Password
+        <div className="settings-panel">
+          <form className="settings-card" onSubmit={saveChanges} noValidate>
+            <div className="settings-profile-row">
+              <div className="settings-photo-label-group">
+                <span className="settings-photo-label">Profile Photo</span>
+                <div className="settings-photo-controls">
+                  {renderProfilePhoto("settings-avatar-large")}
+                  <button className="settings-button settings-button-outline settings-photo-button" type="button" onClick={() => showModal("photo")}>
+                    Change Profile Photo
                   </button>
                 </div>
-              </section>
+              </div>
+            </div>
 
-              {requestError && <p className="settings-request-error" role="alert">{requestError}</p>}
+            {isLoading ? (
+              <p className="settings-loading" role="status">Loading account information...</p>
+            ) : (
+              <>
+                <div className="settings-fields">
+                  <SettingsField id="name" label="NAME" value={profile.name} error={fieldErrors.name} onChange={updateProfile} />
+                  <SettingsField id="phone" label="PHONE NUMBER" value={profile.phone} error={fieldErrors.phone} onChange={updateProfile} />
+                  <SettingsField id="email" label="EMAIL ADDRESS" type="text" value={profile.email} error={fieldErrors.email} onChange={updateProfile} />
+                </div>
 
-              <footer className="settings-card-footer">
-                <button className="settings-button settings-button-logout" type="button" onClick={handleLogout}>Logout</button>
-                <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
-              </footer>
-            </>
-          )}
-        </form>
+                <div className="settings-card-divider" />
 
-        <section className="settings-danger-card" aria-labelledby="delete-account-heading">
-          <div>
-            <h2 id="delete-account-heading">Delete Account</h2>
-            <p>Permanently remove your account and associated information.</p>
-          </div>
-          <button className="settings-button settings-button-danger" type="button" onClick={() => showModal("delete")}>
-            Delete Account
-          </button>
-        </section>
+                <section className="settings-preference-row" id="notification-settings" aria-labelledby="notification-title">
+                  <div>
+                    <h2 id="notification-title">Notifications</h2>
+                    <p>Receive reminders and important account updates.</p>
+                  </div>
+                  <button className="settings-button settings-button-outline settings-notification-button" type="button" onClick={() => navigate("/notification-settings")}>
+                    Go To Notification Settings
+                  </button>
+                </section>
+
+                <div className="settings-card-divider" />
+
+                <section className="settings-preference-row settings-security-row">
+                  <div>
+                    <h2>Password</h2>
+                    <p>Update your password to help keep your account secure.</p>
+                    <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => showModal("password")}>
+                      Change Password
+                    </button>
+                  </div>
+                </section>
+
+                {requestError && <p className="settings-request-error" role="alert">{requestError}</p>}
+
+                <footer className="settings-card-footer">
+                  <button className="settings-button settings-button-logout" type="button" onClick={handleLogout}>Logout</button>
+                  <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                </footer>
+              </>
+            )}
+            <section className="settings-danger-card" aria-labelledby="delete-account-heading">
+              <div>
+                <h2 id="delete-account-heading">Delete Account</h2>
+                <p>Permanently remove your account and associated information.</p>
+              </div>
+              <button className="settings-button settings-button-danger" type="button" onClick={() => showModal("delete")}>
+                Delete Account
+              </button>
+            </section>
+          </form>
+        </div>
       </div>
 
       {modal && (
@@ -480,7 +475,7 @@ const SettingsPage = () => {
                 <>
                   <h2 id="settings-modal-title">Are you sure you want to delete your account?</h2>
                   <div className="settings-modal-actions">
-                    <button className="settings-button settings-upload-white-button" type="button" onClick={handleDeleteAccount} disabled={isDeletingAccount}>
+                    <button className="settings-button settings-delete-confirm" type="button" onClick={handleDeleteAccount} disabled={isDeletingAccount}>
                       {isDeletingAccount ? "Deleting..." : "Confirm"}
                     </button>
                   </div>
