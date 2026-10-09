@@ -1,6 +1,6 @@
 import "./App.css";
 //this allows us to use react router dom to navigate between pages
-import {HashRouter, Routes, Route} from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 
 //each individual page is imported here.
 import RegisterPage from "./pages/RegisterPage";
@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetCodePage from "./pages/ResetCodePage";
 import NewPasswordPage from "./pages/NewPasswordPage";
 import LoginPage from "./pages/LoginPage";
+import LoggedOutPage from "./pages/LoggedOutPage";
 
 function App() {
   return (
@@ -22,9 +23,10 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-code" element={<ResetCodePage />} />
         <Route path="/new-password" element={<NewPasswordPage />} />
+        <Route path="/logged-out" element={<LoggedOutPage />} />
       </Routes>
     </HashRouter>
-    );
+  );
 }
 
 export default App;
