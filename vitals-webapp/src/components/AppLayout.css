@@ -72,6 +72,15 @@
   display: none;
 }
 
+.app-sidebar-mobile-logout {
+  display: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
 .app-sidebar-link svg {
   width: 28px;
   height: 28px;
@@ -79,7 +88,9 @@
 }
 
 .app-sidebar-link:hover,
-.app-sidebar-link:focus-visible {
+.app-sidebar-link:focus-visible,
+.app-sidebar-mobile-logout:hover,
+.app-sidebar-mobile-logout:focus-visible {
   border-color: #fff;
   background: rgb(255 255 255 / 12%);
 }
@@ -184,7 +195,7 @@
 @media (max-width: 680px) {
   .app-layout {
     display: block;
-    padding-bottom: 158px;
+    padding-bottom: 86px;
   }
 
   .app-layout-main {
@@ -197,7 +208,7 @@
   .app-sidebar {
     inset: auto 0 0;
     width: auto;
-    height: 150px;
+    height: auto;
     flex-direction: row;
     align-items: stretch;
     padding: 9px 10px;
@@ -214,7 +225,7 @@
     display: grid;
     width: 100%;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
     align-items: stretch;
     gap: 3px 5px;
     padding: 0;
@@ -230,6 +241,10 @@
     border-radius: 7px;
     font-size: 13px;
     font-weight: 600;
+  }
+
+  .app-sidebar-mobile-logout {
+    display: flex;
   }
 
   .app-sidebar-link-active {

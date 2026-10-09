@@ -305,53 +305,57 @@ const SettingsPage = () => {
               <p className="settings-loading" role="status">Loading account information...</p>
             ) : (
               <>
-                <div className="settings-fields">
-                  <SettingsField id="name" label="NAME" value={profile.name} error={fieldErrors.name} onChange={updateProfile} />
-                  <SettingsField id="phone" label="PHONE NUMBER" value={profile.phone} error={fieldErrors.phone} onChange={updateProfile} />
-                  <SettingsField id="email" label="EMAIL ADDRESS" type="text" value={profile.email} error={fieldErrors.email} onChange={updateProfile} />
+                <div className="settings-profile-column">
+                  <div className="settings-fields">
+                    <SettingsField id="name" label="NAME" value={profile.name} error={fieldErrors.name} onChange={updateProfile} />
+                    <SettingsField id="phone" label="PHONE NUMBER" value={profile.phone} error={fieldErrors.phone} onChange={updateProfile} />
+                    <SettingsField id="email" label="EMAIL ADDRESS" type="text" value={profile.email} error={fieldErrors.email} onChange={updateProfile} />
+                  </div>
+
+                  {/*
+                  <section className="settings-preference-row" id="notification-settings" aria-labelledby="notification-title">
+                    <div>
+                      <h2 id="notification-title">Notifications</h2>
+                      <p>Receive reminders and important account updates.</p>
+                    </div>
+                    <button className="settings-button settings-button-outline settings-notification-button" type="button" onClick={() => navigate("/notification-settings")}>
+                      Go To Notification Settings
+                    </button>
+                  </section>
+                  */}
+
+                  {requestError && <p className="settings-request-error" role="alert">{requestError}</p>}
+
+                  <footer className="settings-card-footer">
+                    <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </button>
+                  </footer>
                 </div>
 
-                {/*
-                <section className="settings-preference-row" id="notification-settings" aria-labelledby="notification-title">
-                  <div>
-                    <h2 id="notification-title">Notifications</h2>
-                    <p>Receive reminders and important account updates.</p>
-                  </div>
-                  <button className="settings-button settings-button-outline settings-notification-button" type="button" onClick={() => navigate("/notification-settings")}>
-                    Go To Notification Settings
-                  </button>
-                </section>
-                */}
+                <div className="settings-account-actions-column">
+                  <section className="settings-preference-row settings-security-row">
+                    <div>
+                      <h2>Password</h2>
+                      <p>Update your password to help keep your account secure.</p>
+                      <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => showModal("password")}>
+                        Change Password
+                      </button>
+                    </div>
+                  </section>
 
-                <section className="settings-preference-row settings-security-row">
-                  <div>
-                    <h2>Password</h2>
-                    <p>Update your password to help keep your account secure.</p>
-                    <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => showModal("password")}>
-                      Change Password
+                  <section className="settings-danger-card" aria-labelledby="delete-account-heading">
+                    <div>
+                      <h2 id="delete-account-heading">Delete Account</h2>
+                      <p>Permanently remove your account and associated information.</p>
+                    </div>
+                    <button className="settings-button settings-button-danger" type="button" onClick={() => showModal("delete")}>
+                      Delete Account
                     </button>
-                  </div>
-                </section>
-
-                {requestError && <p className="settings-request-error" role="alert">{requestError}</p>}
-
-                <footer className="settings-card-footer">
-                  <button className="settings-button settings-button-logout" type="button" onClick={openLogoutConfirmation}>Logout</button>
-                  <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </button>
-                </footer>
+                  </section>
+                </div>
               </>
             )}
-            <section className="settings-danger-card" aria-labelledby="delete-account-heading">
-              <div>
-                <h2 id="delete-account-heading">Delete Account</h2>
-                <p>Permanently remove your account and associated information.</p>
-              </div>
-              <button className="settings-button settings-button-danger" type="button" onClick={() => showModal("delete")}>
-                Delete Account
-              </button>
-            </section>
           </form>
         </div>
       </div>
