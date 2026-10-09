@@ -400,3 +400,199 @@
 .login-password-input::-ms-clear {
   display: none;
 }
+
+/* Home page styles */
+
+.home-content {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+  color: var(--app-ink);
+}
+
+.home-heading .home-page-title {
+  margin: 0;
+  text-align: left;
+}
+
+.home-see-all {
+  color: var(--app-blue);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-see-all:hover {
+  text-decoration: underline;
+}
+
+.home-see-all:focus-visible {
+  outline: 3px solid var(--app-blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.home-card {
+  padding: 16px 18px;
+  border-radius: 15px;
+  background: #eaf3fb;
+  box-shadow: 0 2px 5px rgb(22 59 162 / 8%);
+}
+
+.home-bp-card {
+  padding: 20px 20px 22px;
+}
+
+.home-bp-label {
+  color: var(--app-blue);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.home-bp-value {
+  margin: 4px 0 12px;
+  color: #1a1a1a;
+  font-size: clamp(40px, 4.6vw, 56px);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.home-bp-unit {
+  margin-left: 4px;
+  color: #666;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 500;
+  letter-spacing: normal;
+}
+
+.home-status-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 8px;
+  background: #d9f0de;
+  color: #1b6b32;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.home-status-badge-alert {
+  border: 1px solid #d32f2f;
+  background: #fce4e4;
+  color: #b93a2e;
+}
+
+.home-medication-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+}
+
+.home-medication-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.home-medication-details,
+.home-appointment-details {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.home-medication-details h3,
+.home-appointment-details h3 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 18px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.home-medication-details p {
+  margin: 2px 0 0;
+  color: #666;
+  font-size: 15px;
+}
+
+.home-appointment-details h3 {
+  font-size: 15px;
+}
+
+.home-appointment-details p {
+  margin: 3px 0 0;
+  color: var(--app-blue);
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.home-pill-box {
+  flex: 0 0 auto;
+  padding: 10px 18px;
+}
+
+.home-medication-time span {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.home-medication-time strong,
+.home-appointment-time strong {
+  color: var(--app-blue);
+}
+
+.home-medication-time strong {
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.home-appointment-time strong {
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.home-appointment-time span {
+  color: #444;
+  font-size: 14px;
+}
+
+.home-empty {
+  margin: 0;
+  color: #666;
+  font-size: 15px;
+}
+
+.home-bp-card .home-empty {
+  margin-top: 8px;
+}
+
+.home-request-error {
+  margin: 20px 0 0;
+  padding: 9px 12px;
+  border: 1px solid #d32f2f;
+  border-radius: 9px;
+  background: #fce4e4;
+  color: #b93a2e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@media (min-width: 901px) {
+  .home-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .home-medication-card,
+  .home-appointment-card {
+    flex-wrap: wrap;
+  }
+
+  .home-pill-box {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

@@ -176,3 +176,81 @@ export async function logoutUser(): Promise<void> {
         : "Couldn't log out. Please try again.",
   };
 }
+
+
+export interface AccountInfo {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+// GET account.php -> the signed-in user's profile (401 when not logged in)
+export async function getAccount(): Promise<AccountInfo> {
+  const response = await fetch(`${API_BASE}/account.php`, {
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Unable to load your account information.",
+    };
+  }
+
+  return data as AccountInfo;
+}
+
+// Shape returned by homepage.php. Each section is null when the user has no data for it.
+export interface BpReading {
+  systolic: number;
+  diastolic: number;
+  status: string;
+  recorded_at: string;
+}
+
+export interface TodaysMedication {
+  medication_name: string;
+  dosage: string;
+  time: string; // already formatted by the backend, e.g. "8:00 AM"
+  days: string;
+}
+
+export interface NextAppointment {
+  doctors_name: string;
+  appointment_date: string; // already formatted by the backend
+  notes: string | null;
+}
+
+export interface HomepageData {
+  success: true;
+  bp_reading: BpReading | null;
+  medications: TodaysMedication[] | null;
+  next_appointment: NextAppointment | null;
+}
+
+// GET homepage.php -> dashboard data (401 when not logged in)
+export async function getHomepage(): Promise<HomepageData> {
+  const response = await fetch(`${API_BASE}/homepage.php`, {
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success !== true) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : "Unable to load your homepage.",
+    };
+  }
+
+  return data as HomepageData;
+}

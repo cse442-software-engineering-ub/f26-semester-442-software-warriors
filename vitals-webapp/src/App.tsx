@@ -10,6 +10,7 @@ import ResetCodePage from "./pages/ResetCodePage";
 import NewPasswordPage from "./pages/NewPasswordPage";
 import LoginPage from "./pages/LoginPage";
 import LoggedOutPage from "./pages/LoggedOutPage";
+import HomePage from "./pages/HomePage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/reset-code" element={<ResetCodePage />} />
         <Route path="/new-password" element={<NewPasswordPage />} />
         <Route path="/logged-out" element={<LoggedOutPage />} />
+        <Route path="/dashboard" element={<HomePage />} />
       </Routes>
     </HashRouter>
   );
