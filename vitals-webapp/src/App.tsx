@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetCodePage from "./pages/ResetCodePage";
 import NewPasswordPage from "./pages/NewPasswordPage";
 import LoginPage from "./pages/LoginPage";
+import SettingsPage from "./pages/SettingsPage";
 import LoggedOutPage from "./pages/LoggedOutPage";
 
 function App() {
@@ -18,11 +19,13 @@ function App() {
         {/*add route to other pages here with "<Route path="/page-name" element={<"page-name"/>}/> as shown*/}
         {/*landing page is first page seen so its route is just "/" the rest are named*/}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/home" element={null} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-code" element={<ResetCodePage />} />
         <Route path="/new-password" element={<NewPasswordPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/logged-out" element={<LoggedOutPage />} />
       </Routes>
     </HashRouter>

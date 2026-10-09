@@ -17,9 +17,9 @@ interface LogoutButtonProps {
 
 const VARIANT_CLASSES: Record<LogoutVariant, string> = {
   sidebar:
-    "flex h-12 w-full items-center gap-3 rounded-lg border border-white px-4 text-lg font-medium text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-60",
+    "app-sidebar-logout flex h-12 w-full items-center gap-3 rounded-lg border border-white px-4 text-lg font-medium text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-60",
   bottomnav:
-    "flex w-full flex-col items-center gap-1 py-1 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-60",
+    "app-sidebar-link app-sidebar-mobile-logout flex w-full flex-col items-center gap-1 py-1 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed disabled:opacity-60",
   page: "flex w-full items-center justify-center gap-2 rounded-xl border border-blue-800 bg-white px-6 py-2.5 text-base font-semibold text-blue-800 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 lg:rounded-lg",
 };
 
@@ -53,12 +53,14 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({
   className = "",
 }) => {
   const navigate = useNavigate();
+  const [isConfirming, setIsConfirming] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogout = async () => {
     setError("");
     setIsLoggingOut(true);
+    setIsConfirming(false);
     try {
       await logoutUser();
       // replace: true removes the current (logged-in) page from history,
@@ -75,7 +77,10 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({
     <div className={className}>
       <button
         type="button"
-        onClick={handleLogout}
+        onClick={() => {
+          setError("");
+          setIsConfirming(true);
+        }}
         disabled={isLoggingOut}
         className={VARIANT_CLASSES[variant]}
       >
@@ -87,6 +92,59 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({
         <p role="alert" className={ERROR_CLASSES[variant]}>
           {error}
         </p>
+      )}
+      {isConfirming && (
+        <div
+          className="app-logout-dialog-backdrop"
+          onMouseDown={(event) =>
+            event.target === event.currentTarget && setIsConfirming(false)
+          }
+        >
+          <section
+            className="app-logout-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="app-logout-dialog-title"
+          >
+            <button
+              className="app-logout-dialog-close"
+              type="button"
+              aria-label="Cancel logout"
+              onClick={() => setIsConfirming(false)}
+            >
+              <svg
+                className="app-dialog-close-icon"
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <path d="m7 7 10 10M17 7 7 17" />
+              </svg>
+            </button>
+            <h2 id="app-logout-dialog-title">
+              Are you sure you want to log out?
+            </h2>
+            <div className="app-logout-dialog-actions">
+              <button
+                type="button"
+                onClick={() => setIsConfirming(false)}
+                disabled={isLoggingOut}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? "Logging out..." : "Confirm"}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

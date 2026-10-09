@@ -86,8 +86,7 @@ const LoginPage: React.FC = () => {
     try {
       const result = await loginUser(formData);
       if (result.login) {
-        // TODO: Add the Dashboard route to App.tsx when that page is implemented.
-        navigate("/dashboard");
+        navigate("/home");
       }
     } catch (error: any) {
       const message = error?.error || "Something went wrong. Please try again later.";
