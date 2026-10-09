@@ -109,7 +109,7 @@ if($method === 'POST') {
     if($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)){
         accountFail(400, 'A valid email is required.');
     }
-    if($phone === '' || !preg_match('/^\d{7,15}$/', $phone)){
+    if($phone === '' || !preg_match('/^\d{10}$/', $phone)){
         accountFail(400, 'A valid phone number (digits only) is required.');
     }
 
