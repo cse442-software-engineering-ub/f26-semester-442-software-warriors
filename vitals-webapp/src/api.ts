@@ -32,9 +32,91 @@ export interface RegisterGeneralError {
   error: string;
 }
 
-export async function loginUser(
-  formData: LoginFormData,
-): Promise<LoginSuccessResponse> {
+export interface AccountInfo {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
+
+// account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
+async function settingsRequest<T>(fileName: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_BASE}/${fileName}`, {
+    ...options,
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data?.errors,
+    };
+  }
+
+  if (data?.error || data?.errors) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data.errors,
+    };
+  }
+
+  return data as T;
+}
+
+export async function getAccount(): Promise<AccountInfo> {
+  return settingsRequest<AccountInfo>("account.php");
+}
+
+export async function updateAccount(account: AccountUpdate): Promise<{ message: string }> {
+  const params = new URLSearchParams();
+  params.append("name", account.name);
+  params.append("phone", account.phone);
+  params.append("email", account.email);
+
+  return settingsRequest("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: params.toString(),
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "DELETE",
+  });
+}
+
+export async function changeAccountPassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const params = new URLSearchParams();
+  params.append("current_password", oldPassword);
+  params.append("new_password", newPassword);
+
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: params.toString(),
+  });
+}
+
+export async function loginUser(formData: LoginFormData): Promise<LoginSuccessResponse> {
   const params = new URLSearchParams();
   params.append("email", formData.email.trim());
   params.append("password", formData.password);

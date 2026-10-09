@@ -1,0 +1,421 @@
+.app-layout {
+  --sidebar-width: clamp(190px, 19vw, 260px);
+  --app-blue: #163ba2;
+  --app-blue-dark: #12348f;
+  --app-ink: #1a1a1a;
+  --app-muted: #666;
+  --app-line: #d8d8d8;
+  display: flex;
+  min-height: 100vh;
+  background: #fff;
+  color: var(--app-ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.app-layout-main {
+  width: calc(100% - var(--sidebar-width));
+  min-height: 100vh;
+  margin-left: var(--sidebar-width);
+  padding: 32px 25px 30px;
+}
+
+.app-sidebar {
+  position: fixed;
+  z-index: 2;
+  inset: 0 auto 0 0;
+  display: flex;
+  width: var(--sidebar-width);
+  box-sizing: border-box;
+  flex-direction: column;
+  padding: 22px 15px 18px;
+  background: #163ba2;
+  color: #fff;
+}
+
+.app-sidebar-brand {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  padding: 0 10px 26px;
+}
+
+.app-sidebar-brand img {
+  display: block;
+  width: 122px;
+  max-height: 42px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.app-sidebar-navigation {
+  display: grid;
+  gap: 7px;
+  padding-top: 16px;
+}
+
+.app-sidebar-link {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border: 2px solid rgb(255 255 255 / 45%);
+  border-radius: 9px;
+  color: #d6e6fa;
+  font-size: clamp(16px, 1.25vw, 18px);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.app-sidebar-link-mobile-label {
+  display: none;
+}
+
+.app-logout-control-bottomnav {
+  display: none;
+}
+
+.app-sidebar-mobile-logout {
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+.app-sidebar-link svg {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.app-sidebar-link:hover,
+.app-sidebar-link:focus-visible,
+.app-sidebar-mobile-logout:hover,
+.app-sidebar-mobile-logout:focus-visible {
+  border-color: #fff;
+  background: rgb(255 255 255 / 12%);
+}
+
+.app-sidebar-link:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+.app-sidebar-link-active {
+  border-color: #fff;
+  background: #fff;
+  color: #163ba2;
+}
+
+.app-sidebar-link-active:hover,
+.app-sidebar-link-active:focus-visible {
+  border-color: #fff;
+  background: #f5f5f5;
+  color: #163ba2;
+}
+
+.app-sidebar-link-active:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+.app-sidebar-logout {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  border: 2px solid rgb(255 255 255 / 45%);
+  border-radius: 9px;
+  background: transparent;
+  color: #d6e6fa;
+  cursor: pointer;
+  font: inherit;
+  font-size: clamp(16px, 1.25vw, 18px);
+  font-weight: 600;
+  text-align: left;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.app-logout-control-sidebar {
+  margin-top: auto;
+  margin-bottom: 12px;
+}
+
+.app-sidebar-logout svg {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.app-sidebar-logout:hover {
+  border-color: #fff;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+}
+
+.app-sidebar-logout:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+.app-sidebar-logout-error {
+  margin: 5px 0 0;
+  color: #ffd1d1;
+  font-size: 13px;
+}
+
+.app-logout-dialog-backdrop {
+  position: fixed;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(18 30 51 / 52%);
+}
+
+.app-logout-dialog {
+  position: relative;
+  width: min(100%, 430px);
+  box-sizing: border-box;
+  padding: 68px 30px 28px;
+  border: 1px solid #12348f;
+  border-radius: 16px;
+  background: #163ba2;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 18px 48px rgb(13 28 67 / 30%);
+}
+
+.app-logout-dialog h2 {
+  max-width: 330px;
+  margin: 0 auto;
+  font-size: 24px;
+  line-height: 1.35;
+}
+
+.app-logout-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #163ba2;
+  cursor: pointer;
+}
+
+.app-dialog-close-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+.app-logout-dialog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.app-logout-dialog-actions button {
+  min-width: 152px;
+  min-height: 56px;
+  padding: 0 24px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+  color: #163ba2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.app-logout-dialog-actions button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.app-logout-dialog button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar-link,
+  .app-sidebar-logout {
+    transition: none;
+  }
+}
+
+.app-sidebar-account {
+  display: block;
+  padding: 17px 8px 0;
+  border-top: 1px solid rgb(255 255 255 / 23%);
+}
+
+.app-sidebar-account-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.app-sidebar-account-copy strong {
+  overflow: hidden;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-sidebar-account-copy span {
+  color: #d6e6fa;
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .app-layout-main {
+    padding: 30px 24px;
+  }
+}
+
+@media (max-width: 680px) {
+  .app-layout {
+    display: block;
+    padding-bottom: 86px;
+  }
+
+  .app-layout-main {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 30px 18px 26px;
+  }
+
+  .app-sidebar {
+    inset: auto 0 0;
+    width: auto;
+    height: auto;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 9px 10px;
+    box-shadow: 0 -5px 18px rgb(20 38 68 / 13%);
+  }
+
+  .app-sidebar-brand,
+  .app-sidebar-account,
+  .app-logout-control-sidebar {
+    display: none;
+  }
+
+  .app-logout-control-bottomnav {
+    display: flex;
+  }
+
+  .app-sidebar-navigation {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto;
+    align-items: stretch;
+    gap: 3px 5px;
+    padding: 0;
+  }
+
+  .app-sidebar-link {
+    min-height: 0;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 2px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .app-sidebar-mobile-logout {
+    display: flex;
+  }
+
+  .app-sidebar-link-active {
+    border-color: #fff;
+    background: #fff;
+    color: #163ba2;
+  }
+
+  .app-sidebar-link-active:hover,
+  .app-sidebar-link-active:focus-visible {
+    border-color: #fff;
+    background: #f5f5f5;
+    color: #163ba2;
+  }
+
+  .app-sidebar-link-label {
+    display: none;
+  }
+
+  .app-sidebar-link-mobile-label {
+    display: inline;
+  }
+
+  .app-sidebar-link svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-sidebar-mobile-logout svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-logout-dialog {
+    padding: 60px 20px 22px;
+  }
+
+  .app-logout-dialog h2 {
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  .app-logout-dialog-close {
+    top: 10px;
+    right: 10px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .app-logout-dialog .app-dialog-close-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .app-logout-dialog-actions {
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .app-logout-dialog-actions button {
+    min-width: 0;
+    min-height: 48px;
+    flex: 1;
+    padding: 0 10px;
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar *,
+  .app-sidebar *::before,
+  .app-sidebar *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
