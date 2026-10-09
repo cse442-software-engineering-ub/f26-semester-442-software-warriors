@@ -41,7 +41,7 @@ export interface AccountInfo {
 
 export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
 
-// Keep settings requests consistent with the existing fetch-and-JSON helpers.
+// account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
 async function settingsRequest<T>(fileName: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE}/${fileName}`, {
     ...options,
@@ -100,9 +100,12 @@ export async function deleteAccount(): Promise<void> {
 }
 
 export async function logoutUser(): Promise<void> {
-  await settingsRequest<{ message: string }>("logout.php", {
+  const result = await settingsRequest<{ logout: boolean }>("logout.php", {
     method: "POST",
   });
+  if (result.logout !== true) {
+    throw new Error("The server did not confirm that logout completed.");
+  }
 }
 
 export async function changeAccountPassword(

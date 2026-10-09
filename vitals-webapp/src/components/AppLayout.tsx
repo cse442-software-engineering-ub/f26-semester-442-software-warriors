@@ -7,23 +7,31 @@ import "./AppLayout.css";
 // <AppLayout activeItem="Medications">
 //   <MedicationsPage />
 // </AppLayout>
-const sidebarSections = [
+export type SidebarSection =
+  | "Home"
+  | "Caregivers"
+  | "Medications"
+  | "Appointments"
+  | "Journal"
+  | "My Profile";
+
+const sidebarSections: SidebarSection[] = [
   "Home",
-  "Caregivers",
-  "Medications",
-  "Appointments",
-  "Journal",
+  // Re-enable these links when their routes are added to App.tsx.
+  // "Caregivers",
+  // "Medications",
+  // "Appointments",
+  // "Journal",
   "My Profile",
-] as const;
+];
 
-export type SidebarSection = (typeof sidebarSections)[number];
-
-const defaultDestinations: Record<SidebarSection, string> = {
-  Home: "/dashboard",
-  Caregivers: "/caregivers",
-  Medications: "/medications",
-  Appointments: "/appointments",
-  Journal: "/journal",
+const defaultDestinations: Partial<Record<SidebarSection, string>> = {
+  Home: "/home",
+  // Restore destinations when the corresponding routes are implemented.
+  // Caregivers: "/caregivers",
+  // Medications: "/medications",
+  // Appointments: "/appointments",
+  // Journal: "/journal",
   "My Profile": "/settings",
 };
 
@@ -51,6 +59,7 @@ interface AppLayoutProps {
   userName?: string;
   accountLabel?: string;
   destinations?: Partial<Record<SidebarSection, string>>;
+  onLogout?: () => void; // Caller handles confirmation and the actual logout request.
 }
 
 const AppSidebar = ({
@@ -58,16 +67,17 @@ const AppSidebar = ({
   userName = "Jane Doe",
   accountLabel = "Personal account",
   destinations,
+  onLogout,
 }: Omit<AppLayoutProps, "children">) => (
   <aside className="app-sidebar">
-    <Link className="app-sidebar-brand" to={destinations?.Home ?? defaultDestinations.Home} aria-label="Vitals home">
+    <div className="app-sidebar-brand">
       <img src={VitalsLogo} alt="Vitals" />
-    </Link>
+    </div>
     <nav className="app-sidebar-navigation" aria-label="Main navigation">
       {sidebarSections.map((section) => (
         <Link
           className={`app-sidebar-link${activeItem === section ? " app-sidebar-link-active" : ""}`}
-          to={destinations?.[section] ?? defaultDestinations[section]}
+          to={destinations?.[section] ?? defaultDestinations[section] ?? "/"}
           key={section}
           aria-current={activeItem === section ? "page" : undefined}
         >
@@ -79,6 +89,15 @@ const AppSidebar = ({
         </Link>
       ))}
     </nav>
+    {onLogout && (
+      <button className="app-sidebar-logout" type="button" onClick={onLogout}>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 17l5-5-5-5M15 12H3" />
+          <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+        </svg>
+        <span>Logout</span>
+      </button>
+    )}
     <div className="app-sidebar-account">
       <div className="app-sidebar-account-copy">
         <strong>{userName}</strong>
@@ -94,6 +113,7 @@ const AppLayout = ({
   userName = "Jane Doe",
   accountLabel = "Personal account",
   destinations,
+  onLogout,
 }: AppLayoutProps) => (
   <div className="app-layout">
     <AppSidebar
@@ -101,6 +121,7 @@ const AppLayout = ({
       userName={userName}
       accountLabel={accountLabel}
       destinations={destinations}
+      onLogout={onLogout}
     />
     <main className="app-layout-main">{children}</main>
   </div>

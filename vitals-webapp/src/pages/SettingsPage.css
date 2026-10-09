@@ -80,12 +80,14 @@
 .settings-card-divider { display: none; }
 .settings-preference-row { display: flex; grid-column: 2; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 9px; }
 .settings-preference-row:not(.settings-security-row) { grid-row: 1; }
-.settings-security-row { grid-row: 2; margin-top: 10px; }
+.settings-security-row { grid-row: 1; }
 .settings-preference-row h2 { margin: 0; }
 .settings-preference-row p { margin: 5px 0 0; color: #666; font-size: 14px; line-height: 1.45; }
 
 .settings-change-password { margin-top: 7px; }
+/*
 .settings-notification-button { display: inline-flex; width: fit-content; }
+*/
 .settings-request-error { grid-column: 1; grid-row: 4; margin: 12px 0 12px; padding: 9px 12px; border: 1px solid #d32f2f; border-radius: 9px; background: #fce4e4; color: #b93a2e; font-size: 14px; font-weight: 600; }
 .settings-loading { grid-column: 1 / -1; margin: 0; padding: 20px 0; color: #666; font-size: 15px; }
 .settings-card-footer {
@@ -97,12 +99,12 @@
   gap: 10px;
   margin: 16px 0 18px;
   padding: 0;
+  align-self: end;
 }
 .settings-card-footer .settings-button-primary { order: 0; }
 .settings-card-footer .settings-button-logout { order: 1; }
 .settings-button-logout { border: 2px solid #163ba2; background: #fff; color: #163ba2; }
 .settings-danger-card { display: flex; grid-column: 2; grid-row: 5; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 10px; margin: 16px 0 18px; padding: 0; }
-.settings-card-footer { align-self: end; }
 .settings-danger-card h2 { margin: 0; color: #163ba2; font-size: 14px; font-weight: 750; letter-spacing: 0.055em; text-transform: uppercase; }
 .settings-danger-card p { width: 100%; margin: 5px 0 0; color: #666; font-size: 14px; line-height: 1.45; }
 
@@ -136,10 +138,8 @@
   color: #fff;
   box-shadow: 0 18px 48px rgb(13 28 67 / 30%);
 }
-.settings-modal-success { width: min(100%, 410px); border: 2px solid #1e8e3e; background: #e3f3e8; color: #1e6b31; }
 .settings-modal h2 { margin: 0; color: #1e293b; font-size: 22px; line-height: 1.35; }
 .settings-modal-blue h2 { max-width: 330px; margin: 0 auto; color: #fff; font-size: 24px; line-height: 1.35; }
-.settings-modal-success h2 { max-width: 330px; margin: 0 auto; color: #1e6b31; font-size: 20px; line-height: 1.4; }
 .settings-modal-description { margin: 6px auto 22px; color: #666; font-size: 16px; line-height: 1.55; }
 .settings-modal-blue .settings-modal-description { color: #d6e6fa; font-size: 16px; }
 .settings-modal-close {
@@ -163,7 +163,7 @@
 }
 .settings-modal-close:hover { background: #f5f5f5; }
 .settings-modal-close:focus-visible { outline-color: #aec9f2; }
-.settings-modal-action-button { min-height: 56px; flex: 0 0 auto; padding: 0 24px; background: #fff; color: #163ba2; font-size: 20px; font-weight: 700; }
+.settings-modal-action-button { min-width: 152px; min-height: 56px; flex: 0 0 auto; padding: 0 24px; background: #fff; color: #163ba2; font-size: 20px; font-weight: 700; }
 .settings-modal-action-button:hover { background: #f5f5f5; }
 .settings-modal-blue .settings-field > span { color: #fff; }
 .settings-modal-blue .settings-field > .settings-field-error { border-color: #d32f2f; background: #fce4e4; color: #b93a2e; }
@@ -175,10 +175,8 @@
 .settings-password-form .settings-field > span { font-size: 14px; }
 .settings-password-form .settings-field input { min-height: 52px; font-size: 16px; }
 .settings-password-form .settings-modal-actions { margin-top: 5px; }
-.settings-modal-action-button { min-width: 152px; min-height: 56px; }
-.settings-modal-success { display: grid; justify-items: center; gap: 16px; padding: 27px; border-radius: 12px; }
-.settings-confirm-button { min-height: 54px; padding: 0 25px; border: 2px solid #1e8e3e; background: #e3f3e8; color: #1e6b31; font-size: 19px; font-weight: 700; }
-.settings-delete-confirm { min-height: 56px; min-width: 152px; border: 2px solid #d32f2f; background: #fce4e4; color: #b93a2e; font-size: 20px; font-weight: 700; }
+.settings-modal-success { display: grid; justify-items: center; gap: 22px; }
+.settings-delete-confirm { min-height: 56px; min-width: 190px; border: 2px solid #d32f2f; background: #fce4e4; color: #b93a2e; font-size: 20px; font-weight: 700; }
 .settings-delete-confirm:hover { background: #fce4e4; }
 @media (max-width: 680px) {
   .settings-page-heading { margin-bottom: 20px; }
@@ -188,19 +186,21 @@
   .settings-card { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .settings-fields { grid-column: 1; grid-row: 1; gap: 17px; }
   .settings-preference-row { align-items: stretch; gap: 8px; }
-  .settings-preference-row:not(.settings-security-row) { grid-column: 1; grid-row: 2; }
-  .settings-security-row { grid-column: 1; grid-row: 3; }
-  .settings-preference-row:not(.settings-security-row) { margin-top: 18px; margin-bottom: 18px; }
-  .settings-security-row { margin-top: 0; margin-bottom: 18px; }
+  /*
+  .settings-preference-row:not(.settings-security-row) { grid-column: 1; grid-row: 2; margin-top: 18px; margin-bottom: 18px; }
+  */
+  .settings-security-row { grid-column: 1; grid-row: 2; margin-top: 24px; margin-bottom: 18px; }
   .settings-preference-row > div { width: 100%; }
+  /*
   .settings-notification-button { width: 100%; }
+  */
   .settings-card-footer .settings-button, .settings-danger-card .settings-button { width: 100%; }
   .settings-security-row > div { display: grid; width: 100%; justify-items: start; gap: 8px; }
   .settings-security-row .settings-change-password { width: 100%; margin-top: 0; }
   .settings-change-password { margin-top: 0; }
-  .settings-request-error { grid-column: 1; grid-row: 4; }
-  .settings-card-footer { grid-column: 1; grid-row: 5; align-items: stretch; flex-direction: column; gap: 9px; margin: 19px 0 16px; padding: 0; }
-  .settings-danger-card { grid-column: 1; grid-row: 6; align-items: stretch; gap: 10px; margin: 0 0 18px; padding: 0; }
+  .settings-request-error { grid-column: 1; grid-row: 3; }
+  .settings-card-footer { grid-column: 1; grid-row: 4; align-items: stretch; flex-direction: column; gap: 9px; margin: 19px 0 16px; padding: 0; }
+  .settings-danger-card { grid-column: 1; grid-row: 5; align-items: stretch; gap: 10px; margin: 0 0 18px; padding: 0; }
   .settings-modal { max-height: calc(100vh - 32px); padding: 24px 20px; }
   .settings-modal-blue { padding: 48px 20px 24px; }
 }

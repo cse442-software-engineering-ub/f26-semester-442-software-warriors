@@ -11,7 +11,7 @@ import {
 } from "../api";
 import "./SettingsPage.css";
 
-type ModalName = "password" | "delete" | "saved" | null;
+type ModalName = "password" | "delete" | "saved" | "password-saved" | "logout" | null;
 type ProfileFields = "name" | "phone" | "email";
 type FieldErrors = Partial<Record<ProfileFields, string>>;
 
@@ -74,7 +74,7 @@ const SettingsField = ({
 );
 
 const formatPhoneNumber = (value: string) => {
-  const digits = value.replace(/\D/g, "");
+  const digits = value.replace(/\D/g, "").slice(0, 15);
   if (!digits) return "";
   if (digits.length <= 3) return `(${digits}`;
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
@@ -84,6 +84,7 @@ const formatPhoneNumber = (value: string) => {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
+  const [savedName, setSavedName] = useState("");
   const [modal, setModal] = useState<ModalName>(null);
   const [passwordErrors, setPasswordErrors] = useState<{ oldPassword?: string; newPassword?: string }>({});
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -93,6 +94,7 @@ const SettingsPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   useEffect(() => {
     let isCurrent = true;
 
@@ -104,6 +106,7 @@ const SettingsPage = () => {
           phone: formatPhoneNumber(account.phone),
           email: account.email,
         });
+        setSavedName(account.name);
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -156,10 +159,11 @@ const SettingsPage = () => {
   const validateProfile = () => {
     // Reject invalid values before sending an account update.
     const errors: FieldErrors = {};
+    const phoneDigits = profile.phone.replace(/\D/g, "");
     if (!profile.name.trim()) errors.name = "Name is required.";
     if (!profile.phone.trim()) {
       errors.phone = "Phone Number is required.";
-    } else if (!/^\(\d{3}\) \d{3}-\d{4}$/.test(profile.phone)) {
+    } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
       errors.phone = "Please enter a valid phone number.";
     }
     if (emailLimitExceeded) {
@@ -185,6 +189,7 @@ const SettingsPage = () => {
         phone: profile.phone.replace(/\D/g, ""),
         email: profile.email.trim(),
       });
+      setSavedName(profile.name.trim());
       setModal("saved");
     } catch (error: unknown) {
       if (isUnauthorized(error)) {
@@ -219,15 +224,18 @@ const SettingsPage = () => {
     setIsChangingPassword(true);
     try {
       await changeAccountPassword(oldPassword, newPassword);
-      closeModal();
+      setPasswordErrors({});
+      setModal("password-saved");
     } catch (error: unknown) {
       if (isSettingsApiError(error) && error.errors && Object.keys(error.errors).length > 0) {
         setPasswordErrors({
           oldPassword: error.errors.oldPassword,
           newPassword: error.errors.newPassword,
         });
-      } else if (isSettingsApiError(error) && error.status === 401) {
+      } else if (isSettingsApiError(error) && error.error === "Current password is incorrect.") {
         setPasswordErrors({ oldPassword: error.error ?? "Old password is incorrect." });
+      } else if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
       } else {
         setPasswordErrors({ newPassword: getErrorMessage(error, "Unable to change your password.") });
       }
@@ -242,13 +250,23 @@ const SettingsPage = () => {
   };
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setModal(null);
+    setIsLoggingOut(true);
     setRequestError("");
     try {
       await logoutUser();
       navigate("/login", { replace: true });
     } catch (error: unknown) {
       setRequestError(getErrorMessage(error, "Unable to log out. Please try again."));
+    } finally {
+      setIsLoggingOut(false);
     }
+  };
+
+  const openLogoutConfirmation = () => {
+    setRequestError("");
+    setModal("logout");
   };
 
   const handleDeleteAccount = async () => {
@@ -269,8 +287,9 @@ const SettingsPage = () => {
   return (
     <AppLayout
       activeItem="My Profile"
-      userName={profile.name || "Account"}
+      userName={savedName || "Account"}
       accountLabel="Personal account"
+      onLogout={openLogoutConfirmation}
     >
       <div className="settings-content">
         <header className="settings-page-heading">
@@ -292,8 +311,7 @@ const SettingsPage = () => {
                   <SettingsField id="email" label="EMAIL ADDRESS" type="text" value={profile.email} error={fieldErrors.email} onChange={updateProfile} />
                 </div>
 
-                <div className="settings-card-divider" />
-
+                {/*
                 <section className="settings-preference-row" id="notification-settings" aria-labelledby="notification-title">
                   <div>
                     <h2 id="notification-title">Notifications</h2>
@@ -303,8 +321,7 @@ const SettingsPage = () => {
                     Go To Notification Settings
                   </button>
                 </section>
-
-                <div className="settings-card-divider" />
+                */}
 
                 <section className="settings-preference-row settings-security-row">
                   <div>
@@ -319,7 +336,7 @@ const SettingsPage = () => {
                 {requestError && <p className="settings-request-error" role="alert">{requestError}</p>}
 
                 <footer className="settings-card-footer">
-                  <button className="settings-button settings-button-logout" type="button" onClick={handleLogout}>Logout</button>
+                  <button className="settings-button settings-button-logout" type="button" onClick={openLogoutConfirmation}>Logout</button>
                   <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
                     {isSaving ? "Saving..." : "Save Changes"}
                   </button>
@@ -341,13 +358,15 @@ const SettingsPage = () => {
 
       {modal && (
         <div className="settings-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>
-          {modal === "saved" ? (
-            <section className="settings-modal settings-modal-success" role="dialog" aria-modal="true" aria-labelledby="settings-saved-title">
-              <h2 id="settings-saved-title">Your changes have been saved!</h2>
-              <button className="settings-button settings-confirm-button" type="button" onClick={closeModal}>Confirm</button>
+          {modal === "saved" || modal === "password-saved" ? (
+            <section className="settings-modal settings-modal-blue settings-modal-success" role="dialog" aria-modal="true" aria-labelledby="settings-saved-title">
+              <h2 id="settings-saved-title">
+                {modal === "password-saved" ? "Your password has been changed!" : "Your changes have been saved!"}
+              </h2>
+              <button className="settings-button settings-modal-action-button" type="button" onClick={closeModal}>Confirm</button>
             </section>
           ) : (
-            <section className={`settings-modal${modal === "delete" || modal === "password" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+            <section className={`settings-modal${modal === "delete" || modal === "password" || modal === "logout" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
               <button className="settings-modal-close" type="button" aria-label="Close dialog" onClick={closeModal}>×</button>
 
               {modal === "password" && (
@@ -362,7 +381,7 @@ const SettingsPage = () => {
                     </label>
                     <label className="settings-field" htmlFor="new-password">
                       <span>NEW PASSWORD</span>
-                      <input id="new-password" name="newPassword" type="password" autoComplete="new-password" aria-invalid={Boolean(passwordErrors.newPassword)} aria-describedby={passwordErrors.newPassword ? "new-password-error" : undefined} />
+                      <input id="new-password" name="newPassword" type="password" maxLength={128} autoComplete="new-password" aria-invalid={Boolean(passwordErrors.newPassword)} aria-describedby={passwordErrors.newPassword ? "new-password-error" : undefined} />
                       {passwordErrors.newPassword && <span className="settings-field-error" id="new-password-error" role="alert">{passwordErrors.newPassword}</span>}
                     </label>
                     <div className="settings-modal-actions">
@@ -377,9 +396,26 @@ const SettingsPage = () => {
               {modal === "delete" && (
                 <>
                   <h2 id="settings-modal-title">Are you sure you want to delete your account?</h2>
+                  <p className="settings-modal-description">This action is permanent and cannot be undone.</p>
                   <div className="settings-modal-actions">
                     <button className="settings-button settings-delete-confirm" type="button" onClick={handleDeleteAccount} disabled={isDeletingAccount}>
-                      {isDeletingAccount ? "Deleting..." : "Confirm"}
+                      {isDeletingAccount ? "Deleting..." : "Delete Account"}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {modal === "logout" && (
+                <>
+                  <h2 id="settings-modal-title">Are you sure you want to log out?</h2>
+                  <div className="settings-modal-actions">
+                    <button
+                      className="settings-button settings-modal-action-button"
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut ? "Logging out..." : "Confirm"}
                     </button>
                   </div>
                 </>
