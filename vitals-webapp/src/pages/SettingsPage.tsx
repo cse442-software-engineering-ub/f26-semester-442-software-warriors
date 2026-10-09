@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
@@ -8,11 +8,10 @@ import {
   getAccount,
   logoutUser,
   updateAccount,
-  uploadAccountPhoto,
 } from "../api";
 import "./SettingsPage.css";
 
-type ModalName = "photo" | "password" | "delete" | "saved" | null;
+type ModalName = "password" | "delete" | "saved" | null;
 type ProfileFields = "name" | "phone" | "email";
 type FieldErrors = Partial<Record<ProfileFields, string>>;
 
@@ -85,22 +84,15 @@ const formatPhoneNumber = (value: string) => {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
-  const [caregiverName, setCaregiverName] = useState("");
-  const [photo, setPhoto] = useState<string | null>(null);
   const [modal, setModal] = useState<ModalName>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [fileError, setFileError] = useState("");
   const [passwordErrors, setPasswordErrors] = useState<{ oldPassword?: string; newPassword?: string }>({});
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [emailLimitExceeded, setEmailLimitExceeded] = useState(false);
   const [requestError, setRequestError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     let isCurrent = true;
 
@@ -112,8 +104,6 @@ const SettingsPage = () => {
           phone: formatPhoneNumber(account.phone),
           email: account.email,
         });
-        setPhoto(account.photoUrl);
-        setCaregiverName(account.caregiverName);
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -160,46 +150,7 @@ const SettingsPage = () => {
 
   const closeModal = () => {
     setModal(null);
-    setFileError("");
     setPasswordErrors({});
-  };
-
-  const choosePhoto = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
-    setFileError("");
-    setSelectedFile(null);
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setFileError("Choose an image file, such as PNG or JPG.");
-      event.target.value = "";
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setFileError("The image must be 5 MB or smaller.");
-      event.target.value = "";
-      return;
-    }
-    setSelectedFile(file);
-  };
-
-  const uploadPhoto = async () => {
-    if (!selectedFile) {
-      setFileError("Please choose a file.");
-      return;
-    }
-
-    setIsUploadingPhoto(true);
-    setFileError("");
-    try {
-      const result = await uploadAccountPhoto(selectedFile);
-      setPhoto(result.photoUrl);
-      closeModal();
-    } catch (error: unknown) {
-      setFileError(getErrorMessage(error, "Unable to upload the photo. Please try again."));
-    } finally {
-      setIsUploadingPhoto(false);
-    }
   };
 
   const validateProfile = () => {
@@ -286,8 +237,6 @@ const SettingsPage = () => {
   };
 
   const showModal = (name: Exclude<ModalName, null | "saved">) => {
-    setSelectedFile(null);
-    setFileError("");
     setPasswordErrors({});
     setModal(name);
   };
@@ -317,25 +266,11 @@ const SettingsPage = () => {
     }
   };
 
-  const renderProfilePhoto = (className: string) => (
-    <div className={`settings-avatar ${className}`} aria-label={photo ? "Profile photo" : "Default profile icon"}>
-      {photo ? (
-        <img src={photo} alt="" />
-      ) : (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="3.5" />
-          <path d="M5 20a7 7 0 0 1 14 0" />
-        </svg>
-      )}
-    </div>
-  );
-
   return (
     <AppLayout
       activeItem="My Profile"
       userName={profile.name || "Account"}
-      accountLabel={`Caregiver: ${caregiverName || "—"}`}
-      photoUrl={photo ?? undefined}
+      accountLabel="Personal account"
     >
       <div className="settings-content">
         <header className="settings-page-heading">
@@ -347,18 +282,6 @@ const SettingsPage = () => {
 
         <div className="settings-panel">
           <form className="settings-card" onSubmit={saveChanges} noValidate>
-            <div className="settings-profile-row">
-              <div className="settings-photo-label-group">
-                <span className="settings-photo-label">Profile Photo</span>
-                <div className="settings-photo-controls">
-                  {renderProfilePhoto("settings-avatar-large")}
-                  <button className="settings-button settings-button-outline settings-photo-button" type="button" onClick={() => showModal("photo")}>
-                    Change Profile Photo
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {isLoading ? (
               <p className="settings-loading" role="status">Loading account information...</p>
             ) : (
@@ -424,28 +347,8 @@ const SettingsPage = () => {
               <button className="settings-button settings-confirm-button" type="button" onClick={closeModal}>Confirm</button>
             </section>
           ) : (
-            <section className={`settings-modal${modal === "photo" || modal === "delete" || modal === "password" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+            <section className={`settings-modal${modal === "delete" || modal === "password" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
               <button className="settings-modal-close" type="button" aria-label="Close dialog" onClick={closeModal}>×</button>
-
-              {modal === "photo" && (
-                <>
-                  <h2 id="settings-modal-title">Upload Profile Photo</h2>
-                  <p className="settings-modal-description">Choose an image from your device. JPG, PNG, or GIF up to 5 MB.</p>
-                  <input ref={fileInputRef} className="settings-sr-only" type="file" accept="image/*" onChange={choosePhoto} />
-                  <div className="settings-upload-controls">
-                    <button className="settings-button settings-upload-white-button" type="button" onClick={() => fileInputRef.current?.click()}>
-                      Choose File
-                    </button>
-                    <span className="settings-upload-placeholder">{selectedFile?.name ?? "No file chosen"}</span>
-                  </div>
-                  {fileError && <p className="settings-form-error" role="alert">{fileError}</p>}
-                  <div className="settings-modal-actions">
-                    <button className="settings-button settings-upload-white-button" type="button" disabled={isUploadingPhoto} onClick={uploadPhoto}>
-                      {isUploadingPhoto ? "Uploading..." : "Upload"}
-                    </button>
-                  </div>
-                </>
-              )}
 
               {modal === "password" && (
                 <>
@@ -463,7 +366,7 @@ const SettingsPage = () => {
                       {passwordErrors.newPassword && <span className="settings-field-error" id="new-password-error" role="alert">{passwordErrors.newPassword}</span>}
                     </label>
                     <div className="settings-modal-actions">
-                      <button className="settings-button settings-upload-white-button" type="submit" disabled={isChangingPassword}>
+                      <button className="settings-button settings-modal-action-button" type="submit" disabled={isChangingPassword}>
                         {isChangingPassword ? "Updating..." : "Confirm"}
                       </button>
                     </div>

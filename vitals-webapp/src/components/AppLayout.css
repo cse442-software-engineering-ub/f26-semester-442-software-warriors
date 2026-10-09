@@ -114,38 +114,10 @@
 }
 
 .app-sidebar-account {
-  display: flex;
-  align-items: center;
-  gap: 11px;
+  display: block;
   margin-top: auto;
   padding: 17px 8px 0;
   border-top: 1px solid rgb(255 255 255 / 23%);
-}
-
-.app-sidebar-avatar {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  flex: 0 0 auto;
-  overflow: hidden;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid #d8d8d8;
-  background: #fff;
-  color: #666;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.app-sidebar-avatar svg {
-  width: 26px;
-  height: 26px;
-}
-
-.app-sidebar-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .app-sidebar-account-copy {

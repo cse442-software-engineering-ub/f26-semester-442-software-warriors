@@ -50,7 +50,6 @@ interface AppLayoutProps {
   children: ReactNode;
   userName?: string;
   accountLabel?: string;
-  photoUrl?: string;
   destinations?: Partial<Record<SidebarSection, string>>;
 }
 
@@ -58,7 +57,6 @@ const AppSidebar = ({
   activeItem,
   userName = "Jane Doe",
   accountLabel = "Personal account",
-  photoUrl,
   destinations,
 }: Omit<AppLayoutProps, "children">) => (
   <aside className="app-sidebar">
@@ -82,16 +80,6 @@ const AppSidebar = ({
       ))}
     </nav>
     <div className="app-sidebar-account">
-      <div className="app-sidebar-avatar" aria-hidden="true">
-        {photoUrl ? (
-          <img src={photoUrl} alt="" />
-        ) : (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="8" r="3.5" />
-            <path d="M5 20a7 7 0 0 1 14 0" />
-          </svg>
-        )}
-      </div>
       <div className="app-sidebar-account-copy">
         <strong>{userName}</strong>
         <span>{accountLabel}</span>
@@ -105,7 +93,6 @@ const AppLayout = ({
   children,
   userName = "Jane Doe",
   accountLabel = "Personal account",
-  photoUrl,
   destinations,
 }: AppLayoutProps) => (
   <div className="app-layout">
@@ -113,7 +100,6 @@ const AppLayout = ({
       activeItem={activeItem}
       userName={userName}
       accountLabel={accountLabel}
-      photoUrl={photoUrl}
       destinations={destinations}
     />
     <main className="app-layout-main">{children}</main>

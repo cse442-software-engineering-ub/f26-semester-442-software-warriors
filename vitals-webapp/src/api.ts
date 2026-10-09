@@ -33,11 +33,10 @@ export interface RegisterGeneralError {
 }
 
 export interface AccountInfo {
+  id: number;
   name: string;
   phone: string;
   email: string;
-  photoUrl: string | null;
-  caregiverName: string;
 }
 
 export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
@@ -80,21 +79,17 @@ export async function getAccount(): Promise<AccountInfo> {
 }
 
 export async function updateAccount(account: AccountUpdate): Promise<{ message: string }> {
+  const params = new URLSearchParams();
+  params.append("name", account.name);
+  params.append("phone", account.phone);
+  params.append("email", account.email);
+
   return settingsRequest("account.php", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
     },
-    body: JSON.stringify(account),
-  });
-}
-
-export async function uploadAccountPhoto(file: File): Promise<{ photoUrl: string }> {
-  const formData = new FormData();
-  formData.append("photo", file);
-  return settingsRequest("upload-photo.php", {
-    method: "POST",
-    body: formData,
+    body: params.toString(),
   });
 }
 
@@ -114,12 +109,16 @@ export async function changeAccountPassword(
   oldPassword: string,
   newPassword: string,
 ): Promise<void> {
-  await settingsRequest<{ message: string }>("change-password.php", {
+  const params = new URLSearchParams();
+  params.append("current_password", oldPassword);
+  params.append("new_password", newPassword);
+
+  await settingsRequest<{ message: string }>("account.php", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
     },
-    body: JSON.stringify({ oldPassword, newPassword }),
+    body: params.toString(),
   });
 }
 
