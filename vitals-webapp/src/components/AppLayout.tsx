@@ -32,7 +32,7 @@ const sectionIcons: Record<SidebarSection, ReactNode> = {
   Caregivers: <><circle cx="9" cy="8" r="3" /><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5v1" /></>,
   Medications: <><path d="m7 17 10-10" /><path d="M5 15a4 4 0 0 0 6 6l8-8a4 4 0 0 0-6-6Z" /></>,
   Appointments: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></>,
-  Journal: <><path d="M5 3h14a2 2 0 0 1 2 2v16l-9-5-9 5V5a2 2 0 0 1 2-2Z" /><path d="M8 8h8M8 11h8" /></>,
+  Journal: <><path d="M6 4h10a3 3 0 0 1 3 3v13H8a2 2 0 0 1-2-2V4Z" /><path d="M6 4v14a2 2 0 0 0 2 2M10 8h5M10 11h5" /></>,
   "My Profile": <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
 };
 
