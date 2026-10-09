@@ -131,7 +131,7 @@
 }
 .settings-modal-blue {
   width: min(100%, 430px);
-  padding: 42px 30px 28px;
+  padding: 68px 30px 28px;
   border: 1px solid #12348f;
   border-radius: 16px;
   background: #163ba2;
@@ -175,7 +175,7 @@
 .settings-password-form .settings-field > span { font-size: 14px; }
 .settings-password-form .settings-field input { min-height: 52px; font-size: 16px; }
 .settings-password-form .settings-modal-actions { margin-top: 5px; }
-.settings-modal-success { display: grid; justify-items: center; gap: 22px; }
+.settings-modal-success { display: grid; justify-items: center; gap: 22px; padding: 36px 30px 28px; }
 .settings-delete-confirm { min-height: 56px; min-width: 190px; border: 2px solid #d32f2f; background: #fce4e4; color: #b93a2e; font-size: 20px; font-weight: 700; }
 .settings-delete-confirm:hover { background: #fce4e4; }
 @media (max-width: 680px) {
@@ -203,7 +203,17 @@
   .settings-card-footer { align-items: stretch; flex-direction: column; gap: 9px; margin: 25px 0 16px; padding: 0; }
   .settings-danger-card { align-items: stretch; gap: 8px; margin: 0 0 18px; }
   .settings-modal { max-height: calc(100vh - 32px); padding: 24px 20px; }
-  .settings-modal-blue { padding: 48px 20px 24px; }
+  .settings-modal-blue { padding: 60px 20px 22px; }
+  .settings-modal h2 { font-size: 19px; line-height: 1.3; }
+  .settings-modal-blue h2 { font-size: 20px; }
+  .settings-modal-description,
+  .settings-modal-blue .settings-modal-description { margin-bottom: 16px; font-size: 14px; }
+  .settings-modal-close { top: 10px; right: 10px; width: 38px; height: 38px; }
+  .settings-modal-close .app-dialog-close-icon { width: 18px; height: 18px; }
+  .settings-modal-actions { gap: 8px; margin-top: 18px; }
+  .settings-modal-action-button { min-width: 0; min-height: 48px; padding: 0 18px; font-size: 16px; }
+  .settings-delete-confirm { min-width: 0; min-height: 48px; padding: 0 18px; font-size: 16px; }
+  .settings-modal-success { gap: 16px; padding: 28px 20px 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

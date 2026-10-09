@@ -1,7 +1,7 @@
 import type { RegisterFormData } from "./types";
 
-// Default to the API folder beside the deployed frontend; local development can override it.
-const API_BASE = import.meta.env.VITE_API_URL as string;
+const API_BASE = (import.meta.env.VITE_API_URL ??
+  "/CSE442/2026-Fall/cse-442ab/api") as string;
 
 export interface LoginFormData {
   email: string;
@@ -97,15 +97,6 @@ export async function deleteAccount(): Promise<void> {
   await settingsRequest<{ message: string }>("account.php", {
     method: "DELETE",
   });
-}
-
-export async function logoutUser(): Promise<void> {
-  const result = await settingsRequest<{ logout: boolean }>("logout.php", {
-    method: "POST",
-  });
-  if (result.logout !== true) {
-    throw new Error("The server did not confirm that logout completed.");
-  }
 }
 
 export async function changeAccountPassword(
@@ -242,4 +233,28 @@ export async function registerUser(
   }
 
   return data as RegisterSuccess;
+}
+
+// Logout (#53 backend, #56 frontend)
+// 200 {"logout":true}  -> logged out
+// 401                  -> there was no session anymore (already logged out), treat as done
+// anything else        -> still logged in, so throw and let the button show an error
+export async function logoutUser(): Promise<void> {
+  const response = await fetch(`${API_BASE}/logout.php`, {
+    method: "POST",
+    credentials: "include", // sends the PHPSESSID cookie so the server knows which session to end
+  });
+
+  if (response.ok || response.status === 401) {
+    return;
+  }
+
+  const data = await response.json().catch(() => ({}));
+  throw {
+    status: response.status,
+    error:
+      typeof data?.error === "string"
+        ? data.error
+        : "Couldn't log out. Please try again.",
+  };
 }

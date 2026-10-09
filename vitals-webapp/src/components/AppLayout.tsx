@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import VitalsLogo from "../assets/logo.png";
+import LogoutButton from "./LogoutButton";
 import "./AppLayout.css";
 
 // Shared layout for signed-in pages; set activeItem to highlight the current section.
@@ -59,7 +60,6 @@ interface AppLayoutProps {
   userName?: string;
   accountLabel?: string;
   destinations?: Partial<Record<SidebarSection, string>>;
-  onLogout?: () => void; // Caller handles confirmation and the actual logout request.
 }
 
 const AppSidebar = ({
@@ -67,7 +67,6 @@ const AppSidebar = ({
   userName = "Jane Doe",
   accountLabel = "Personal account",
   destinations,
-  onLogout,
 }: Omit<AppLayoutProps, "children">) => (
   <aside className="app-sidebar">
     <div className="app-sidebar-brand">
@@ -88,29 +87,15 @@ const AppSidebar = ({
           <span className="app-sidebar-link-mobile-label">{mobileLabels[section]}</span>
         </Link>
       ))}
-      {onLogout && (
-        <button
-          className="app-sidebar-link app-sidebar-mobile-logout"
-          type="button"
-          onClick={onLogout}
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 17l5-5-5-5M15 12H3" />
-            <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
-          </svg>
-          <span className="app-sidebar-link-mobile-label">Logout</span>
-        </button>
-      )}
+      <LogoutButton
+        variant="bottomnav"
+        className="app-logout-control app-logout-control-bottomnav"
+      />
     </nav>
-    {onLogout && (
-      <button className="app-sidebar-logout" type="button" onClick={onLogout}>
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10 17l5-5-5-5M15 12H3" />
-          <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
-        </svg>
-        <span>Logout</span>
-      </button>
-    )}
+    <LogoutButton
+      variant="sidebar"
+      className="app-logout-control app-logout-control-sidebar"
+    />
     <div className="app-sidebar-account">
       <div className="app-sidebar-account-copy">
         <strong>{userName}</strong>
@@ -126,7 +111,6 @@ const AppLayout = ({
   userName = "Jane Doe",
   accountLabel = "Personal account",
   destinations,
-  onLogout,
 }: AppLayoutProps) => (
   <div className="app-layout">
     <AppSidebar
@@ -134,7 +118,6 @@ const AppLayout = ({
       userName={userName}
       accountLabel={accountLabel}
       destinations={destinations}
-      onLogout={onLogout}
     />
     <main className="app-layout-main">{children}</main>
   </div>

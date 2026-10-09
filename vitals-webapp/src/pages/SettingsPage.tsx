@@ -6,12 +6,11 @@ import {
   changeAccountPassword,
   deleteAccount,
   getAccount,
-  logoutUser,
   updateAccount,
 } from "../api";
 import "./SettingsPage.css";
 
-type ModalName = "password" | "delete" | "saved" | "password-saved" | "logout" | null;
+type ModalName = "password" | "delete" | "saved" | "password-saved" | null;
 type ProfileFields = "name" | "phone" | "email";
 type FieldErrors = Partial<Record<ProfileFields, string>>;
 
@@ -94,7 +93,6 @@ const SettingsPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   useEffect(() => {
     let isCurrent = true;
 
@@ -249,26 +247,6 @@ const SettingsPage = () => {
     setModal(name);
   };
 
-  const handleLogout = async () => {
-    if (isLoggingOut) return;
-    setModal(null);
-    setIsLoggingOut(true);
-    setRequestError("");
-    try {
-      await logoutUser();
-      navigate("/login", { replace: true });
-    } catch (error: unknown) {
-      setRequestError(getErrorMessage(error, "Unable to log out. Please try again."));
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const openLogoutConfirmation = () => {
-    setRequestError("");
-    setModal("logout");
-  };
-
   const handleDeleteAccount = async () => {
     if (isDeletingAccount) return;
     setIsDeletingAccount(true);
@@ -289,7 +267,6 @@ const SettingsPage = () => {
       activeItem="My Profile"
       userName={savedName || "Account"}
       accountLabel="Personal account"
-      onLogout={openLogoutConfirmation}
     >
       <div className="settings-content">
         <header className="settings-page-heading">
@@ -370,8 +347,20 @@ const SettingsPage = () => {
               <button className="settings-button settings-modal-action-button" type="button" onClick={closeModal}>Confirm</button>
             </section>
           ) : (
-            <section className={`settings-modal${modal === "delete" || modal === "password" || modal === "logout" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-              <button className="settings-modal-close" type="button" aria-label="Close dialog" onClick={closeModal}>×</button>
+            <section className={`settings-modal${modal === "delete" || modal === "password" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+              <button className="settings-modal-close" type="button" aria-label="Close dialog" onClick={closeModal}>
+                <svg
+                  className="app-dialog-close-icon"
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                >
+                  <path d="m7 7 10 10M17 7 7 17" />
+                </svg>
+              </button>
 
               {modal === "password" && (
                 <>
@@ -409,21 +398,6 @@ const SettingsPage = () => {
                 </>
               )}
 
-              {modal === "logout" && (
-                <>
-                  <h2 id="settings-modal-title">Are you sure you want to log out?</h2>
-                  <div className="settings-modal-actions">
-                    <button
-                      className="settings-button settings-modal-action-button"
-                      type="button"
-                      onClick={handleLogout}
-                      disabled={isLoggingOut}
-                    >
-                      {isLoggingOut ? "Logging out..." : "Confirm"}
-                    </button>
-                  </div>
-                </>
-              )}
             </section>
           )}
         </div>
