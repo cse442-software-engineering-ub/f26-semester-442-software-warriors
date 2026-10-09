@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { getAccount, getHomepage } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
@@ -67,6 +67,7 @@ const HomePage = () => {
   const appointmentWhen = appointment ? splitAppointmentDate(appointment.appointment_date) : null;
 
   return (
+    <AppLayout activeItem="Home" userName={userName || "Account"} accountLabel="Personal account">
       <div className="home-content">
         <header className="home-heading">
           <h1 className="formTitle home-page-title">
@@ -112,6 +113,7 @@ const HomePage = () => {
           <section className="mt-6 min-w-0" aria-labelledby="home-meds-title">
             <div className="home-section-header flex items-baseline justify-between gap-3">
               <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-meds-title">Medication Schedule</h2>
+              <Link className="home-see-all" to="/medications">See all</Link>
             </div>
             <div className="home-card-list grid gap-3">
               {isLoading ? (
@@ -144,6 +146,7 @@ const HomePage = () => {
           <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
             <div className="home-section-header flex items-baseline justify-between gap-3">
               <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-appointment-title">Next Appointment</h2>
+              <Link className="home-see-all" to="/appointments">See all</Link>
             </div>
             <div className="home-card-list grid gap-3">
               {isLoading ? (
@@ -166,6 +169,7 @@ const HomePage = () => {
           </section>
         </div>
       </div>
+    </AppLayout>
   );
 };
 
