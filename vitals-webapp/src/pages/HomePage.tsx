@@ -101,7 +101,6 @@ const HomePage = () => {
                   {bp.systolic}/{bp.diastolic}
                   <span className="home-bp-unit">mmHg</span>
                 </p>
-                <span className="home-status-badge">* pending range</span>
               </>
             ) : (
               <p className="home-empty">No blood pressure readings. Visit the Journal page to add a reading</p>
