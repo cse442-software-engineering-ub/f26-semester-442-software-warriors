@@ -11,6 +11,7 @@ import NewPasswordPage from "./pages/NewPasswordPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoggedOutPage from "./pages/LoggedOutPage";
+import HomePage from "./pages/HomePage";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/new-password" element={<NewPasswordPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/logged-out" element={<LoggedOutPage />} />
+        <Route path="/dashboard" element={<HomePage />} />
       </Routes>
     </HashRouter>
   );
