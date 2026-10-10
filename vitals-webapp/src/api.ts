@@ -1,6 +1,7 @@
 import type { RegisterFormData } from "./types";
 
-const API_BASE = (import.meta.env.VITE_API_URL ?? "/CSE442/2026-Fall/cse-442ab/api") as string;
+const API_BASE = (import.meta.env.VITE_API_URL ??
+  "/CSE442/2026-Fall/cse-442ab/api") as string;
 
 export interface LoginFormData {
   email: string;
@@ -29,6 +30,90 @@ export interface RegisterFieldErrors {
 export interface RegisterGeneralError {
   status: number;
   error: string;
+}
+
+export interface AccountInfo {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
+
+// account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
+async function settingsRequest<T>(fileName: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${API_BASE}/${fileName}`, {
+    ...options,
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data?.errors,
+    };
+  }
+
+  if (data?.error || data?.errors) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data.errors,
+    };
+  }
+
+  return data as T;
+}
+
+export async function getAccount(): Promise<AccountInfo> {
+  return settingsRequest<AccountInfo>("account.php");
+}
+
+export async function updateAccount(account: AccountUpdate): Promise<{ message: string }> {
+  const params = new URLSearchParams();
+  params.append("name", account.name);
+  params.append("phone", account.phone);
+  params.append("email", account.email);
+
+  return settingsRequest("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: params.toString(),
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "DELETE",
+  });
+}
+
+export async function changeAccountPassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const params = new URLSearchParams();
+  params.append("current_password", oldPassword);
+  params.append("new_password", newPassword);
+
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: params.toString(),
+  });
 }
 
 export async function loginUser(formData: LoginFormData): Promise<LoginSuccessResponse> {
@@ -148,4 +233,88 @@ export async function registerUser(
   }
 
   return data as RegisterSuccess;
+}
+
+// Logout (#53 backend, #56 frontend)
+// 200 {"logout":true}  -> logged out
+// 401                  -> there was no session anymore (already logged out), treat as done
+// anything else        -> still logged in, so throw and let the button show an error
+export async function logoutUser(): Promise<void> {
+  const response = await fetch(`${API_BASE}/logout.php`, {
+    method: "POST",
+    credentials: "include", // sends the PHPSESSID cookie so the server knows which session to end
+  });
+
+  if (response.ok || response.status === 401) {
+    return;
+  }
+
+  const data = await response.json().catch(() => ({}));
+  throw {
+    status: response.status,
+    error:
+      typeof data?.error === "string"
+        ? data.error
+        : "Couldn't log out. Please try again.",
+  };
+}
+
+
+export interface AccountInfo {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+
+
+// Shape returned by homepage.php. Each section is null when the user has no data for it.
+export interface BpReading {
+  systolic: number;
+  diastolic: number;
+  status: string;
+  recorded_at: string;
+}
+
+export interface TodaysMedication {
+  medication_name: string;
+  dosage: string;
+  time: string; // already formatted by the backend, e.g. "8:00 AM"
+  days: string;
+}
+
+export interface NextAppointment {
+  doctors_name: string;
+  appointment_date: string; // already formatted by the backend
+  notes: string | null;
+}
+
+export interface HomepageData {
+  success: true;
+  bp_reading: BpReading | null;
+  medications: TodaysMedication[] | null;
+  next_appointment: NextAppointment | null;
+}
+
+// GET homepage.php -> dashboard data (401 when not logged in)
+export async function getHomepage(): Promise<HomepageData> {
+  const response = await fetch(`${API_BASE}/homepage.php`, {
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success !== true) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : "Unable to load your homepage.",
+    };
+  }
+
+  return data as HomepageData;
 }
