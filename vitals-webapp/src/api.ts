@@ -267,25 +267,7 @@ export interface AccountInfo {
   phone: string;
 }
 
-// GET account.php -> the signed-in user's profile (401 when not logged in)
-export async function getAccount(): Promise<AccountInfo> {
-  const response = await fetch(`${API_BASE}/account.php`, {
-    credentials: "include",
-  });
-  const data = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw {
-      status: response.status,
-      error:
-        typeof data?.error === "string"
-          ? data.error
-          : "Unable to load your account information.",
-    };
-  }
-
-  return data as AccountInfo;
-}
 
 // Shape returned by homepage.php. Each section is null when the user has no data for it.
 export interface BpReading {
