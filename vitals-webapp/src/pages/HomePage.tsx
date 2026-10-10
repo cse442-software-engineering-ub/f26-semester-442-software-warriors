@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { getAccount, getHomepage } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
