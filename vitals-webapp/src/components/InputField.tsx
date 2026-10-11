@@ -2,6 +2,15 @@
 import React from 'react'
 import type { InputFieldProps } from '../types'
 
+export const FieldErrorMessage = ({ id, message }: { id?: string; message: string }) => (
+    <p className="field-error-message" id={id} role="alert">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <span>{message}</span>
+    </p>
+)
+
 const InputField: React.FC<InputFieldProps> = ({ label, type, value, onChange, placeholder, name, required, error, isPhone = false }) => {
     
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -20,10 +29,11 @@ const InputField: React.FC<InputFieldProps> = ({ label, type, value, onChange, p
     
     return (
         <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2"> {/* this uses the tailwindcss CSS rules so we don't have to make separate styles */}
+            <label htmlFor={name} className="auth-field-label">
                 {label} {required && <span className="text-red-500">*</span>}
             </label>
             <input
+                id={name}
                 type={type}
                 value={value}
                 onChange={onChange}
@@ -31,22 +41,11 @@ const InputField: React.FC<InputFieldProps> = ({ label, type, value, onChange, p
                 name={name}
                 placeholder={placeholder}
                 required={required}
-                className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 
-                ${
-                    error
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-blue-500'
-                }`}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? `${name}-error` : undefined}
+                className={`auth-field-input${error ? ' auth-field-input-error' : ''}`}
             />
-            { /* Display error message */ }
-            {error && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {error}
-                </p>
-            )}
+            {error && <FieldErrorMessage id={`${name}-error`} message={error} />}
         </div>
     )
 }
