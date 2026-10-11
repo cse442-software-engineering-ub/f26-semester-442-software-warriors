@@ -30,7 +30,7 @@ const LandingPage: React.FC = () => {
                 <img 
                     src={VitalsLogo} 
                     alt="Vitals Logo" 
-                    className="w-[400px] h-auto md:w-[550px] md:h-[140px] mb-6 md:mb-4"
+                    className="w-[400px] max-w-full h-auto md:w-[550px] object-contain mb-6 md:mb-4"
                     />
                 <h1 className="text-[20px] md:text-[28px] font-bold text-center mb-10"> 
                     Track and Manage Your Health Easier
@@ -43,7 +43,7 @@ const LandingPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleCreateAccount}
-                        className="w-full h-[45px] md:h-[60px] md:w-[550px] mx-auto bg-white text-blue-800 text-[16px] md:text-[26px] font-bold rounded-lg"
+                        className="w-full h-[45px] md:h-[60px] md:w-[550px] mx-auto bg-white text-blue-800 text-[16px] md:text-[26px] font-bold rounded-lg cursor-pointer transition-colors duration-200 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-800"
                         >
                         Create Account
                     </button>
@@ -52,7 +52,7 @@ const LandingPage: React.FC = () => {
                     <button 
                         type="button"
                         onClick={handleExistingUser}
-                        className="w-full h-[45px] md:h-[60px] md:w-[550px] mx-auto bg-transparent text-white text-[16px] md:text-[26px] font-bold rounded-lg border-2 border-white"
+                        className="w-full h-[45px] md:h-[60px] md:w-[550px] mx-auto bg-transparent text-white text-[16px] md:text-[26px] font-bold rounded-lg border-2 border-white cursor-pointer transition-colors duration-200 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-800"
                         >
                             Existing User
                     </button>
