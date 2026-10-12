@@ -51,11 +51,11 @@ const HealthCard: React.FC<HealthCardProps> = ({
     }
     else if (type == 'MedicationCard') {
         return (
-            <div className="home-card-list grid gap-3 p-2">
+            <div className="home-card-list grid p-1">
               {isLoading ? (
                 <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
               ) : medication ? (
-                  <article className="home-card home-medication-card flex items-center gap-3.5" key={`${medication.medication_name}-${medication.time}`}>
+                  <article className="home-card home-medication-card flex items-center gap-3.5 p-2" key={`${medication.medication_name}-${medication.time}`}>
                     <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m7 17 10-10" />
