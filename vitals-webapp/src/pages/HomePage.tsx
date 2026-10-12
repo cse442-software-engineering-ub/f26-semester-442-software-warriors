@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
+import AddReadingModal from "../components/AddReadingModal";
 import { useNavigate } from "react-router-dom";
 import { getAccount, getHomepage } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
@@ -7,7 +8,10 @@ import type { AccountInfo, HomepageData } from "../api";
 const splitAppointmentDate = (value: string) => {
   const separator = value.lastIndexOf(", ");
   if (separator === -1) return { date: value, time: "" };
-  return { date: value.slice(0, separator), time: value.slice(separator + 2).toUpperCase() };
+  return {
+    date: value.slice(0, separator),
+    time: value.slice(separator + 2).toUpperCase(),
+  };
 };
 
 const isUnauthorized = (error: unknown) =>
@@ -18,6 +22,14 @@ const isUnauthorized = (error: unknown) =>
 
 const LOAD_ERROR_MESSAGE = "Could not retrieve account data";
 
+// Badge colour for the status the server calculated (readings.php)
+const statusBadgeClass = (status: string) => {
+  if (status === "Within range") return "home-status-badge";
+  if (status === "Slightly elevated")
+    return "home-status-badge home-status-badge-warn";
+  return "home-status-badge home-status-badge-alert";
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [account, setAccount] = useState<AccountInfo | null>(null);
@@ -25,6 +37,8 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
+  const [isAddingReading, setIsAddingReading] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
 
   useEffect(() => {
     let isCurrent = true;
@@ -64,16 +78,24 @@ const HomePage = () => {
   const bp = data?.bp_reading ?? null;
   const medications = data?.medications ?? [];
   const appointment = data?.next_appointment ?? null;
-  const appointmentWhen = appointment ? splitAppointmentDate(appointment.appointment_date) : null;
+  const appointmentWhen = appointment
+    ? splitAppointmentDate(appointment.appointment_date)
+    : null;
 
   return (
-    <AppLayout activeItem="Home" userName={userName || "Account"} accountLabel="Personal account">
+    <AppLayout
+      activeItem="Home"
+      userName={userName || "Account"}
+      accountLabel="Personal account"
+    >
       <div className="home-content">
         <header className="home-heading">
           <h1 className="formTitle home-page-title">
             {firstName ? `Hello, ${firstName}` : "Hello"}
           </h1>
-          <p className="mt-1.5 text-base text-gray-600">Here is your health overview for today.</p>
+          <p className="mt-1.5 text-base text-gray-600">
+            Here is your health overview for today.
+          </p>
         </header>
 
         {requestError && (
@@ -90,37 +112,88 @@ const HomePage = () => {
         )}
 
         <section className="mt-6 min-w-0" aria-labelledby="home-bp-title">
-        <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-bp-title">Blood Pressure</h2>
+          <h2
+            className="mb-3 text-xl font-bold text-gray-900"
+            id="home-bp-title"
+          >
+            Blood Pressure
+          </h2>
           <div className="home-card home-bp-card">
             <span className="home-bp-label">Last Reading</span>
             {isLoading ? (
-              <p className="home-empty" role="status">Loading...</p>
+              <p className="home-empty" role="status">
+                Loading...
+              </p>
             ) : bp ? (
               <>
                 <p className="home-bp-value">
                   {bp.systolic}/{bp.diastolic}
                   <span className="home-bp-unit">mmHg</span>
                 </p>
+                {bp.status && (
+                  <span className={statusBadgeClass(bp.status)}>
+                    {bp.status}
+                  </span>
+                )}
               </>
             ) : (
-              <p className="home-empty">No blood pressure readings. Visit the Journal page to add a reading</p>
+              <p className="home-empty">
+                No blood pressure readings yet. Add your first reading below.
+              </p>
             )}
           </div>
+          <button
+            className="home-add-reading"
+            type="button"
+            onClick={() => {
+              setSavedMessage("");
+              setIsAddingReading(true);
+            }}
+          >
+            <span aria-hidden="true">+</span> Add Blood Pressure Reading
+          </button>
+          {savedMessage && (
+            <p className="home-reading-saved" role="status">
+              {savedMessage}
+            </p>
+          )}
         </section>
 
         <div className="home-columns grid grid-cols-1 gap-x-6">
           <section className="mt-6 min-w-0" aria-labelledby="home-meds-title">
             <div className="home-section-header flex items-baseline justify-between gap-3">
-              <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-meds-title">Medication Schedule</h2>
+              <h2
+                className="mb-3 text-xl font-bold text-gray-900"
+                id="home-meds-title"
+              >
+                Medication Schedule
+              </h2>
             </div>
             <div className="home-card-list grid gap-3">
               {isLoading ? (
-                <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
+                <div className="home-card">
+                  <p className="home-empty" role="status">
+                    Loading...
+                  </p>
+                </div>
               ) : medications.length > 0 ? (
                 medications.map((medication) => (
-                  <article className="home-card home-medication-card flex items-center gap-3.5" key={`${medication.medication_name}-${medication.time}`}>
-                    <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <article
+                    className="home-card home-medication-card flex items-center gap-3.5"
+                    key={`${medication.medication_name}-${medication.time}`}
+                  >
+                    <span
+                      className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white"
+                      aria-hidden="true"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="m7 17 10-10" />
                         <path d="M5 15a4 4 0 0 0 6 6l8-8a4 4 0 0 0-6-6Z" />
                       </svg>
@@ -136,18 +209,35 @@ const HomePage = () => {
                   </article>
                 ))
               ) : (
-                <div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
+                <div className="home-card">
+                  <p className="home-empty">
+                    No medications. Visit the Medications page to add a
+                    medication
+                  </p>
+                </div>
               )}
             </div>
           </section>
 
-          <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
+          <section
+            className="mt-6 min-w-0"
+            aria-labelledby="home-appointment-title"
+          >
             <div className="home-section-header flex items-baseline justify-between gap-3">
-              <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-appointment-title">Next Appointment</h2>
+              <h2
+                className="mb-3 text-xl font-bold text-gray-900"
+                id="home-appointment-title"
+              >
+                Next Appointment
+              </h2>
             </div>
             <div className="home-card-list grid gap-3">
               {isLoading ? (
-                <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
+                <div className="home-card">
+                  <p className="home-empty" role="status">
+                    Loading...
+                  </p>
+                </div>
               ) : appointment && appointmentWhen ? (
                 <article className="home-card home-appointment-card flex items-center gap-3.5">
                   <div className="home-appointment-details">
@@ -156,16 +246,35 @@ const HomePage = () => {
                   </div>
                   <div className="home-pill-box home-appointment-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
                     <strong>{appointmentWhen.date}</strong>
-                    {appointmentWhen.time && <span>{appointmentWhen.time}</span>}
+                    {appointmentWhen.time && (
+                      <span>{appointmentWhen.time}</span>
+                    )}
                   </div>
                 </article>
               ) : (
-                <div className="home-card"><p className="home-empty">No appointments. Visit the Appointments page to add an appointment</p></div>
+                <div className="home-card">
+                  <p className="home-empty">
+                    No appointments. Visit the Appointments page to add an
+                    appointment
+                  </p>
+                </div>
               )}
             </div>
           </section>
         </div>
       </div>
+      {isAddingReading && (
+        <AddReadingModal
+          onClose={() => setIsAddingReading(false)}
+          onSaved={(reading) => {
+            setIsAddingReading(false);
+            setSavedMessage(
+              `Reading saved: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
+            );
+            setReloadCount((count) => count + 1); // reload so "Last Reading" shows the new one
+          }}
+        />
+      )}
     </AppLayout>
   );
 };
