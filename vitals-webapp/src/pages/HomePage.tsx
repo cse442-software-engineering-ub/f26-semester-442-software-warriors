@@ -93,7 +93,7 @@ const HomePage = () => {
           <h1 className="formTitle home-page-title">
             {firstName ? `Hello, ${firstName}` : "Hello"}
           </h1>
-          <p className="mt-1.5 text-base text-gray-600">
+          <p className="home-intro">
             Here is your health overview for today.
           </p>
         </header>
@@ -111,7 +111,7 @@ const HomePage = () => {
           </div>
         )}
 
-        <section className="mt-6 min-w-0" aria-labelledby="home-bp-title">
+        <section className="min-w-0" aria-labelledby="home-bp-title">
           <h2
             className="mb-3 text-xl font-bold text-gray-900"
             id="home-bp-title"

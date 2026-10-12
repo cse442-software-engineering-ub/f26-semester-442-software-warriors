@@ -822,7 +822,29 @@
 
 .home-heading .home-page-title {
   margin: 0;
+  color: #1a1a1a;
+  font-size: clamp(29px, 3.05vw, 38px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.5;
   text-align: left;
+}
+
+.home-heading {
+  margin-bottom: 24px;
+}
+
+.app-layout-main:has(> .home-content) {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-intro {
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .home-see-all {
@@ -997,6 +1019,14 @@
 }
 
 @media (max-width: 680px) {
+  .home-heading {
+    margin-bottom: 20px;
+  }
+
+  .home-heading .home-page-title {
+    font-size: clamp(27px, 7.2vw, 32px);
+  }
+
   .home-medication-card,
   .home-appointment-card {
     flex-wrap: wrap;

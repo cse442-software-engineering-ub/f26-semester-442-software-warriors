@@ -312,10 +312,7 @@
     padding: 30px 18px calc(86px + 26px);
   }
 
-  .home-content {
-    margin-block: auto;
-  }
-
+  .home-content,
   .settings-content {
     margin-block: 0;
   }
