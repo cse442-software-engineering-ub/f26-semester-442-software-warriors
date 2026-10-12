@@ -86,7 +86,7 @@ const LoginPage: React.FC = () => {
     try {
       const result = await loginUser(formData);
       if (result.login) {
-        navigate("/home");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       const message = error?.error || "Something went wrong. Please try again later.";

@@ -3,12 +3,7 @@ import AppLayout from "../components/AppLayout";
 import { useNavigate } from "react-router-dom";
 import { getAccount, getHomepage } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
-
-const splitAppointmentDate = (value: string) => {
-  const separator = value.lastIndexOf(", ");
-  if (separator === -1) return { date: value, time: "" };
-  return { date: value.slice(0, separator), time: value.slice(separator + 2).toUpperCase() };
-};
+import HealthCard from "../components/HealthCard";
 
 const isUnauthorized = (error: unknown) =>
   typeof error === "object" &&
@@ -64,7 +59,6 @@ const HomePage = () => {
   const bp = data?.bp_reading ?? null;
   const medications = data?.medications ?? [];
   const appointment = data?.next_appointment ?? null;
-  const appointmentWhen = appointment ? splitAppointmentDate(appointment.appointment_date) : null;
 
   return (
     <AppLayout activeItem="Home" userName={userName || "Account"} accountLabel="Personal account">
@@ -91,21 +85,12 @@ const HomePage = () => {
 
         <section className="mt-6 min-w-0" aria-labelledby="home-bp-title">
         <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-bp-title">Blood Pressure</h2>
-          <div className="home-card home-bp-card">
-            <span className="home-bp-label">Last Reading</span>
-            {isLoading ? (
-              <p className="home-empty" role="status">Loading...</p>
-            ) : bp ? (
-              <>
-                <p className="home-bp-value">
-                  {bp.systolic}/{bp.diastolic}
-                  <span className="home-bp-unit">mmHg</span>
-                </p>
-              </>
-            ) : (
-              <p className="home-empty">No blood pressure readings. Visit the Journal page to add a reading</p>
-            )}
-          </div>
+        <HealthCard
+          isLoading={isLoading}
+          type="BPCard"
+          emptyString="No blood pressure readings. Visit the Journal page to add a reading"
+          bloodPressureReading={bp}
+        />
         </section>
 
         <div className="home-columns grid grid-cols-1 gap-x-6">
@@ -113,58 +98,28 @@ const HomePage = () => {
             <div className="home-section-header flex items-baseline justify-between gap-3">
               <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-meds-title">Medication Schedule</h2>
             </div>
-            <div className="home-card-list grid gap-3">
-              {isLoading ? (
-                <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
-              ) : medications.length > 0 ? (
-                medications.map((medication) => (
-                  <article className="home-card home-medication-card flex items-center gap-3.5" key={`${medication.medication_name}-${medication.time}`}>
-                    <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m7 17 10-10" />
-                        <path d="M5 15a4 4 0 0 0 6 6l8-8a4 4 0 0 0-6-6Z" />
-                      </svg>
-                    </span>
-                    <div className="home-medication-details">
-                      <h3>{medication.medication_name}</h3>
-                      <p>{medication.dosage}</p>
-                    </div>
-                    <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
-                      <span>TIME</span>
-                      <strong>{medication.time}</strong>
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
-              )}
-            </div>
-          </section>
-
-          <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
-            <div className="home-section-header flex items-baseline justify-between gap-3">
-              <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-appointment-title">Next Appointment</h2>
-            </div>
-            <div className="home-card-list grid gap-3">
-              {isLoading ? (
-                <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
-              ) : appointment && appointmentWhen ? (
-                <article className="home-card home-appointment-card flex items-center gap-3.5">
-                  <div className="home-appointment-details">
-                    <h3>{appointment.doctors_name}</h3>
-                    {appointment.notes && <p>{appointment.notes}</p>}
-                  </div>
-                  <div className="home-pill-box home-appointment-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
-                    <strong>{appointmentWhen.date}</strong>
-                    {appointmentWhen.time && <span>{appointmentWhen.time}</span>}
-                  </div>
-                </article>
-              ) : (
-                <div className="home-card"><p className="home-empty">No appointments. Visit the Appointments page to add an appointment</p></div>
-              )}
-            </div>
+            {medications ? (medications.map((medication) => (
+              <HealthCard 
+                  isLoading={isLoading}
+                  type="MedicationCard"
+                  emptyString="No medications. Visit the Medications page to add a medication"
+                  medication={medication}
+                />))) : (<div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
+            )}
           </section>
         </div>
+
+        <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
+          <div className="home-section-header flex items-baseline justify-between gap-3">
+            <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-appointment-title">Next Appointment</h2>
+          </div>
+          <HealthCard 
+            isLoading={isLoading}
+            type="AppointmentCard"
+            emptyString="No appointments. Visit the Appointments page to add an appointment"
+            nextAppointment={appointment}
+          />
+        </section>
       </div>
     </AppLayout>
   );
