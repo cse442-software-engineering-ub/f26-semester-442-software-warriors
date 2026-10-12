@@ -42,7 +42,10 @@ export interface AccountInfo {
 export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
 
 // account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
-async function settingsRequest<T>(fileName: string, options: RequestInit = {}): Promise<T> {
+async function settingsRequest<T>(
+  fileName: string,
+  options: RequestInit = {},
+): Promise<T> {
   const response = await fetch(`${API_BASE}/${fileName}`, {
     ...options,
     credentials: "include",
@@ -78,7 +81,9 @@ export async function getAccount(): Promise<AccountInfo> {
   return settingsRequest<AccountInfo>("account.php");
 }
 
-export async function updateAccount(account: AccountUpdate): Promise<{ message: string }> {
+export async function updateAccount(
+  account: AccountUpdate,
+): Promise<{ message: string }> {
   const params = new URLSearchParams();
   params.append("name", account.name);
   params.append("phone", account.phone);
@@ -116,7 +121,9 @@ export async function changeAccountPassword(
   });
 }
 
-export async function loginUser(formData: LoginFormData): Promise<LoginSuccessResponse> {
+export async function loginUser(
+  formData: LoginFormData,
+): Promise<LoginSuccessResponse> {
   const params = new URLSearchParams();
   params.append("email", formData.email.trim());
   params.append("password", formData.password);
@@ -259,15 +266,12 @@ export async function logoutUser(): Promise<void> {
   };
 }
 
-
 export interface AccountInfo {
   id: number;
   name: string;
   email: string;
   phone: string;
 }
-
-
 
 // Shape returned by homepage.php. Each section is null when the user has no data for it.
 export interface BpReading {
@@ -317,4 +321,52 @@ export async function getHomepage(): Promise<HomepageData> {
   }
 
   return data as HomepageData;
+}
+
+// Add a blood pressure reading (POST readings.php)
+// 201 {"reading": {...}}            -> saved; status is calculated by the server
+// 400 {"errors": {field: message}}  -> show each message under its box
+// 401                               -> not logged in
+export interface ReadingInput {
+  systolic: string;
+  diastolic: string;
+  pulse: string;
+}
+
+export interface SavedReading {
+  rid: number;
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  status: string;
+  recorded_at: string;
+}
+
+export async function addReading(input: ReadingInput): Promise<SavedReading> {
+  const params = new URLSearchParams();
+  params.append("systolic", input.systolic.trim());
+  params.append("diastolic", input.diastolic.trim());
+  params.append("pulse", input.pulse.trim());
+
+  const response = await fetch(`${API_BASE}/readings.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    credentials: "include",
+    body: params.toString(),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.reading) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not save your reading. Please try again.",
+      errors: data?.errors,
+    };
+  }
+  return data.reading as SavedReading;
 }
