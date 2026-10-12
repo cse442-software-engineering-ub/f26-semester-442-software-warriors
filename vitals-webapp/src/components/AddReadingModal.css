@@ -1,0 +1,184 @@
+/* "Log Reading" popup - colours and sizes from the Figma frames */
+.reading-backdrop {
+  position: fixed;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(18 30 51 / 52%);
+}
+
+.reading-dialog {
+  position: relative;
+  width: min(100%, 392px);
+  box-sizing: border-box;
+  padding: 28px 24px 30px;
+  border-radius: 18px;
+  background: #163ba2;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 18px 48px rgb(13 28 67 / 30%);
+}
+
+.reading-dialog h2 {
+  margin: 4px 0 22px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.reading-close {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #163ba2;
+  cursor: pointer;
+}
+
+.reading-close svg {
+  width: 22px;
+  height: 22px;
+}
+
+.reading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+}
+
+.reading-row-center {
+  margin-top: 14px;
+}
+
+.reading-slash {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.reading-field {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 132px;
+}
+
+.reading-field span {
+  white-space: nowrap;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.reading-field input {
+  width: 96px;
+  height: 44px;
+  box-sizing: border-box;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: #fff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 18px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 18%);
+}
+
+.reading-field input:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+.reading-field input[aria-invalid="true"] {
+  border-color: #ffb4b4;
+}
+
+.reading-field small,
+.reading-form-error {
+  color: #ffd1d1;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.reading-form-error {
+  margin: 14px 0 0;
+}
+
+.reading-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 206px;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: #163ba2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 20%);
+}
+
+.reading-submit:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.reading-submit:focus-visible,
+.reading-close:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 3px;
+}
+
+/* Homepage "+ Add Blood Pressure Reading" button (Figma vitals-homepage-mobile) */
+.home-add-reading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  margin-top: 14px;
+  border: 3px solid #163ba2;
+  border-radius: 10px;
+  background: #fff;
+  color: #163ba2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.home-add-reading:hover {
+  background: #eef4ff;
+}
+
+.home-add-reading:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 3px;
+}
+
+.home-status-badge-warn {
+  background: #fdecc8;
+  color: #8a5300;
+}
+
+.home-reading-saved {
+  margin: 10px 0 0;
+  color: #1b6b32;
+  font-size: 15px;
+  font-weight: 600;
+}
