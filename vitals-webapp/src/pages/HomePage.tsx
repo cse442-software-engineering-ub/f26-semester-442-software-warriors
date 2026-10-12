@@ -107,9 +107,8 @@ const HomePage = () => {
                 />))) : (<div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
             )}
           </section>
-        </div>
 
-        <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
+          <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
           <div className="home-section-header flex items-baseline justify-between gap-3">
             <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-appointment-title">Next Appointment</h2>
           </div>
@@ -120,6 +119,7 @@ const HomePage = () => {
             nextAppointment={appointment}
           />
         </section>
+        </div>
       </div>
     </AppLayout>
   );
