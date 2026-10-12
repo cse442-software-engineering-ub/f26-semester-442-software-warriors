@@ -27,7 +27,7 @@ const sidebarSections: SidebarSection[] = [
 ];
 
 const defaultDestinations: Partial<Record<SidebarSection, string>> = {
-  Home: "/home",
+  Home: "/dashboard",
   // Restore destinations when the corresponding routes are implemented.
   // Caregivers: "/caregivers",
   // Medications: "/medications",

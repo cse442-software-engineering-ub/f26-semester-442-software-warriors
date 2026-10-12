@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { FieldErrorMessage } from "../components/InputField";
 import {
   changeAccountPassword,
   deleteAccount,
@@ -64,11 +65,19 @@ const SettingsField = ({
       type={type}
       value={value}
       onChange={onChange}
+      placeholder={
+        id === "name"
+          ? "Jane Doe"
+          : id === "phone"
+            ? "(123) 456-7890"
+            : "jane.doe@example.com"
+      }
       aria-invalid={Boolean(error)}
       aria-describedby={error ? `${id}-error` : undefined}
       autoComplete={id === "name" ? "name" : id === "phone" ? "tel" : "email"}
+      className={error ? "auth-field-input-error" : undefined}
     />
-    {error && <span className="settings-field-error" id={`${id}-error`} role="alert">{error}</span>}
+    {error && <FieldErrorMessage id={`${id}-error`} message={error} />}
   </label>
 );
 
@@ -301,7 +310,7 @@ const SettingsPage = () => {
                   </section>
                   */}
 
-                  {requestError && <p className="settings-request-error" role="alert">{requestError}</p>}
+                  {requestError && <p className="login-server-error" role="alert">{requestError}</p>}
 
                   <footer className="settings-card-footer">
                     <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
@@ -340,14 +349,14 @@ const SettingsPage = () => {
       {modal && (
         <div className="settings-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>
           {modal === "saved" || modal === "password-saved" ? (
-            <section className="settings-modal settings-modal-blue settings-modal-success" role="dialog" aria-modal="true" aria-labelledby="settings-saved-title">
+            <section className="settings-modal settings-modal-success" role="dialog" aria-modal="true" aria-labelledby="settings-saved-title">
               <h2 id="settings-saved-title">
                 {modal === "password-saved" ? "Your password has been changed!" : "Your changes have been saved!"}
               </h2>
               <button className="settings-button settings-modal-action-button" type="button" onClick={closeModal}>Confirm</button>
             </section>
           ) : (
-            <section className={`settings-modal${modal === "delete" || modal === "password" ? " settings-modal-blue" : ""}`} role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+            <section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
               <button className="settings-modal-close" type="button" aria-label="Close dialog" onClick={closeModal}>
                 <svg
                   className="app-dialog-close-icon"
@@ -358,7 +367,7 @@ const SettingsPage = () => {
                   strokeWidth="2.5"
                   strokeLinecap="round"
                 >
-                  <path d="m7 7 10 10M17 7 7 17" />
+                  <path d="m5 5 14 14M19 5 5 19" />
                 </svg>
               </button>
 
@@ -369,13 +378,13 @@ const SettingsPage = () => {
                   <form className="settings-password-form" onSubmit={changePassword}>
                     <label className="settings-field" htmlFor="old-password">
                       <span>OLD PASSWORD</span>
-                      <input id="old-password" name="oldPassword" type="password" autoComplete="current-password" aria-invalid={Boolean(passwordErrors.oldPassword)} aria-describedby={passwordErrors.oldPassword ? "old-password-error" : undefined} />
-                      {passwordErrors.oldPassword && <span className="settings-field-error" id="old-password-error" role="alert">{passwordErrors.oldPassword}</span>}
+                      <input id="old-password" name="oldPassword" type="password" placeholder="••••••••" autoComplete="current-password" aria-invalid={Boolean(passwordErrors.oldPassword)} aria-describedby={passwordErrors.oldPassword ? "old-password-error" : undefined} className={passwordErrors.oldPassword ? "auth-field-input-error" : undefined} />
+                      {passwordErrors.oldPassword && <FieldErrorMessage id="old-password-error" message={passwordErrors.oldPassword} />}
                     </label>
                     <label className="settings-field" htmlFor="new-password">
                       <span>NEW PASSWORD</span>
-                      <input id="new-password" name="newPassword" type="password" maxLength={128} autoComplete="new-password" aria-invalid={Boolean(passwordErrors.newPassword)} aria-describedby={passwordErrors.newPassword ? "new-password-error" : undefined} />
-                      {passwordErrors.newPassword && <span className="settings-field-error" id="new-password-error" role="alert">{passwordErrors.newPassword}</span>}
+                      <input id="new-password" name="newPassword" type="password" placeholder="••••••••" maxLength={128} autoComplete="new-password" aria-invalid={Boolean(passwordErrors.newPassword)} aria-describedby={passwordErrors.newPassword ? "new-password-error" : undefined} className={passwordErrors.newPassword ? "auth-field-input-error" : undefined} />
+                      {passwordErrors.newPassword && <FieldErrorMessage id="new-password-error" message={passwordErrors.newPassword} />}
                     </label>
                     <div className="settings-modal-actions">
                       <button className="settings-button settings-modal-action-button" type="submit" disabled={isChangingPassword}>

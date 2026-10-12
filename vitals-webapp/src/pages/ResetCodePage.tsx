@@ -29,7 +29,7 @@ const ResetCodePage: React.FC = () => {
       return;
     }
     if (!code) {
-      setError("This field is required");
+      setError("Reset code is required.");
       return;
     }
     try {
@@ -49,8 +49,9 @@ const ResetCodePage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <SplitLayout
-        left_css="leftPanel"
-        right_css="rightPanel"
+        left_css="auth-left-panel"
+        right_css="auth-right-panel"
+        mobileBrand
         leftContent={
           <div className="leftWrap">
             <div className="leftBox">
