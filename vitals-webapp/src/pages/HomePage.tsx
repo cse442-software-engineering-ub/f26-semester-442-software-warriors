@@ -99,12 +99,16 @@ const HomePage = () => {
               <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-meds-title">Medication Schedule</h2>
             </div>
             {medications ? (medications.map((medication) => (
+              <div>
               <HealthCard 
                   isLoading={isLoading}
                   type="MedicationCard"
                   emptyString="No medications. Visit the Medications page to add a medication"
                   medication={medication}
-                />))) : (<div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
+                />
+                <div className="p-1"/>
+              </div>
+              ))) : (<div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
             )}
           </section>
 

@@ -51,7 +51,7 @@ const HealthCard: React.FC<HealthCardProps> = ({
     }
     else if (type == 'MedicationCard') {
         return (
-            <div className="home-card-list grid p-1">
+            <div className="home-card-list grid">
               {isLoading ? (
                 <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
               ) : medication ? (
