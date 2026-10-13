@@ -281,14 +281,14 @@ export interface BpReading {
   recorded_at: string;
 }
 
-export interface TodaysMedication {
+export interface Medication {
   medication_name: string;
   dosage: string;
   time: string; // already formatted by the backend, e.g. "8:00 AM"
   days: string;
 }
 
-export interface NextAppointment {
+export interface Appointment {
   doctors_name: string;
   appointment_date: string; // already formatted by the backend
   notes: string | null;
@@ -297,8 +297,8 @@ export interface NextAppointment {
 export interface HomepageData {
   success: true;
   bp_reading: BpReading | null;
-  medications: TodaysMedication[] | null;
-  next_appointment: NextAppointment | null;
+  medications: Medication[] | null;
+  next_appointment: Appointment | null;
 }
 
 // GET homepage.php -> dashboard data (401 when not logged in)
