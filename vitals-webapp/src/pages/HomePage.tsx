@@ -14,14 +14,6 @@ const isUnauthorized = (error: unknown) =>
 
 const LOAD_ERROR_MESSAGE = "Could not retrieve account data";
 
-// Badge colour for the status the server calculated (readings.php)
-const statusBadgeClass = (status: string) => {
-  if (status === "Within range") return "home-status-badge";
-  if (status === "Slightly elevated")
-    return "home-status-badge home-status-badge-warn";
-  return "home-status-badge home-status-badge-alert";
-};
-
 const HomePage = () => {
   const navigate = useNavigate();
   const [account, setAccount] = useState<AccountInfo | null>(null);
@@ -108,6 +100,21 @@ const HomePage = () => {
           emptyString="No blood pressure readings. Visit the Journal page to add a reading"
           bloodPressureReading={bp}
         />
+        <button
+            className="home-add-reading"
+            type="button"
+            onClick={() => {
+              setSavedMessage("");
+              setIsAddingReading(true);
+            }}
+          >
+            <span aria-hidden="true">+</span> Add Blood Pressure Reading
+          </button>
+          {savedMessage && (
+            <p className="home-reading-saved" role="status">
+              {savedMessage}
+            </p>
+          )}
         </section>
 
         <div className="home-columns grid grid-cols-1 gap-x-6">

@@ -21,6 +21,13 @@ const HealthCard: React.FC<HealthCardProps> = ({
     medication
 }) => {
     if (type == 'BPCard') {
+        // Badge colour for the status the server calculated (readings.php)
+        const statusBadgeClass = (status: string) => {
+        if (status === "Within range") return "home-status-badge";
+        if (status === "Slightly elevated")
+            return "home-status-badge home-status-badge-warn";
+        return "home-status-badge home-status-badge-alert";
+        };
         return (
           <div className="home-card home-bp-card">
             <span className="home-bp-label">Last Reading</span>
@@ -32,16 +39,11 @@ const HealthCard: React.FC<HealthCardProps> = ({
                   {bloodPressureReading.systolic}/{bloodPressureReading.diastolic}
                   <span className="home-bp-unit">mmHg</span>
                 </p>
-                <p>
-                    {(bloodPressureReading.status == "Normal") ? (
-                        <span className="text-status-normal bg-normal-bg font-bold">{bloodPressureReading.status}</span>
-                    ) : (bloodPressureReading.status == "Hypertension Crisis") ? (
-                        <span className="text-status-bad bg-bad-bg font-bold">{bloodPressureReading.status}</span>
-                    ) : (
-                        <span className="text-status-advisory bg-advisory-bg font-bold">{bloodPressureReading.status}</span>
-                    )
-                    }
-                </p>
+                {bloodPressureReading.status && (
+                  <span className={statusBadgeClass(bloodPressureReading.status)}>
+                    {bloodPressureReading.status}
+                  </span>
+                )}
               </>
             ) : (
               <p className="home-empty">{emptyString}</p>
