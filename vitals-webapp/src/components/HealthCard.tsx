@@ -23,11 +23,16 @@ const HealthCard: React.FC<HealthCardProps> = ({
     if (type == 'BPCard') {
         // Badge colour for the status the server calculated (readings.php)
         const statusBadgeClass = (status: string) => {
-        if (status === "Within range") return "home-status-badge";
+        if (status === "Within range" || status === "Normal")  {
+            return "home-status-badge";
+        }
         if (status === "Slightly elevated")
             return "home-status-badge home-status-badge-warn";
         return "home-status-badge home-status-badge-alert";
         };
+        if (bloodPressureReading && bloodPressureReading.status.toLowerCase() === "normal") {
+            bloodPressureReading.status = "Within range";
+        }
         return (
           <div className="home-card home-bp-card">
             <span className="home-bp-label">Last Reading</span>
