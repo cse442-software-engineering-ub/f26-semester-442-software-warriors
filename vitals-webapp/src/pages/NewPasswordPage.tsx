@@ -42,16 +42,16 @@ const NewPasswordPage: React.FC = () => {
     }
 
     if (!password) {
-      newErrors.password = "This field is required";
+      newErrors.password = "New password is required.";
     } else if (password.length < 8 || !/\d/.test(password)) {
       newErrors.password =
         "Password must be at least 8 characters, including at least one number";
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = "This field is required";
+      newErrors.confirmPassword = "Confirm password is required.";
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = "Passwords do not match.";
     }
 
     setErrors(newErrors);
@@ -72,8 +72,9 @@ const NewPasswordPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <SplitLayout
-        left_css="leftPanel"
-        right_css="rightPanel"
+        left_css="auth-left-panel"
+        right_css="auth-right-panel"
+        mobileBrand
         leftContent={
           <div className="leftWrap">
             <div className="leftBox">
@@ -112,6 +113,7 @@ const NewPasswordPage: React.FC = () => {
                 name="password"
                 value={password}
                 onChange={(e) => limit("password", e.target.value, setPassword)}
+                placeholder="••••••••"
                 error={errors.password}
               />
 
@@ -121,6 +123,7 @@ const NewPasswordPage: React.FC = () => {
                 name="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => limit("confirmPassword", e.target.value, setConfirmPassword)}
+                placeholder="••••••••"
                 error={errors.confirmPassword}
               />
 

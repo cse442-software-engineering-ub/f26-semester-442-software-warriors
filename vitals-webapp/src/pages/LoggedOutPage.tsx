@@ -11,11 +11,10 @@ const LoggedOutPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <SplitLayout
-        left_css="hidden lg:w-1/2 lg:bg-blue-800 lg:flex lg:items-center lg:justify-center lg:p-45 lg:h-screen"
-        left_css_mobile="w-full sm:p-60 min-h-[500px]"
-        right_css="lg:w-1/2 bg-white flex items-center justify-center lg:p-8 lg:h-screen"
-        right_css_mobile="w-full min-h-screen px-7 py-10 lg:min-h-0"
-        spacer_css="hidden lg:block p-10"
+        left_css="auth-left-panel"
+        right_css="auth-right-panel"
+        spacer_css="hidden"
+        mobileBrand
         leftContent={
           <div className="flex p-8">
             <div className="max-w-md w-full text-white">
@@ -29,8 +28,8 @@ const LoggedOutPage: React.FC = () => {
                   Track and Manage Your Health, Effortlessly.
                 </h1>
                 <p className="text-gray-200">
-                  Sign in to view your vitals, medication schedule, and upcoming
-                  appointments. All in one place.
+                  You&apos;ve been securely signed out. Sign back in anytime to
+                  continue managing your health.
                 </p>
               </div>
               <img
@@ -42,24 +41,7 @@ const LoggedOutPage: React.FC = () => {
           </div>
         }
         rightContent={
-          <div className="mx-auto w-full max-w-[18rem] lg:max-w-md">
-            {/* Mobile only: blue VITALS logo at the top (same trick as LoginPage) */}
-            <div
-              role="img"
-              aria-label="Vitals"
-              className="mx-auto mb-16 h-[36px] w-[166px] bg-blue-800 lg:hidden"
-              style={{
-                maskImage: `url(${VitalLogo})`,
-                maskPosition: "center",
-                maskRepeat: "no-repeat",
-                maskSize: "contain",
-                WebkitMaskImage: `url(${VitalLogo})`,
-                WebkitMaskPosition: "center",
-                WebkitMaskRepeat: "no-repeat",
-                WebkitMaskSize: "contain",
-              }}
-            />
-
+          <div className="logged-out-content">
             {/* Blue circle with a white check mark */}
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-800">
               <svg
@@ -79,10 +61,10 @@ const LoggedOutPage: React.FC = () => {
             </div>
 
             <div className="mb-6 text-center">
-              <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">
+              <h1 className="formTitle">
                 You&apos;re Logged Out!
               </h1>
-              <p className="mt-1 text-xs font-semibold text-gray-600 lg:text-sm">
+              <p className="formSubtitle logged-out-subtitle">
                 For your security, we&apos;ve signed you out. Log in again to
                 access your dashboard.
               </p>
@@ -91,13 +73,13 @@ const LoggedOutPage: React.FC = () => {
             <div className="flex flex-col gap-3 lg:flex-row">
               <Link
                 to="/login"
-                className="flex flex-1 items-center justify-center rounded-xl bg-blue-800 px-3 py-2.5 text-center text-base font-semibold text-white transition hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 lg:rounded-lg"
+                className="auth-primary-link"
               >
                 Sign In
               </Link>
               <Link
                 to="/"
-                className="flex flex-1 items-center justify-center rounded-xl border border-blue-800 px-3 py-2.5 text-center text-base font-semibold text-blue-800 transition hover:bg-blue-50 lg:rounded-lg"
+                className="outlineBtn auth-secondary-link"
               >
                 Return Home
               </Link>

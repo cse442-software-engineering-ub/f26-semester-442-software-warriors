@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
+import AddReadingModal from "../components/AddReadingModal";
 import { useNavigate } from "react-router-dom";
 import { getAccount, getHomepage } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
@@ -13,6 +14,14 @@ const isUnauthorized = (error: unknown) =>
 
 const LOAD_ERROR_MESSAGE = "Could not retrieve account data";
 
+// Badge colour for the status the server calculated (readings.php)
+const statusBadgeClass = (status: string) => {
+  if (status === "Within range") return "home-status-badge";
+  if (status === "Slightly elevated")
+    return "home-status-badge home-status-badge-warn";
+  return "home-status-badge home-status-badge-alert";
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [account, setAccount] = useState<AccountInfo | null>(null);
@@ -20,6 +29,8 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
+  const [isAddingReading, setIsAddingReading] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
 
   useEffect(() => {
     let isCurrent = true;
@@ -61,13 +72,19 @@ const HomePage = () => {
   const appointment = data?.next_appointment ?? null;
 
   return (
-    <AppLayout activeItem="Home" userName={userName || "Account"} accountLabel="Personal account">
+    <AppLayout
+      activeItem="Home"
+      userName={userName || "Account"}
+      accountLabel="Personal account"
+    >
       <div className="home-content">
         <header className="home-heading">
           <h1 className="formTitle home-page-title">
             {firstName ? `Hello, ${firstName}` : "Hello"}
           </h1>
-          <p className="mt-1.5 text-base text-gray-600">Here is your health overview for today.</p>
+          <p className="home-intro">
+            Here is your health overview for today.
+          </p>
         </header>
 
         {requestError && (
@@ -96,7 +113,12 @@ const HomePage = () => {
         <div className="home-columns grid grid-cols-1 gap-x-6">
           <section className="mt-6 min-w-0" aria-labelledby="home-meds-title">
             <div className="home-section-header flex items-baseline justify-between gap-3">
-              <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-meds-title">Medication Schedule</h2>
+              <h2
+                className="mb-3 text-xl font-bold text-gray-900"
+                id="home-meds-title"
+              >
+                Medication Schedule
+              </h2>
             </div>
             {medications ? (medications.map((medication) => (
               <div>
@@ -125,6 +147,18 @@ const HomePage = () => {
         </section>
         </div>
       </div>
+      {isAddingReading && (
+        <AddReadingModal
+          onClose={() => setIsAddingReading(false)}
+          onSaved={(reading) => {
+            setIsAddingReading(false);
+            setSavedMessage(
+              `Reading saved: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
+            );
+            setReloadCount((count) => count + 1); // reload so "Last Reading" shows the new one
+          }}
+        />
+      )}
     </AppLayout>
   );
 };

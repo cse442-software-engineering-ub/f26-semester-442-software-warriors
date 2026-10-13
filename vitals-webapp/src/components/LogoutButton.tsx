@@ -106,24 +106,6 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({
             aria-modal="true"
             aria-labelledby="app-logout-dialog-title"
           >
-            <button
-              className="app-logout-dialog-close"
-              type="button"
-              aria-label="Cancel logout"
-              onClick={() => setIsConfirming(false)}
-            >
-              <svg
-                className="app-dialog-close-icon"
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <path d="m7 7 10 10M17 7 7 17" />
-              </svg>
-            </button>
             <h2 id="app-logout-dialog-title">
               Are you sure you want to log out?
             </h2>

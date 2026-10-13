@@ -4,7 +4,7 @@ import type { ButtonProps } from '../types/index.ts' //MUST IMPORT TYPES WITH 'i
 
 //all the properties from the type are now set with a default value (type='button' and variant='primary')
 const Button: React.FC<ButtonProps> = ({ children, onClick, type='button', variant='primary', className=''}) => {
-    const baseStyles = "px-6 py-3 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+    const baseStyles = "auth-button px-6 py-3 rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
 
     const variants = { // these variants are the ui schemes for the buttons we can add more but first add to the types/index.ts file to add additional ones
         primary: "bg-blue-600 text-white hover:bg-blue-800 focus:ring-blue-500",

@@ -31,11 +31,11 @@ const ForgotPasswordPage: React.FC = () => {
     }
     const value = email.trim();
     if (!value) {
-      setError("This field is required");
+      setError("Email address is required.");
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-      setError("Please enter a valid email address");
+      setError("Please enter a valid email address.");
       return;
     }
     
@@ -55,8 +55,9 @@ const ForgotPasswordPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <SplitLayout
-        left_css="leftPanel"
-        right_css="rightPanel"
+        left_css="auth-left-panel"
+        right_css="auth-right-panel"
+        mobileBrand
         leftContent={
           <div className="leftWrap">
             <div className="leftBox">
