@@ -97,7 +97,7 @@ const HomePage = () => {
         <HealthCard
           isLoading={isLoading}
           type="BPCard"
-          emptyString="No blood pressure readings. Visit the Journal page to add a reading"
+          emptyString="No blood pressure readings. Add a new reading."
           bloodPressureReading={bp}
         />
         <button
@@ -127,17 +127,24 @@ const HomePage = () => {
                 Medication Schedule
               </h2>
             </div>
-            {medications ? (medications.map((medication) => (
-              <div>
-              <HealthCard 
-                  isLoading={isLoading}
-                  type="MedicationCard"
-                  emptyString="No medications. Visit the Medications page to add a medication"
-                  medication={medication}
-                />
-                <div className="p-1"/>
-              </div>
-              ))) : (<div className="home-card"><p className="home-empty">No medications. Visit the Medications page to add a medication</p></div>
+            {medications && medications.length > 0 ? (
+              medications.map((medication) => (
+                <div key={`${medication.medication_name}-${medication.time}`}>
+                  <HealthCard
+                    isLoading={isLoading}
+                    type="MedicationCard"
+                    emptyString="No medications. Visit the Medications page to add a medication"
+                    medication={medication}
+                  />
+                  <div className="p-1" />
+                </div>
+              ))
+            ) : (
+              <HealthCard
+                isLoading={isLoading}
+                type="MedicationCard"
+                emptyString="No medications."
+              />
             )}
           </section>
 
@@ -148,7 +155,7 @@ const HomePage = () => {
           <HealthCard 
             isLoading={isLoading}
             type="AppointmentCard"
-            emptyString="No appointments. Visit the Appointments page to add an appointment"
+            emptyString="No appointments."
             nextAppointment={appointment}
           />
         </section>
