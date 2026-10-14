@@ -1,6 +1,16 @@
 import type { RegisterFormData } from "./types";
 
-const API_BASE = import.meta.env.VITE_API_URL as string;
+const API_BASE = (import.meta.env.VITE_API_URL ??
+  "/CSE442/2026-Fall/cse-442ab/api") as string;
+
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface LoginSuccessResponse {
+  login: true;
+}
 
 export interface RegisterSuccess {
   message: string;
@@ -20,6 +30,176 @@ export interface RegisterFieldErrors {
 export interface RegisterGeneralError {
   status: number;
   error: string;
+}
+
+export interface AccountInfo {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+}
+
+export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
+
+// account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
+async function settingsRequest<T>(
+  fileName: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetch(`${API_BASE}/${fileName}`, {
+    ...options,
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data?.errors,
+    };
+  }
+
+  if (data?.error || data?.errors) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+      errors: data.errors,
+    };
+  }
+
+  return data as T;
+}
+
+export async function getAccount(): Promise<AccountInfo> {
+  return settingsRequest<AccountInfo>("account.php");
+}
+
+export async function updateAccount(
+  account: AccountUpdate,
+): Promise<{ message: string }> {
+  const params = new URLSearchParams();
+  params.append("name", account.name);
+  params.append("phone", account.phone);
+  params.append("email", account.email);
+
+  return settingsRequest("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: params.toString(),
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "DELETE",
+  });
+}
+
+export async function changeAccountPassword(
+  oldPassword: string,
+  newPassword: string,
+): Promise<void> {
+  const params = new URLSearchParams();
+  params.append("current_password", oldPassword);
+  params.append("new_password", newPassword);
+
+  await settingsRequest<{ message: string }>("account.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: params.toString(),
+  });
+}
+
+export async function loginUser(
+  formData: LoginFormData,
+): Promise<LoginSuccessResponse> {
+  const params = new URLSearchParams();
+  params.append("email", formData.email.trim());
+  params.append("password", formData.password);
+
+  const response = await fetch(`${API_BASE}/login.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    credentials: "include",
+    body: params.toString(),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Something went wrong. Please try again later.",
+    };
+  }
+
+  if (data?.login === true) {
+    return data as LoginSuccessResponse;
+  }
+
+  throw {
+    status: response.status,
+    error:
+      typeof data?.error === "string"
+        ? data.error
+        : "Something went wrong. Please try again later.",
+  };
+}
+
+// Forgot Password — Step 1: Send email
+export async function forgotPassword(email: string) {
+  const formData = new FormData();
+  formData.append("email", email);
+
+  const res = await fetch(`${API_BASE}/forgot_password.php`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // required — backend uses PHP sessions
+  });
+  return res.json();
+}
+
+// Forgot Password — Step 2: Verify OTP
+export async function verifyOtp(otp: string) {
+  const formData = new FormData();
+  formData.append("otp", otp);
+
+  const res = await fetch(`${API_BASE}/verify_otp.php`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // required — session must persist
+  });
+  return res.json();
+}
+
+// Forgot Password — Step 3: Reset password
+export async function resetPassword(password: string, confirmPassword: string) {
+  const formData = new FormData();
+  formData.append("password", password);
+  formData.append("confirmPassword", confirmPassword);
+
+  const res = await fetch(`${API_BASE}/reset_password.php`, {
+    method: "POST",
+    body: formData,
+    credentials: "include", // required — backend checks session for otp_verified
+  });
+  return res.json();
 }
 
 export async function registerUser(
@@ -60,4 +240,133 @@ export async function registerUser(
   }
 
   return data as RegisterSuccess;
+}
+
+// Logout (#53 backend, #56 frontend)
+// 200 {"logout":true}  -> logged out
+// 401                  -> there was no session anymore (already logged out), treat as done
+// anything else        -> still logged in, so throw and let the button show an error
+export async function logoutUser(): Promise<void> {
+  const response = await fetch(`${API_BASE}/logout.php`, {
+    method: "POST",
+    credentials: "include", // sends the PHPSESSID cookie so the server knows which session to end
+  });
+
+  if (response.ok || response.status === 401) {
+    return;
+  }
+
+  const data = await response.json().catch(() => ({}));
+  throw {
+    status: response.status,
+    error:
+      typeof data?.error === "string"
+        ? data.error
+        : "Couldn't log out. Please try again.",
+  };
+}
+
+export interface AccountInfo {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+// Shape returned by homepage.php. Each section is null when the user has no data for it.
+export interface BpReading {
+  systolic: number;
+  diastolic: number;
+  status: string;
+  recorded_at: string;
+}
+
+export interface Medication {
+  medication_name: string;
+  dosage: string;
+  time: string; // already formatted by the backend, e.g. "8:00 AM"
+  days: string;
+}
+
+export interface Appointment {
+  doctors_name: string;
+  appointment_date: string; // already formatted by the backend
+  notes: string | null;
+}
+
+export interface HomepageData {
+  success: true;
+  bp_reading: BpReading | null;
+  medications: Medication[] | null;
+  next_appointment: Appointment | null;
+}
+
+// GET homepage.php -> dashboard data (401 when not logged in)
+export async function getHomepage(): Promise<HomepageData> {
+  const response = await fetch(`${API_BASE}/homepage.php`, {
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success !== true) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : "Unable to load your homepage.",
+    };
+  }
+
+  return data as HomepageData;
+}
+
+// Add a blood pressure reading (POST readings.php)
+// 201 {"reading": {...}}            -> saved; status is calculated by the server
+// 400 {"errors": {field: message}}  -> show each message under its box
+// 401                               -> not logged in
+export interface ReadingInput {
+  systolic: string;
+  diastolic: string;
+  pulse: string;
+}
+
+export interface SavedReading {
+  rid: number;
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  status: string;
+  recorded_at: string;
+}
+
+export async function addReading(input: ReadingInput): Promise<SavedReading> {
+  const params = new URLSearchParams();
+  params.append("systolic", input.systolic.trim());
+  params.append("diastolic", input.diastolic.trim());
+  params.append("pulse", input.pulse.trim());
+
+  const response = await fetch(`${API_BASE}/readings.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    credentials: "include",
+    body: params.toString(),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.reading) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not save your reading. Please try again.",
+      errors: data?.errors,
+    };
+  }
+  return data.reading as SavedReading;
 }

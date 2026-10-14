@@ -7,6 +7,7 @@ import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
 import type { RegisterFormData } from "../types";
 import { registerUser } from "../api";
+import { Link } from "react-router-dom";
 
 function mapBackendErrors(backendErrors: { [field: string]: string }) {
   const mapped: { [key: string]: string } = {};
@@ -294,13 +295,26 @@ const RegisterPage: React.FC = () => {
                 error={errors.confirmPassword}
               />
 
-              <Button
-                type="submit"
-                variant="primary"
-                className={isSubmitting ? "opacity-60 cursor-not-allowed" : ""}
-              >
-                {isSubmitting ? "Creating account..." : "Register"}
-              </Button>
+              <div className="mt-4 flex gap-4">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className={`flex-1 ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
+                >
+                  {isSubmitting ? "Creating account..." : "Register"}
+                </Button>
+                <Link
+                  to="/login"
+                  className="flex flex-1 items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-800 transition hover:bg-gray-50"
+                >
+                  Back to Login
+                </Link>
+              </div>
+
+              <p className="mt-6 text-center text-gray-600 text-sm">
+                Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Log in</Link> to access your dashboard.
+              </p>
+
               {successMessage && (
                 <div className="mt-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
                   <span className="font-bold">Thank you!</span>{" "}
@@ -314,14 +328,6 @@ const RegisterPage: React.FC = () => {
                 </div>
               )}
             </form>
-
-            {/* uncomment when login page and page routing is ready */}
-            {/*<p className="text-center text-gray-600 mt-6">
-                  Already have an account?{' '}
-                  <a href="/login" className="text-blue-600 hover:underline">
-                    Log in
-                  </a>
-                </p>*/}
           </div>
         }
       />

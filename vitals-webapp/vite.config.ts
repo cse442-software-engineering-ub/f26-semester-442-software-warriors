@@ -5,10 +5,19 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/CSE442/2026-Fall/cse-442ab/",
+  base: "./",
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
+  }
 });
