@@ -68,15 +68,19 @@ if($method === 'POST') {
         medicationFail(400, 'Time is required.');
     }
 
-    if($days === '') {
-        medicationFail(400, 'Days are required.');
-    }
-
-    //Only allow the three statuses supported by the database
     $validStatuses = ['active', 'inactive', 'as needed'];
 
     if(!in_array($status, $validStatuses, true)) {
         medicationFail(400, 'Status must be active, inactive, or as needed.');
+    }
+
+    // As needed medications do not use scheduled days
+    if($status === 'as needed') {
+        $days = '';
+    }
+
+    elseif($days === '') {
+        medicationFail(400, 'Days are required.');
     }
 
     //Convert the supplied time into the format used by the database
@@ -114,3 +118,137 @@ if($method === 'POST') {
     exit;
 }
 
+//Handle PUT requests
+if($method === 'PUT') {
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if(!is_array($data)) {
+        medicationFail(400, 'Invalid request data.');
+    }
+
+    $mid = $data['mid'] ?? null;
+    $medicationName = trim($data['medication_name'] ?? '');
+    $dosage = trim($data['dosage'] ?? '');
+    $time = trim($data['time'] ?? '');
+    $days = trim($data['days'] ?? '');
+    $status = trim($data['status'] ?? '');
+
+    //Make sure a medication ID was provided
+    if($mid === null || filter_var($mid, FILTER_VALIDATE_INT) === false || (int)$mid <= 0) {
+    medicationFail(400, 'Medication ID is required.');
+    }
+
+    if($medicationName === '') {
+        medicationFail(400, 'Medication name is required.');
+    }
+
+    if($dosage === '') {
+        medicationFail(400, 'Dosage is required.');
+    }
+
+    if($time === '') {
+        medicationFail(400, 'Time is required.');
+    }
+
+    $validStatuses = ['active', 'inactive', 'as needed'];
+
+    if(!in_array($status, $validStatuses, true)) {
+        medicationFail(400, 'Status must be active, inactive, or as needed.');
+    }
+
+    if($status === 'as needed') {
+        $days = '';
+    }
+
+    elseif($days === '') {
+        medicationFail(400, 'Days are required.');
+    }
+
+    //Convert the time into the database format
+    $timeValue = strtotime($time);
+
+    if($timeValue === false) {
+        medicationFail(400, 'A valid time is required.');
+    }
+
+    $databaseTime = date('H:i:s', $timeValue);
+
+    //Make sure the medication exists and belongs to the logged-in user
+    $stmt = $pdo->prepare(
+        'SELECT mid FROM medications WHERE mid = ? AND uid = ?'
+    );
+
+    $stmt->execute([
+        (int) $mid,
+        $userId
+    ]);
+
+     if(!$stmt->fetch()) {
+        medicationFail(404, 'Medication not found.');
+    }
+
+    //Update the medication
+    $stmt = $pdo->prepare(
+        'UPDATE medications
+         SET medication_name = ?, dosage = ?, time = ?, days = ?, status = ?
+         WHERE mid = ? AND uid = ?'
+    );
+
+    $stmt->execute([
+        $medicationName,
+        $dosage,
+        $databaseTime,
+        $days,
+        $status,
+        (int) $mid,
+        $userId
+    ]);
+
+    echo json_encode([
+        'success' => true
+    ]);
+
+    exit;
+}
+
+//Handle DELETE requests
+if($method === 'DELETE') {
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if(!is_array($data)) {
+        medicationFail(400, 'Invalid request data.');
+    }
+
+    $mid = $data['mid'] ?? null;
+
+    //Make sure a medication ID was provided
+    if($mid === null || filter_var($mid, FILTER_VALIDATE_INT) === false || (int)$mid <= 0) {
+    medicationFail(400, 'Medication ID is required.');
+    }
+
+    //Delete only a medication belonging to the logged-in user
+    $stmt = $pdo->prepare(
+        'DELETE FROM medications
+         WHERE mid = ? AND uid = ?'
+    );
+
+    $stmt->execute([
+        (int) $mid, $userId
+    ]);
+
+    if($stmt->rowCount() === 0) {
+        medicationFail(404, 'Medication not found.');
+    }
+
+    echo json_encode([
+        'success' => true
+    ]);
+
+    exit;
+}
+
+//Reject unsupported request methods
+header('Allow: GET, POST, PUT, DELETE');
+medicationFail(405, 'Method not allowed. Use GET, POST, PUT, or DELETE.');
