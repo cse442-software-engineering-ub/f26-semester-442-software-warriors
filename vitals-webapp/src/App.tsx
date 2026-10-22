@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoggedOutPage from "./pages/LoggedOutPage";
 import HomePage from "./pages/HomePage";
+import MedicationsPage from "./pages/MedicationsPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/logged-out" element={<LoggedOutPage />} />
         <Route path="/dashboard" element={<HomePage />} />
+        <Route path="/medications" element={<MedicationsPage />} />
       </Routes>
     </HashRouter>
   );
