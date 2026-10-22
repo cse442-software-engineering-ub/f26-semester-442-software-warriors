@@ -19,6 +19,49 @@
 }
 .medications-intro { max-width: 680px; margin: 10px 0 0; color: #666; font-size: 14px; line-height: 1.5; }
 
+.medications-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px;
+  border: 2px solid var(--app-blue);
+  border-radius: 10px;
+  background: var(--app-blue);
+}
+.medications-filter-button,
+.medications-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 45px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.medications-filter-button {
+  border: 0;
+  background: var(--app-blue);
+  border: 1px solid #fff;
+  color: #fff;
+}
+.medications-add-button {
+  min-width: 190px;
+  border: 1px solid var(--app-blue);
+  background: #fff;
+  color: var(--app-blue-dark);
+}
+.medications-filter-button:hover,
+.medications-filter-button:focus-visible { background: var(--app-blue-dark); }
+.medications-add-button:hover,
+.medications-add-button:focus-visible { background: #f5f5f5; }
+.medications-filter-button:focus-visible,
+.medications-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
+
 @media (max-width: 760px) {
   .medications-page-heading { margin-bottom: 20px; }
   .medications-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
