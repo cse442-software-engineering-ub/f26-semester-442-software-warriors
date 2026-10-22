@@ -21,7 +21,7 @@ else {
         $bp_readings = $stmt->fetchAll();
 
         foreach ($bp_readings as &$reading) {
-            $reading['recorded_at'] = date('F jS, Y, g:i a', strtotime($reading['appointment_date']));
+            $reading['recorded_at'] = date('F jS, Y, g:i a', strtotime($reading['recorded_at']));
         }
 
         echo json_encode([
