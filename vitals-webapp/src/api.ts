@@ -370,3 +370,21 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
   }
   return data.reading as SavedReading;
 }
+
+// One row from the medications table, as returned by GET get_medications.php
+export interface MedicationRecord {
+  mid: number;
+  medication_name: string;
+  dosage: string;
+  time: string; // raw TIME value, e.g. "08:00:00"
+  days: string; // comma separated weekdays, empty for "as needed"
+  status: "active" | "inactive" | "as needed";
+}
+
+/*
+=====MEDICATION BACKEND NEEDED HERE=====
+We need Backend for:
+- returning every medication for the logged-in user 
+- handle when the user has no medications
+*/
+

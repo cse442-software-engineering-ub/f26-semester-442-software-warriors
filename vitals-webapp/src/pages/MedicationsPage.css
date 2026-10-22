@@ -62,6 +62,13 @@
 .medications-filter-button:focus-visible,
 .medications-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
+.medications-list { display: grid; gap: 12px; margin-top: 20px; }
+.medications-card { padding: 14px 18px; }
+.medications-days { font-size: 13px; }
+.medications-status { flex: 0 0 auto; font-size: 14px; }
+.medications-status-inactive { background: #e6e6e6; color: #555; }
+.medications-status-as-needed { background: #fff1d6; color: #8a5a00; }
+
 @media (max-width: 760px) {
   .medications-page-heading { margin-bottom: 20px; }
   .medications-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
