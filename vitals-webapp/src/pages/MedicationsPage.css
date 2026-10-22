@@ -63,13 +63,74 @@
 .medications-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
 .medications-list { display: grid; gap: 12px; margin-top: 20px; }
-.medications-card { padding: 14px 18px; }
-.medications-days { font-size: 13px; }
+/* Desktop: details on the left, days/time centered, status and buttons on the right */
+.medications-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+}
+.medications-main { display: flex; grid-column: 1; align-items: center; gap: 14px; min-width: 0; }
+.medications-schedule { display: flex; grid-column: 2; gap: 10px; }
+/* Days/time boxes match the Remove button height, with the label and value on one line */
+.medications-schedule .home-pill-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  box-sizing: border-box;
+}
+.medications-schedule .home-pill-box span,
+.medications-schedule .home-pill-box strong { font-size: 13px; line-height: 1; }
+.medications-controls { display: flex; grid-column: 3; align-items: center; justify-content: flex-end; gap: 14px; }
 .medications-status { flex: 0 0 auto; font-size: 14px; }
-.medications-status-inactive { background: #e6e6e6; color: #555; }
+.medications-status-inactive { background: #fce4e4; color: #b93a2e; }
 .medications-status-as-needed { background: #fff1d6; color: #8a5a00; }
+.medications-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.medications-edit-button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-blue);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.medications-edit-button svg { width: 24px; height: 24px; }
+.medications-remove-button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 2px solid #d32f2f;
+  border-radius: 8px;
+  background: #fff;
+  color: #b93a2e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.medications-edit-button:hover,
+.medications-edit-button:focus-visible { background: #f5f5f5; }
+.medications-remove-button:hover,
+.medications-remove-button:focus-visible { background: #fce4e4; }
+.medications-edit-button:focus-visible,
+.medications-remove-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
 @media (max-width: 760px) {
   .medications-page-heading { margin-bottom: 20px; }
   .medications-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
+
+  /* Mobile: one column. Name, then days/time stacked, then status and buttons at the bottom */
+  .medications-card { grid-template-columns: 1fr; }
+  .medications-schedule { grid-column: 1; grid-row: 2; flex-direction: column; }
+  .medications-schedule .home-pill-box { width: 100%; }
+  .medications-controls { grid-column: 1; grid-row: 3; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 }
