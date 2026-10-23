@@ -422,12 +422,15 @@ const MedicationsPage = () => {
                         <input id="medication-dose" name="dosage" type="text" placeholder="Dose amount" value={doseInput} onChange={(event) => { if (event.target.value.length > maxDoseLength) { setDoseError(`Medication dose cannot be longer than ${maxDoseLength} characters.`); return; } setDoseInput(event.target.value); setDoseError(""); }} aria-invalid={Boolean(doseError)} />
                         {doseError && <p className="medications-modal-error" role="alert">{doseError}</p>}
                       </label>
-
-            <div className="medications-modal-status" role="group" aria-label="Medication status">
-              <button className={`medications-modal-status-button${newStatus === "active" ? " medications-modal-status-active" : ""}`} type="button" aria-pressed={newStatus === "active"} onClick={() => setNewStatus("active")}>Active</button>
-              <button className={`medications-modal-status-button${newStatus === "inactive" ? " medications-modal-status-inactive" : ""}`} type="button" aria-pressed={newStatus === "inactive"} onClick={() => setNewStatus("inactive")}>Inactive</button>
-              <button className={`medications-modal-status-button${newStatus === "as needed" ? " medications-modal-status-as-needed" : ""}`} type="button" aria-pressed={newStatus === "as needed"} onClick={() => setNewStatus("as needed")}>As Needed</button>
-            </div>
+            <label className="medications-modal-field" htmlFor="medication-name">
+              <span>MEDICATION STATUS</span>
+                <div className="medications-modal-status" role="group" aria-label="Medication status">
+                  <button className={`medications-modal-status-button${newStatus === "active" ? " medications-modal-status-active" : ""}`} type="button" aria-pressed={newStatus === "active"} onClick={() => setNewStatus("active")}>Active</button>
+                  <button className={`medications-modal-status-button${newStatus === "inactive" ? " medications-modal-status-inactive" : ""}`} type="button" aria-pressed={newStatus === "inactive"} onClick={() => setNewStatus("inactive")}>Inactive</button>
+                  <button className={`medications-modal-status-button${newStatus === "as needed" ? " medications-modal-status-as-needed" : ""}`} type="button" aria-pressed={newStatus === "as needed"} onClick={() => setNewStatus("as needed")}>As Needed</button>
+                </div>
+            </label>       
+            
 
             {newStatus !== "as needed" && (
                     <>
