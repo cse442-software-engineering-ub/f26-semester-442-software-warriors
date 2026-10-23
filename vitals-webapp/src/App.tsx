@@ -13,6 +13,7 @@ import SettingsPage from "./pages/SettingsPage";
 import LoggedOutPage from "./pages/LoggedOutPage";
 import HomePage from "./pages/HomePage";
 import MedicationsPage from "./pages/MedicationsPage";
+import JournalPage from "./pages/JournalPage";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/logged-out" element={<LoggedOutPage />} />
         <Route path="/dashboard" element={<HomePage />} />
         <Route path="/medications" element={<MedicationsPage />} />
+        <Route path="/journal" element={<JournalPage />} />
       </Routes>
     </HashRouter>
   );

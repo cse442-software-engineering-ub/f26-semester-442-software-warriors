@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import SplitLayout from "../components/Layout";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
@@ -19,14 +19,36 @@ const CHARACTER_LIMIT_ERROR = "Character limit exceeded.";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const registrationSuccess =
+    (location.state as { accountCreated?: boolean } | null)?.accountCreated ===
+    true;
   const [formData, setFormData] = useState<LoginFormValues>({
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [serverError, setServerError] = useState("");
+  const [isRegistrationSuccessFading, setIsRegistrationSuccessFading] =
+    useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!registrationSuccess) return;
+
+    const fadeTimer = window.setTimeout(() => {
+      setIsRegistrationSuccessFading(true);
+    }, 2600);
+    const clearTimer = window.setTimeout(() => {
+      navigate("/login", { replace: true, state: null });
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [navigate, registrationSuccess]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -144,6 +166,17 @@ const LoginPage: React.FC = () => {
               Enter your details to access your dashboard.
             </p>
           </div>
+
+          {registrationSuccess && (
+            <div
+              className={`login-success-message${isRegistrationSuccessFading ? " is-fading" : ""}`}
+              role="status"
+              aria-live="polite"
+            >
+              <strong>Thank you!</strong> Your account has been created
+              successfully.
+            </div>
+          )}
 
           {serverError && (
             <div
