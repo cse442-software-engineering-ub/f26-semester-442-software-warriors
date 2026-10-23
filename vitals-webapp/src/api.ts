@@ -375,7 +375,7 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
 export interface JournalReading {
   systolic: number;
   diastolic: number;
-  pulse: number;
+  pulse?: number;
   status: string;
   date_time: string;
 }
@@ -383,7 +383,7 @@ export interface JournalReading {
 export interface JournalAverages {
   systolic: number;
   diastolic: number;
-  pulse: number;
+  pulse?: number;
 }
 
 export interface JournalData {
@@ -393,27 +393,54 @@ export interface JournalData {
 }
 
 export async function getJournal(): Promise<JournalData> {
-  const response = await fetch(`${API_BASE}/journal.php`, {
+  const response = await fetch(`${API_BASE}/health_journal.php`, {
     credentials: "include",
   });
   const data = await response.json().catch(() => ({}));
+  // health_journal.php returns bp_readings/recorded_at; keep supporting older overrides too.
+  const rawReadings =
+    data?.bp_readings !== undefined ? data.bp_readings : data?.readings;
 
   if (
     !response.ok ||
     typeof data !== "object" ||
     data === null ||
-    !Array.isArray(data.readings) ||
-    !("last_reading" in data) ||
-    !("averages" in data)
+    (!Array.isArray(rawReadings) && rawReadings !== null)
   ) {
     throw {
       status: response.status,
       error:
         typeof data?.error === "string"
           ? data.error
-          : "Unable to load your journal.",
+          : typeof data?.message === "string"
+            ? data.message
+            : "Unable to load your journal.",
     };
   }
 
-  return data as JournalData;
+  const readings: JournalReading[] = (rawReadings ?? []).map(
+    (reading: Record<string, unknown>) => ({
+      systolic: Number(reading.systolic),
+      diastolic: Number(reading.diastolic),
+      ...(reading.pulse !== undefined ? { pulse: Number(reading.pulse) } : {}),
+      status: String(reading.status ?? ""),
+      date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
+    }),
+  );
+  const averages = (data.averages as JournalAverages | null | undefined) ?? null;
+  const lastReading = data.last_reading
+    ? {
+        systolic: Number(data.last_reading.systolic),
+        diastolic: Number(data.last_reading.diastolic),
+        ...(data.last_reading.pulse !== undefined
+          ? { pulse: Number(data.last_reading.pulse) }
+          : {}),
+        status: String(data.last_reading.status ?? ""),
+        date_time: String(
+          data.last_reading.date_time ?? data.last_reading.recorded_at ?? "",
+        ),
+      }
+    : readings[0] ?? null;
+
+  return { last_reading: lastReading, averages, readings };
 }

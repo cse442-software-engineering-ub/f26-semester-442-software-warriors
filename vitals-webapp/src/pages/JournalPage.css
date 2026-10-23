@@ -15,6 +15,10 @@
   margin-top: 24px;
 }
 
+.journal-summary-grid:has(.journal-average-card:nth-child(3):last-child) {
+  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr));
+}
+
 .journal-summary-grid .journal-last-reading {
   min-width: 0;
   min-height: 0;
@@ -205,6 +209,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .journal-summary-grid:has(.journal-average-card:nth-child(3):last-child) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .journal-summary-grid .journal-last-reading {
     grid-column: 1 / -1;
   }
@@ -264,6 +272,10 @@
     gap: 5px;
     padding: 10px;
     background: #eaf3fb;
+  }
+
+  .journal-mobile-reading:not(:has(.journal-mobile-pulse)) {
+    grid-template-columns: minmax(82px, 1fr) auto auto;
   }
 
   .journal-log:has(.journal-mobile-readings) {

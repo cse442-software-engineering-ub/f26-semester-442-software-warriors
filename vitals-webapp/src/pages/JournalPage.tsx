@@ -23,7 +23,13 @@ const errorMessage = (error: unknown) =>
     : "Could not retrieve journal data.";
 
 const parseReadingDate = (value: string) => {
-  const date = new Date(value.includes("T") ? value : value.replace(" ", "T"));
+  const normalized = value
+    .replace(/(\d+)(st|nd|rd|th)/gi, "$1")
+    .replace(/,\s*(\d{1,2}:\d{2}\s*[ap]m)$/i, " $1");
+  const isSqlDateTime = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value);
+  const date = new Date(
+    isSqlDateTime ? value.replace(" ", "T") : normalized,
+  );
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
@@ -37,22 +43,31 @@ const formatReadingTime = (value: string) => {
   }).formatToParts(date);
   const hour = parts.find((part) => part.type === "hour")?.value ?? "";
   const minute = parts.find((part) => part.type === "minute")?.value ?? "";
-  const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value ?? "";
-  return `${hour.padStart(2, "0")}:${minute} ${dayPeriod}`;
+  const dayPeriod =
+    parts.find((part) => part.type === "dayPeriod")?.value?.toLowerCase() ?? "";
+  return `${hour}:${minute} ${dayPeriod}`;
 };
 
 const formatReadingDate = (value: string, month: "short" | "long") => {
   const date = parseReadingDate(value);
   if (!date) return value;
-  return new Intl.DateTimeFormat("en-US", {
-    month,
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
+  const monthName = new Intl.DateTimeFormat("en-US", { month }).format(date);
+  const day = date.getDate();
+  const ordinal =
+    day % 100 >= 11 && day % 100 <= 13
+      ? "th"
+      : day % 10 === 1
+        ? "st"
+        : day % 10 === 2
+          ? "nd"
+          : day % 10 === 3
+            ? "rd"
+            : "th";
+  return `${monthName} ${day}${ordinal}, ${date.getFullYear()}`;
 };
 
 const formatLastMeasured = (reading: JournalReading) =>
-  `Last measured ${formatReadingDate(reading.date_time, "short")} at ${formatReadingTime(reading.date_time)}`;
+  `Last measured ${formatReadingDate(reading.date_time, "long")}, ${formatReadingTime(reading.date_time)}`;
 
 const statusClassName = (status: string) => {
   const normalized = status.toUpperCase();
@@ -65,7 +80,7 @@ const statusClassName = (status: string) => {
 
 const StatusBadge = ({ status }: { status: string }) => (
   <span className={statusClassName(status)}>
-    {status}
+    {status.toUpperCase()}
   </span>
 );
 
@@ -77,7 +92,7 @@ const ReadingDate = ({
   month?: "short" | "long";
 }) => (
   <span className="journal-reading-date">
-    <strong>{formatReadingDate(dateTime, month)}</strong>
+    <strong>{formatReadingDate(dateTime, month)},</strong>
     <small>{formatReadingTime(dateTime)}</small>
   </span>
 );
@@ -85,9 +100,11 @@ const ReadingDate = ({
 const ReadingCard = ({ reading }: { reading: JournalReading }) => (
   <article className="journal-mobile-reading">
     <ReadingDate dateTime={reading.date_time} month="short" />
-    <span className="journal-mobile-pulse">
-      {reading.pulse} <small>bpm</small>
-    </span>
+    {reading.pulse !== undefined && (
+      <span className="journal-mobile-pulse">
+        {reading.pulse} <small>bpm</small>
+      </span>
+    )}
     <strong className="journal-mobile-pressure">
       {reading.systolic}/{reading.diastolic} <small>mmHg</small>
     </strong>
@@ -132,7 +149,7 @@ const JournalPage = () => {
 
   const readings = data?.readings ?? [];
   const lastReading = data?.last_reading ?? null;
-  const averages = readings.length > 0 ? data?.averages : null;
+  const averages = data?.averages ?? null;
 
   return (
     <AppLayout activeItem="Journal">
@@ -182,25 +199,27 @@ const JournalPage = () => {
             )}
           </article>
 
-          {averages && (
-            <>
-              <article className="journal-average-card">
-                <h3>Systolic Average</h3>
-                <p><strong>{averages.systolic}</strong> mmHg</p>
-                <StatusBadge status="WITHIN RANGE" />
-              </article>
-              <article className="journal-average-card">
-                <h3>Diastolic Average</h3>
-                <p><strong>{averages.diastolic}</strong> mmHg</p>
-                <StatusBadge status="WITHIN RANGE" />
-              </article>
-              <article className="journal-average-card">
-                <h3>Pulse Rate Average</h3>
-                <p><strong>{averages.pulse}</strong> bpm</p>
-                <StatusBadge status="WITHIN RANGE" />
-              </article>
-            </>
-          )}
+          <article className="journal-average-card">
+            <h3>Systolic Average</h3>
+            <p><strong>{averages?.systolic ?? "—"}</strong> mmHg</p>
+            {typeof averages?.systolic === "number" && (
+              <StatusBadge status="WITHIN RANGE" />
+            )}
+          </article>
+          <article className="journal-average-card">
+            <h3>Diastolic Average</h3>
+            <p><strong>{averages?.diastolic ?? "—"}</strong> mmHg</p>
+            {typeof averages?.diastolic === "number" && (
+              <StatusBadge status="WITHIN RANGE" />
+            )}
+          </article>
+          <article className="journal-average-card">
+            <h3>Pulse Rate Average</h3>
+            <p><strong>{averages?.pulse ?? "—"}</strong> bpm</p>
+            {typeof averages?.pulse === "number" && (
+              <StatusBadge status="WITHIN RANGE" />
+            )}
+          </article>
         </section>
 
         <section className="min-w-0" aria-label="Journal actions">
@@ -251,7 +270,7 @@ const JournalPage = () => {
                           </td>
                           <td>{reading.systolic}</td>
                           <td>{reading.diastolic}</td>
-                          <td>{reading.pulse}</td>
+                          <td>{reading.pulse ?? ""}</td>
                           <td>
                             <StatusBadge status={reading.status} />
                           </td>
