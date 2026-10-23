@@ -444,3 +444,57 @@ export async function getJournal(): Promise<JournalData> {
 
   return { last_reading: lastReading, averages, readings };
 }
+
+// One row from the medications table, as returned by GET medications.php
+export interface MedicationRecord {
+  mid: number;
+  medication_name: string;
+  dosage: string;
+  time: string; // raw TIME value, e.g. "08:00:00"
+  days: string; // comma separated weekdays, empty for "as needed"
+  status: "active" | "inactive" | "as needed";
+}
+
+// Fields sent when adding or editing a medication
+export type MedicationInput = Omit<MedicationRecord, "mid">;
+
+// GET medications.php -> { success: true, medications: [...] } (401 when not logged in)
+export async function getMedications(): Promise<MedicationRecord[]> {
+  const data = await settingsRequest<{ medications?: MedicationRecord[] }>("medications.php");
+  return data.medications ?? [];
+}
+
+// POST medications.php (form-data) -> 201 { success: true, mid }
+export async function addMedication(input: MedicationInput): Promise<number> {
+  const form = new FormData();
+  form.append("medication_name", input.medication_name.trim());
+  form.append("dosage", input.dosage.trim());
+  form.append("time", input.time);
+  form.append("days", input.days);
+  form.append("status", input.status);
+
+  const data = await settingsRequest<{ mid: number }>("medications.php", {
+    method: "POST",
+    body: form,
+  });
+  return data.mid;
+}
+
+// PUT medications.php (raw JSON) -> { success: true }
+export async function updateMedication(medication: MedicationRecord): Promise<void> {
+  await settingsRequest("medications.php", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(medication),
+  });
+}
+
+// DELETE medications.php (raw JSON { mid }) -> { success: true }
+export async function deleteMedication(mid: number): Promise<void> {
+  await settingsRequest("medications.php", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mid }),
+  });
+}
+

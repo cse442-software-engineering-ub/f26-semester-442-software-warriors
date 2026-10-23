@@ -20,7 +20,7 @@ const sidebarSections: SidebarSection[] = [
   "Home",
   // Re-enable these links when their routes are added to App.tsx.
   // "Caregivers",
-  // "Medications",
+  "Medications",
   // "Appointments",
   "Journal",
   "My Profile",
@@ -30,7 +30,7 @@ const defaultDestinations: Partial<Record<SidebarSection, string>> = {
   Home: "/dashboard",
   // Restore destinations when the corresponding routes are implemented.
   // Caregivers: "/caregivers",
-  // Medications: "/medications",
+  Medications: "/medications",
   // Appointments: "/appointments",
   Journal: "/journal",
   "My Profile": "/settings",
