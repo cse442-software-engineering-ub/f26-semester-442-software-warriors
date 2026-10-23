@@ -414,12 +414,12 @@ const MedicationsPage = () => {
           <form className="medications-modal-form"           onSubmit={addMedication} noValidate>
             <label className="medications-modal-field" htmlFor="medication-name">
               <span>MEDICATION NAME</span>
-                        <input id="medication-name" name="medication_name" type="text" placeholder="Lisinopril" value={nameInput} onChange={(event) => { if (event.target.value.length > maxNameLength) { setNameError(`Medication name cannot be longer than ${maxNameLength} characters.`); return; } setNameInput(event.target.value); setNameError(""); }} aria-invalid={Boolean(nameError)} />
+                        <input id="medication-name" name="medication_name" type="text" placeholder="Medication name" value={nameInput} onChange={(event) => { if (event.target.value.length > maxNameLength) { setNameError(`Medication name cannot be longer than ${maxNameLength} characters.`); return; } setNameInput(event.target.value); setNameError(""); }} aria-invalid={Boolean(nameError)} />
                         {nameError && <p className="medications-modal-error" role="alert">{nameError}</p>}
                       </label>
                       <label className="medications-modal-field" htmlFor="medication-dose">
                         <span>MEDICATION DOSE</span>
-                        <input id="medication-dose" name="dosage" type="text" placeholder="10 mg" value={doseInput} onChange={(event) => { if (event.target.value.length > maxDoseLength) { setDoseError(`Medication dose cannot be longer than ${maxDoseLength} characters.`); return; } setDoseInput(event.target.value); setDoseError(""); }} aria-invalid={Boolean(doseError)} />
+                        <input id="medication-dose" name="dosage" type="text" placeholder="Dose amount" value={doseInput} onChange={(event) => { if (event.target.value.length > maxDoseLength) { setDoseError(`Medication dose cannot be longer than ${maxDoseLength} characters.`); return; } setDoseInput(event.target.value); setDoseError(""); }} aria-invalid={Boolean(doseError)} />
                         {doseError && <p className="medications-modal-error" role="alert">{doseError}</p>}
                       </label>
 
@@ -437,7 +437,7 @@ const MedicationsPage = () => {
                           id="medication-time"
                           name="time"
                           type="text"
-                          placeholder="12:30 AM"
+                          placeholder="--:-- AM/PM"
                           value={timeInput}
                           onChange={(event) => {
                             const isDeleting = event.target.value.length < timeInput.length;
