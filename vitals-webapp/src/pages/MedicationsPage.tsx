@@ -309,7 +309,7 @@ const MedicationsPage = () => {
       const selectedDays = getSelectedDays(dayOption, customDays);
       let timeMessage = "";
       if (!timeInput.trim()) timeMessage = "Time is required.";
-      else if (!parseTime(timeInput)) timeMessage = "Please enter a valid time, like 8:00 AM.";
+      else if (!parseTime(timeInput)) timeMessage = "Please enter a valid time for the 12h clock, like 10:00 AM.";
       const daysMessage = dayOption === "custom" && selectedDays.length === 0 ? "Please select at least one day." : "";
       setTimeError(timeMessage);
       setDaysError(daysMessage);
@@ -414,12 +414,12 @@ const MedicationsPage = () => {
           <form className="medications-modal-form"           onSubmit={addMedication} noValidate>
             <label className="medications-modal-field" htmlFor="medication-name">
               <span>MEDICATION NAME</span>
-                        <input id="medication-name" name="medication_name" type="text" placeholder="Medication name" value={nameInput} onChange={(event) => { if (event.target.value.length > maxNameLength) { setNameError(`Medication name cannot be longer than ${maxNameLength} characters.`); return; } setNameInput(event.target.value); setNameError(""); }} aria-invalid={Boolean(nameError)} />
+                        <input id="medication-name" name="medication_name" type="text" placeholder="Medication name" value={nameInput} onChange={(event) => { if (event.target.value.length > maxNameLength) { setNameInput(event.target.value.slice(0, maxNameLength)); setNameError(`Medication name cannot be longer than ${maxNameLength} characters.`); return; } setNameInput(event.target.value); setNameError(""); }} aria-invalid={Boolean(nameError)} />
                         {nameError && <p className="medications-modal-error" role="alert">{nameError}</p>}
                       </label>
                       <label className="medications-modal-field" htmlFor="medication-dose">
                         <span>MEDICATION DOSE</span>
-                        <input id="medication-dose" name="dosage" type="text" placeholder="Dose amount" value={doseInput} onChange={(event) => { if (event.target.value.length > maxDoseLength) { setDoseError(`Medication dose cannot be longer than ${maxDoseLength} characters.`); return; } setDoseInput(event.target.value); setDoseError(""); }} aria-invalid={Boolean(doseError)} />
+                        <input id="medication-dose" name="dosage" type="text" placeholder="Dose amount" value={doseInput} onChange={(event) => { if (event.target.value.length > maxDoseLength) { setDoseInput(event.target.value.slice(0, maxDoseLength)); setDoseError(`Medication dose cannot be longer than ${maxDoseLength} characters.`); return; } setDoseInput(event.target.value); setDoseError(""); }} aria-invalid={Boolean(doseError)} />
                         {doseError && <p className="medications-modal-error" role="alert">{doseError}</p>}
                       </label>
             <label className="medications-modal-field" htmlFor="medication-name">
@@ -445,10 +445,12 @@ const MedicationsPage = () => {
                           onChange={(event) => {
                             const isDeleting = event.target.value.length < timeInput.length;
                             const formatted = formatTimeTyping(event.target.value, isDeleting);
-                            if (formatted !== null) {
-                              setTimeInput(formatted);
-                              setTimeError("");
+                            if (formatted === null) {
+                              setTimeError("Please enter a valid time for the 12h clock, like 10:00 AM.");
+                              return;
                             }
+                            setTimeInput(formatted);
+                            setTimeError("");
                           }}
                           onBlur={() => {
                             const parsedTime = parseTime(timeInput);
