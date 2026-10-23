@@ -227,7 +227,8 @@
 .medications-modal-status-button.medications-modal-status-active { border-color: #1b6b32; background: #d9f0de; color: #1b6b32; }
 .medications-modal-status-button.medications-modal-status-inactive { border-color: #d32f2f; background: #fce4e4; color: #b93a2e; }
 .medications-modal-status-button.medications-modal-status-as-needed { border-color: #c98a1b; background: #fff1d6; color: #8a5a00; }
-.medications-modal-actions { display: flex; justify-content: center; margin-top: 5px; }
+.medications-modal-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 5px; }
+.medications-modal-submit:disabled { opacity: 0.6; cursor: default; }
 .medications-modal-submit {
   display: inline-flex;
   min-height: 52px;

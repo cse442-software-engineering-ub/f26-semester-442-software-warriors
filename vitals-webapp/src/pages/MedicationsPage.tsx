@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import { addMedication as addMedicationRequest, deleteMedication, getMedications, updateMedication } from "../api";
 import type { MedicationRecord } from "../api";
 import "./MedicationsPage.css";
+
+const isUnauthorized = (error: unknown) =>
+  typeof error === "object" && error !== null && "status" in error && error.status === 401;
+
+const getErrorMessage = (error: unknown) =>
+  typeof error === "object" && error !== null && "error" in error && typeof error.error === "string"
+    ? error.error
+    : "Something went wrong. Please try again later.";
 
 // "08:00:00" -> "8:00 AM"
 const formatTime = (time: string) => {
@@ -21,21 +31,19 @@ const formatDays = (days: string) =>
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-type DayOption = "non-specific" | "all" | "weekdays" | "custom";
+type DayOption = "all" | "weekdays" | "custom";
 
 const dayOptions: { value: DayOption; label: string }[] = [
-  { value: "non-specific", label: "Non-specific" },
   { value: "all", label: "All Days" },
   { value: "weekdays", label: "Week Days" },
   { value: "custom", label: "Custom" },
 ];
 
-// Days to save for the chosen option (empty list means non-specific)
+// Days to save for the chosen option
 const getSelectedDays = (option: DayOption, customDays: string[]) => {
   if (option === "all") return weekDays;
   if (option === "weekdays") return weekDays.slice(0, 5);
-  if (option === "custom") return weekDays.filter((day) => customDays.includes(day));
-  return [];
+  return weekDays.filter((day) => customDays.includes(day));
 };
 
 // "8:00 AM", "8:00pm", "1230", "930 p" or "14:30" -> "HH:MM:SS", or null when it is not a real time.
@@ -101,7 +109,7 @@ const formatTimeTyping = (raw: string, isDeleting: boolean) => {
 const maxNameLength = 70;
 const maxDoseLength = 15;
 
-const MedicationCard = ({ medication }: { medication: MedicationRecord }) => (
+const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (mid: number) => void }) => (
   <article className="home-card home-medication-card medications-card">
     <div className="medications-main">
       <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
@@ -146,47 +154,59 @@ const MedicationCard = ({ medication }: { medication: MedicationRecord }) => (
         {medication.status}
       </span>
       <div className="medications-actions">
-        {/* =====NEEDS BACKEND: EDIT MEDICATION=====
-            Open an edit form for this medication and save it with an update request.
-            The backend endpoint for editing does not exist yet.
-            onClick={() => editMedication(medication.mid)} */}
-        <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`}>
+        <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`} onClick={() => onEdit(medication)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
             <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
           </svg>
         </button>
-        {/* =====NEEDS BACKEND: REMOVE MEDICATION=====
-            Send DELETE_medication with the medication's mid (raw JSON body { "mid": ... }),
-            expect { "success": true }, then remove the card from the list.
-            onClick={() => removeMedication(medication.mid)} */}
-        <button className="medications-remove-button" type="button">Remove</button>
+        <button className="medications-remove-button" type="button" onClick={() => onRemove(medication.mid)}>Remove</button>
       </div>
     </div>
   </article>
 );
 
 const MedicationsPage = () => {
-  /*
-  =====MEDICATION BACKEND NEEDED HERE=====
-  We need Backend for:
-  - getting medications for the logged-in user
-  - { "success": false } when the user has no medications (the page shows an empty list)
-  
-  Currently there is a placeholder
-  */
+  const navigate = useNavigate();
+  const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [requestError, setRequestError] = useState("");
+  const [reloadCount, setReloadCount] = useState(0);
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Placeholder example data until the backend is connected.
-  const [medications] = useState<MedicationRecord[]>([
-    { mid: 11, medication_name: "Lisinopril", dosage: "10mg", time: "08:00:00", days: "Monday,Tuesday,Wednesday", status: "active" },
-    { mid: 12, medication_name: "drugIDX", dosage: "55mg", time: "", days: "Monday, Tuesday, Wednsday, Thursday, Friday", status: "active" },
-    { mid: 12, medication_name: "Inactive Test", dosage: "25mg", time: "14:00:00", days: "", status: "inactive" },
-    { mid: 13, medication_name: "Ibuprofen", dosage: "200mg", time: "", days: "", status: "as needed" },
-  ]);
-  const isLoading = false;
-  const requestError = "";
+  // Load the user's medications, and again whenever reloadCount changes
+  useEffect(() => {
+    getMedications()
+      .then((list) => {
+        setMedications(list);
+        setRequestError("");
+      })
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setRequestError(getErrorMessage(error));
+      })
+      .finally(() => setIsLoading(false));
+  }, [navigate, reloadCount]);
+
+  const removeMedication = (mid: number) => {
+    deleteMedication(mid)
+      .then(() => setReloadCount((count) => count + 1))
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setRequestError(getErrorMessage(error));
+      });
+  };
 
   const [isAdding, setIsAdding] = useState(false);
+  // mid of the medication being edited, or null when adding a new one
+  const [editingMid, setEditingMid] = useState<number | null>(null);
   const [newStatus, setNewStatus] = useState<MedicationRecord["status"]>("active");
   const [timeInput, setTimeInput] = useState("");
   const [timeError, setTimeError] = useState("");
@@ -194,11 +214,12 @@ const MedicationsPage = () => {
   const [doseInput, setDoseInput] = useState("");
   const [nameError, setNameError] = useState("");
   const [doseError, setDoseError] = useState("");
-  const [dayOption, setDayOption] = useState<DayOption>("non-specific");
+  const [dayOption, setDayOption] = useState<DayOption>("all");
   const [customDays, setCustomDays] = useState<string[]>([]);
   const [daysError, setDaysError] = useState("");
 
   const openAddModal = () => {
+    setEditingMid(null);
     setNewStatus("active");
     setTimeInput("");
     setTimeError("");
@@ -206,10 +227,33 @@ const MedicationsPage = () => {
     setDoseInput("");
     setNameError("");
     setDoseError("");
-    setDayOption("non-specific");
+    setDayOption("all");
     setCustomDays([]);
     setDaysError("");
+    setSaveError("");
     setIsAdding(true);
+  };
+
+  // Same modal as adding, pre-filled with the medication's current values
+  const openEditModal = (medication: MedicationRecord) => {
+    openAddModal();
+    setEditingMid(medication.mid);
+    setNameInput(medication.medication_name);
+    setDoseInput(medication.dosage);
+    setNewStatus(medication.status);
+    setTimeInput(medication.time ? formatTime(medication.time) : "");
+
+    const saved = medication.days.split(",").map((day) => day.trim()).filter(Boolean);
+    const isSame = (option: DayOption) => {
+      const days = getSelectedDays(option, []);
+      return saved.length === days.length && days.every((day) => saved.includes(day));
+    };
+    if (isSame("all")) setDayOption("all");
+    else if (isSame("weekdays")) setDayOption("weekdays");
+    else {
+      setDayOption("custom");
+      setCustomDays(saved);
+    }
   };
 
   const toggleCustomDay = (day: string) => {
@@ -231,8 +275,8 @@ const MedicationsPage = () => {
     setDoseError(doseMessage);
     let hasError = Boolean(nameMessage || doseMessage);
 
-    // Time and days only apply to active medications
-    if (newStatus === "active") {
+    // Time and days apply to active and inactive medications
+    if (newStatus !== "as needed") {
       const selectedDays = getSelectedDays(dayOption, customDays);
       let timeMessage = "";
       if (!timeInput.trim()) timeMessage = "Time is required.";
@@ -244,19 +288,32 @@ const MedicationsPage = () => {
     }
     if (hasError) return;
 
-    /* =====NEEDS BACKEND: ADD MEDICATION=====
-       POST_medication as form-data with medication_name, dosage, time, days and status
-       ("active", "inactive" or "as needed"), expect 201 { "success": true, "mid": <number> }.
-       Errors come back as 400 { "success": false, "error": "..." } and should be shown in the modal.
-       const time = parseTime(timeInput) ?? "";                       // "HH:MM:SS"
-       const days = getSelectedDays(dayOption, customDays).join(","); // "Monday,Tuesday", empty for non-specific
-       const form = new FormData(event.currentTarget);
-       form.append("time", time);
-       form.append("days", days);
-       form.append("status", newStatus);
-       await addMedicationRequest(form);
-       then reload the medication list */
-    setIsAdding(false);
+    setSaveError("");
+    setIsSaving(true);
+    const medicationData = {
+      medication_name: nameInput,
+      dosage: doseInput,
+      // Time and days are only collected for active and inactive medications
+      time: newStatus !== "as needed" ? parseTime(timeInput) ?? "" : "",
+      days: newStatus !== "as needed" ? getSelectedDays(dayOption, customDays).join(",") : "",
+      status: newStatus,
+    };
+    const request = editingMid === null
+      ? addMedicationRequest(medicationData)
+      : updateMedication({ mid: editingMid, ...medicationData });
+    request
+      .then(() => {
+        setIsAdding(false);
+        setReloadCount((count) => count + 1);
+      })
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setSaveError(getErrorMessage(error));
+      })
+      .finally(() => setIsSaving(false));
   };
 
   return (
@@ -281,7 +338,7 @@ const MedicationsPage = () => {
           <p className="home-empty">No medications. Add a medication to get started.</p>
         )}
         {medications.map((medication) => (
-          <MedicationCard key={medication.mid} medication={medication} />
+          <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={removeMedication} />
         ))}
       </section>
     </div>
@@ -294,7 +351,7 @@ const MedicationsPage = () => {
               <path d="m5 5 14 14M19 5 5 19" />
             </svg>
           </button>
-          <h2 id="medications-modal-title">New Medication</h2>
+          <h2 id="medications-modal-title">{editingMid === null ? "New Medication" : "Edit Medication"}</h2>
           <form className="medications-modal-form"           onSubmit={addMedication} noValidate>
             <label className="medications-modal-field" htmlFor="medication-name">
               <span>MEDICATION NAME</span>
@@ -313,7 +370,7 @@ const MedicationsPage = () => {
               <button className={`medications-modal-status-button${newStatus === "as needed" ? " medications-modal-status-as-needed" : ""}`} type="button" aria-pressed={newStatus === "as needed"} onClick={() => setNewStatus("as needed")}>As Needed</button>
             </div>
 
-            {newStatus === "active" && (
+            {newStatus !== "as needed" && (
                     <>
                       <label className="medications-modal-field" htmlFor="medication-time">
                         <span>TIME</span>
@@ -370,8 +427,9 @@ const MedicationsPage = () => {
                   )}
 
             <div className="medications-modal-actions">
-              <button className="medications-modal-submit" type="submit">
-                <span aria-hidden="true">+</span> Add Medication
+              {saveError && <p className="medications-modal-error" role="alert">{saveError}</p>}
+              <button className="medications-modal-submit" type="submit" disabled={isSaving}>
+                {editingMid === null ? <><span aria-hidden="true">+</span> Add Medication</> : "Save Changes"}
               </button>
             </div>
           </form>
