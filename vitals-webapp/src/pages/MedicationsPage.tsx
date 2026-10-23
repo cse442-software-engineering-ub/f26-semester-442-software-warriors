@@ -107,6 +107,11 @@ const formatTimeTyping = (raw: string, isDeleting: boolean) => {
 };
 
 const maxNameLength = 70;
+const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+  { value: "as needed", label: "As Needed" },
+];
 const maxDoseLength = 15;
 
 const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (mid: number) => void }) => (
@@ -205,6 +210,30 @@ const MedicationsPage = () => {
   };
 
   const [isAdding, setIsAdding] = useState(false);
+
+  // Filter: statusFilter is what the list shows (all three = everything). The modal edits
+  // filterDraft, and it only becomes the real filter when Submit is pressed.
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<MedicationRecord["status"][]>(["active", "inactive", "as needed"]);
+  const [filterDraft, setFilterDraft] = useState(statusFilter);
+  const visibleMedications = medications.filter((medication) => statusFilter.includes(medication.status));
+
+  const openFilterModal = () => {
+    setFilterDraft(statusFilter);
+    setIsFiltering(true);
+  };
+
+  const toggleFilterStatus = (status: MedicationRecord["status"]) => {
+    setFilterDraft((current) =>
+      current.includes(status) ? current.filter((s) => s !== status) : [...current, status],
+    );
+  };
+
+  const submitFilter = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatusFilter(filterDraft);
+    setIsFiltering(false);
+  };
   // mid of the medication being edited, or null when adding a new one
   const [editingMid, setEditingMid] = useState<number | null>(null);
   const [newStatus, setNewStatus] = useState<MedicationRecord["status"]>("active");
@@ -325,7 +354,7 @@ const MedicationsPage = () => {
       </header>
 
       <div className="medications-toolbar">
-        <button className="medications-filter-button" type="button" aria-pressed="true">All</button>
+        <button className="medications-filter-button" type="button" aria-pressed={statusFilter.length < statusOptions.length} onClick={openFilterModal}>Filter</button>
         <button className="medications-add-button" type="button" onClick={openAddModal}>
           <span aria-hidden="true">+</span> Add Medication
         </button>
@@ -337,11 +366,41 @@ const MedicationsPage = () => {
         {!isLoading && !requestError && medications.length === 0 && (
           <p className="home-empty">No medications. Add a medication to get started.</p>
         )}
-        {medications.map((medication) => (
+        {!isLoading && !requestError && medications.length > 0 && visibleMedications.length === 0 && (
+          <p className="home-empty">No medications match the selected filter.</p>
+        )}
+        {visibleMedications.map((medication) => (
           <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={removeMedication} />
         ))}
       </section>
     </div>
+
+    {isFiltering && (
+      <div className="medications-modal-backdrop">
+        <section className="medications-modal medications-filter-modal" role="dialog" aria-modal="true" aria-labelledby="medications-filter-title">
+          <button className="medications-modal-close" type="button" aria-label="Close dialog" onClick={() => setIsFiltering(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <path d="m5 5 14 14M19 5 5 19" />
+            </svg>
+          </button>
+          <h2 id="medications-filter-title">Filter Medications</h2>
+          <form className="medications-modal-form" onSubmit={submitFilter}>
+            <fieldset className="medications-modal-fieldset">
+              {statusOptions.map((option) => (
+                <label className="medications-choice" key={option.value}>
+                  <input type="checkbox" checked={filterDraft.includes(option.value)} onChange={() => toggleFilterStatus(option.value)} />
+                  <span className="medications-choice-mark medications-choice-square" aria-hidden="true" />
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
+            <div className="medications-modal-actions">
+              <button className="medications-modal-submit" type="submit">Submit</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    )}
 
     {isAdding && (
       <div className="medications-modal-backdrop">
