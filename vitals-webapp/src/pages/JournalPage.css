@@ -1,0 +1,303 @@
+.journal-content {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+
+.app-layout-main:has(> .journal-content) {
+  display: flex;
+  flex-direction: column;
+}
+
+.journal-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.journal-summary-grid .journal-last-reading {
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px;
+}
+
+.journal-last-reading-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.journal-summary-grid .home-bp-label {
+  font-size: 16px;
+}
+
+.journal-summary-grid .home-bp-value {
+  margin: 7px 0 0;
+  font-size: clamp(27px, 2.4vw, 36px);
+}
+
+.journal-summary-grid .home-bp-unit {
+  font-size: 16px;
+}
+
+.journal-last-measured {
+  margin: 8px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.journal-summary-grid .home-empty {
+  margin-top: 8px;
+}
+
+.journal-summary-grid .home-status-badge {
+  padding: 5px 9px;
+  font-size: 11px;
+}
+
+.journal-average-card {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--app-blue);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.journal-average-card h3 {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.journal-average-card p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.journal-average-card strong {
+  color: #1a1a1a;
+  font-size: 28px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.journal-average-card .home-status-badge {
+  padding: 0;
+  background: transparent;
+  color: #1b6b32;
+  font-size: 11px;
+}
+
+.journal-average-card .home-status-badge::before {
+  content: "✓ ";
+}
+
+.journal-log {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.journal-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.journal-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #1a1a1a;
+  font-size: 16px;
+  text-align: left;
+}
+
+.journal-table th {
+  padding: 10px 12px;
+  background: var(--app-blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.journal-table th:first-child {
+  border-radius: 7px 0 0 7px;
+}
+
+.journal-table th:last-child {
+  border-radius: 0 7px 7px 0;
+}
+
+.journal-table td {
+  padding: 13px 12px;
+  border-bottom: 1px solid rgb(22 59 162 / 10%);
+}
+
+.journal-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.journal-reading-date {
+  display: grid;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.journal-reading-date strong {
+  color: #1a1a1a;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.journal-reading-date small {
+  color: #666;
+  font-size: 14px;
+}
+
+.journal-mobile-readings {
+  display: none;
+}
+
+.journal-mobile-reading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.journal-mobile-pulse,
+.journal-mobile-pressure {
+  color: #1a1a1a;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.journal-mobile-pulse {
+  font-weight: 700;
+}
+
+.journal-mobile-pulse small,
+.journal-mobile-pressure small {
+  color: #666;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.journal-mobile-pressure {
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .journal-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .journal-summary-grid .journal-last-reading {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .journal-last-measured {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+
+  .journal-summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .journal-summary-grid .journal-last-reading {
+    grid-column: auto;
+    padding: 16px 18px;
+  }
+
+  .journal-summary-grid .home-bp-value {
+    font-size: 36px;
+  }
+
+  .journal-average-card {
+    min-height: 88px;
+    gap: 5px;
+    padding: 10px 14px;
+  }
+
+  .journal-average-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--app-blue);
+  }
+
+  .journal-average-card p {
+    font-size: 16px;
+  }
+
+  .journal-average-card strong {
+    font-size: 28px;
+  }
+
+  .journal-table-wrapper {
+    display: none;
+  }
+
+  .journal-mobile-readings {
+    display: grid;
+    gap: 8px;
+  }
+
+  .journal-mobile-reading {
+    grid-template-columns: minmax(82px, 1.25fr) auto auto auto;
+    gap: 5px;
+    padding: 10px;
+    background: #eaf3fb;
+  }
+
+  .journal-log:has(.journal-mobile-readings) {
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .journal-mobile-reading .journal-reading-date {
+    min-width: 0;
+  }
+
+  .journal-mobile-reading .journal-reading-date strong {
+    font-size: 13px;
+  }
+
+  .journal-mobile-reading .journal-reading-date small {
+    font-size: 11px;
+  }
+
+  .journal-mobile-reading .journal-mobile-pulse,
+  .journal-mobile-reading .journal-mobile-pressure {
+    font-size: 14px;
+  }
+
+  .journal-mobile-reading .journal-mobile-pulse small,
+  .journal-mobile-reading .journal-mobile-pressure small {
+    font-size: 11px;
+  }
+
+  .journal-mobile-reading .home-status-badge {
+    justify-self: end;
+    padding: 4px 6px;
+    font-size: 8px;
+  }
+}

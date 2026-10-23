@@ -22,7 +22,7 @@ const sidebarSections: SidebarSection[] = [
   // "Caregivers",
   // "Medications",
   // "Appointments",
-  // "Journal",
+  "Journal",
   "My Profile",
 ];
 
@@ -32,7 +32,7 @@ const defaultDestinations: Partial<Record<SidebarSection, string>> = {
   // Caregivers: "/caregivers",
   // Medications: "/medications",
   // Appointments: "/appointments",
-  // Journal: "/journal",
+  Journal: "/journal",
   "My Profile": "/settings",
 };
 

@@ -357,8 +357,9 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
     body: params.toString(),
   });
   const data = await response.json().catch(() => ({}));
+  const reading = data?.reading ?? data;
 
-  if (!response.ok || !data?.reading) {
+  if (!response.ok || !reading) {
     throw {
       status: response.status,
       error:
@@ -368,5 +369,51 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
       errors: data?.errors,
     };
   }
-  return data.reading as SavedReading;
+  return reading as SavedReading;
+}
+
+export interface JournalReading {
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+  status: string;
+  date_time: string;
+}
+
+export interface JournalAverages {
+  systolic: number;
+  diastolic: number;
+  pulse: number;
+}
+
+export interface JournalData {
+  last_reading: JournalReading | null;
+  averages: JournalAverages | null;
+  readings: JournalReading[];
+}
+
+export async function getJournal(): Promise<JournalData> {
+  const response = await fetch(`${API_BASE}/journal.php`, {
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (
+    !response.ok ||
+    typeof data !== "object" ||
+    data === null ||
+    !Array.isArray(data.readings) ||
+    !("last_reading" in data) ||
+    !("averages" in data)
+  ) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Unable to load your journal.",
+    };
+  }
+
+  return data as JournalData;
 }

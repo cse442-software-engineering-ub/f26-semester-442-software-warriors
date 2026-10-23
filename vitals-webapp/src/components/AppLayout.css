@@ -340,7 +340,7 @@
   .app-sidebar-navigation {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: auto;
     align-items: stretch;
     gap: 3px 5px;
