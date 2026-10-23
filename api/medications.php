@@ -64,10 +64,6 @@ if($method === 'POST') {
         medicationFail(400, 'Dosage is required.');
     }
 
-    if($time === '') {
-        medicationFail(400, 'Time is required.');
-    }
-
     $validStatuses = ['active', 'inactive', 'as needed'];
 
     if(!in_array($status, $validStatuses, true)) {
@@ -77,20 +73,27 @@ if($method === 'POST') {
     // As needed medications do not use scheduled days
     if($status === 'as needed') {
         $days = '';
+        $databaseTime = null;
     }
 
-    elseif($days === '') {
-        medicationFail(400, 'Days are required.');
+    else {
+        if($time === '') {
+            medicationFail(400, 'Time is required.');
+        }
+
+        if($days === '') {
+            medicationFail(400, 'Days are required.');
+        }
+
+        //Convert the time into the database format
+        $timeValue = strtotime($time);
+
+        if($timeValue === false) {
+            medicationFail(400, 'A valid time is required.');
+        }
+
+        $databaseTime = date('H:i:s', $timeValue);
     }
-
-    //Convert the supplied time into the format used by the database
-    $timeValue = strtotime($time);
-
-    if ($timeValue === false) {
-        medicationFail(400, 'A valid time is required.');
-    }
-
-    $databaseTime = date('H:i:s', $timeValue);
 
     //Add the medication for the currently logged-in user
     $stmt = $pdo->prepare(
@@ -147,10 +150,6 @@ if($method === 'PUT') {
         medicationFail(400, 'Dosage is required.');
     }
 
-    if($time === '') {
-        medicationFail(400, 'Time is required.');
-    }
-
     $validStatuses = ['active', 'inactive', 'as needed'];
 
     if(!in_array($status, $validStatuses, true)) {
@@ -159,20 +158,27 @@ if($method === 'PUT') {
 
     if($status === 'as needed') {
         $days = '';
+        $databaseTime = null;
     }
 
-    elseif($days === '') {
-        medicationFail(400, 'Days are required.');
+    else {
+        if($time === '') {
+            medicationFail(400, 'Time is required.');
+        }
+
+        if($days === '') {
+            medicationFail(400, 'Days are required.');
+        }
+
+        //Convert the time into the database format
+        $timeValue = strtotime($time);
+
+        if($timeValue === false) {
+            medicationFail(400, 'A valid time is required.');
+        }
+
+        $databaseTime = date('H:i:s', $timeValue);
     }
-
-    //Convert the time into the database format
-    $timeValue = strtotime($time);
-
-    if($timeValue === false) {
-        medicationFail(400, 'A valid time is required.');
-    }
-
-    $databaseTime = date('H:i:s', $timeValue);
 
     //Make sure the medication exists and belongs to the logged-in user
     $stmt = $pdo->prepare(
