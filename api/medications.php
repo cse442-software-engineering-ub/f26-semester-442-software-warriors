@@ -17,6 +17,32 @@ function medicationFail(int $status, string $message): void
     exit;
 }
 
+//Convert the as_needed value into true or false so multiple input types are accepted
+function parseAsNeeded($value): bool
+{
+    if(
+        $value === true ||
+        $value === 1 ||
+        $value === '1' ||
+        $value === 'true'
+    ) {
+        return true;
+    }
+
+    if(
+        $value === false ||
+        $value === 0 ||
+        $value === '0' ||
+        $value === 'false' ||
+        $value === '' ||
+        $value === null
+    ) {
+        return false;
+    }
+
+    medicationFail(400, 'As needed must be true or false.');
+}
+
 //Get the logged-in user's ID from their session
 $userId = requireAuth();
 
@@ -28,15 +54,29 @@ if($method === 'GET') {
 
     //Get only medications belonging to the logged-in user
     $stmt = $pdo->prepare(
-        'SELECT mid, medication_name, dosage, time, days, status
+        "SELECT mid, medication_name, dosage, time, days, status, as_needed
          FROM medications
          WHERE uid = ?
-         ORDER BY time ASC'
+         ORDER BY
+         CASE
+            WHEN status = 'active' AND as_needed = 1 THEN 1
+            WHEN status = 'active' AND as_needed = 0 THEN 2
+            WHEN status = 'inactive' AND as_needed = 1 THEN 3
+            WHEN status = 'inactive' AND as_needed = 0 THEN 4
+         END,
+         time ASC"
     );
 
     $stmt->execute([$userId]);
 
     $medications = $stmt->fetchAll();
+
+    //Makes it so GET returns 'true' or 'false' for the as_needed field instead of 1 or 0
+    foreach($medications as &$medication) {
+    $medication['as_needed'] = (bool) $medication['as_needed'];
+    }
+
+    unset($medication);
 
     echo json_encode([
         'success' => true,
@@ -54,6 +94,7 @@ if($method === 'POST') {
     $time = trim($_POST['time'] ?? '');
     $days = trim($_POST['days'] ?? '');
     $status = trim($_POST['status'] ?? '');
+    $asNeeded = parseAsNeeded($_POST['as_needed'] ?? false);
 
     //Make sure all required medication information was provided
     if($medicationName === '') {
@@ -64,14 +105,14 @@ if($method === 'POST') {
         medicationFail(400, 'Dosage is required.');
     }
 
-    $validStatuses = ['active', 'inactive', 'as needed'];
+    $validStatuses = ['active', 'inactive'];
 
     if(!in_array($status, $validStatuses, true)) {
-        medicationFail(400, 'Status must be active, inactive, or as needed.');
+        medicationFail(400, 'Status must be active or inactive.');
     }
 
-    // As needed medications do not use scheduled days
-    if($status === 'as needed') {
+    //As needed medications do not use scheduled days or times
+    if($asNeeded) {
         $days = '';
         $databaseTime = null;
     }
@@ -98,8 +139,8 @@ if($method === 'POST') {
     //Add the medication for the currently logged-in user
     $stmt = $pdo->prepare(
         'INSERT INTO medications
-        (uid, medication_name, dosage, time, days, status)
-        VALUES (?, ?, ?, ?, ?, ?)'
+        (uid, medication_name, dosage, time, days, status, as_needed)
+        VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
 
     $stmt->execute([
@@ -108,8 +149,10 @@ if($method === 'POST') {
         $dosage,
         $databaseTime,
         $days,
-        $status
+        $status,
+        $asNeeded ? 1 : 0
     ]);
+
     //Success
     http_response_code(201);
 
@@ -136,6 +179,7 @@ if($method === 'PUT') {
     $time = trim($data['time'] ?? '');
     $days = trim($data['days'] ?? '');
     $status = trim($data['status'] ?? '');
+    $asNeeded = parseAsNeeded($data['as_needed'] ?? false);
 
     //Make sure a medication ID was provided
     if($mid === null || filter_var($mid, FILTER_VALIDATE_INT) === false || (int)$mid <= 0) {
@@ -150,13 +194,14 @@ if($method === 'PUT') {
         medicationFail(400, 'Dosage is required.');
     }
 
-    $validStatuses = ['active', 'inactive', 'as needed'];
+    $validStatuses = ['active', 'inactive'];
 
     if(!in_array($status, $validStatuses, true)) {
-        medicationFail(400, 'Status must be active, inactive, or as needed.');
+        medicationFail(400, 'Status must be active or inactive.');
     }
 
-    if($status === 'as needed') {
+    //As needed medications do not use scheduled days or times
+    if($asNeeded) {
         $days = '';
         $databaseTime = null;
     }
@@ -197,7 +242,7 @@ if($method === 'PUT') {
     //Update the medication
     $stmt = $pdo->prepare(
         'UPDATE medications
-         SET medication_name = ?, dosage = ?, time = ?, days = ?, status = ?
+         SET medication_name = ?, dosage = ?, time = ?, days = ?, status = ?, as_needed = ?
          WHERE mid = ? AND uid = ?'
     );
 
@@ -207,6 +252,7 @@ if($method === 'PUT') {
         $databaseTime,
         $days,
         $status,
+        $asNeeded ? 1 : 0,
         (int) $mid,
         $userId
     ]);
