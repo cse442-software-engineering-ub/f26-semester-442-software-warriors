@@ -427,7 +427,8 @@ export async function getJournal(): Promise<JournalData> {
       date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
     }),
   );
-  const averages = (data.averages as JournalAverages | null | undefined) ?? null;
+  const averages =
+    (data.averages as JournalAverages | null | undefined) ?? null;
   const lastReading = data.last_reading
     ? {
         systolic: Number(data.last_reading.systolic),
@@ -440,7 +441,7 @@ export async function getJournal(): Promise<JournalData> {
           data.last_reading.date_time ?? data.last_reading.recorded_at ?? "",
         ),
       }
-    : readings[0] ?? null;
+    : (readings[0] ?? null);
 
   return { last_reading: lastReading, averages, readings };
 }
@@ -460,7 +461,9 @@ export type MedicationInput = Omit<MedicationRecord, "mid">;
 
 // GET medications.php -> { success: true, medications: [...] } (401 when not logged in)
 export async function getMedications(): Promise<MedicationRecord[]> {
-  const data = await settingsRequest<{ medications?: MedicationRecord[] }>("medications.php");
+  const data = await settingsRequest<{ medications?: MedicationRecord[] }>(
+    "medications.php",
+  );
   return data.medications ?? [];
 }
 
@@ -481,7 +484,9 @@ export async function addMedication(input: MedicationInput): Promise<number> {
 }
 
 // PUT medications.php (raw JSON) -> { success: true }
-export async function updateMedication(medication: MedicationRecord): Promise<void> {
+export async function updateMedication(
+  medication: MedicationRecord,
+): Promise<void> {
   await settingsRequest("medications.php", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -498,3 +503,62 @@ export async function deleteMedication(mid: number): Promise<void> {
   });
 }
 
+// ---------- Appointments (#70 backend, #73 frontend) ----------
+// One row from GET appointments.php. appointment_date is "YYYY-MM-DD HH:MM:SS".
+export interface AppointmentRecord {
+  aid: number;
+  doctors_name: string;
+  appointment_date: string;
+  location: string | null;
+  address: string | null;
+}
+
+// What the New Appointment popup sends (every box is text, the server checks it)
+export interface AppointmentInput {
+  doctor_name: string;
+  month: string;
+  day: string;
+  year: string;
+  time: string;
+  location: string;
+  address: string;
+}
+
+// GET appointments.php -> 200 { appointments: [...] }, soonest first (401 when not logged in)
+export async function getAppointments(): Promise<AppointmentRecord[]> {
+  const data = await settingsRequest<{ appointments?: AppointmentRecord[] }>(
+    "appointments.php",
+  );
+  return data.appointments ?? [];
+}
+
+// POST appointments.php (form fields)
+// 201 { appointment: {...} }          -> saved, returns the new row
+// 400 { errors: { field: message } }  -> show each message under its box
+export async function addAppointment(
+  input: AppointmentInput,
+): Promise<AppointmentRecord> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    params.append(key, value.trim());
+  }
+
+  const data = await settingsRequest<{ appointment: AppointmentRecord }>(
+    "appointments.php",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      },
+      body: params.toString(),
+    },
+  );
+  return data.appointment;
+}
+
+// DELETE appointments.php?aid=N -> 200 { deleted: true }, 404 when it is not yours or not found
+export async function removeAppointment(aid: number): Promise<void> {
+  await settingsRequest<{ deleted: true }>(`appointments.php?aid=${aid}`, {
+    method: "DELETE",
+  });
+}

@@ -1,0 +1,544 @@
+/* My Appointments (#73). Layout from Figma vitals-appointments-1-desktop / -mobile.
+   Desktop: heading and toolbar on top, list on the left, calendar on the right.
+   Mobile:  heading, calendar, toolbar, list (one column). */
+.appointments-content {
+  display: grid;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  grid-template-areas:
+    "heading heading"
+    "toolbar toolbar"
+    "list    calendar";
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: 0 24px;
+  color: var(--app-ink);
+}
+
+.appointments-page-heading {
+  grid-area: heading;
+  margin-bottom: 24px;
+}
+.appointments-page-heading h1 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: clamp(29px, 3.05vw, 38px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+.appointments-page-heading p {
+  margin: 10px 0 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* "Upcoming" tab + "+ Add Appointment" inside one blue outline, like the Medications toolbar */
+.appointments-toolbar {
+  display: inline-flex;
+  grid-area: toolbar;
+  justify-self: start;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--app-blue);
+}
+.appointments-tab,
+.appointments-add-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+}
+.appointments-tab {
+  border: 1px solid #fff;
+  color: #fff;
+}
+.appointments-add-button {
+  border: 1px solid #fff;
+  background: #fff;
+  color: var(--app-blue-dark);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.appointments-add-button:hover,
+.appointments-add-button:focus-visible {
+  background: #eaf3fb;
+}
+.appointments-add-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+/* ---------- List ---------- */
+.appointments-list {
+  display: grid;
+  grid-area: list;
+  gap: 12px;
+  min-width: 0;
+}
+.appointments-status {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid #1b6b32;
+  border-radius: 9px;
+  background: #d9f0de;
+  color: #1b6b32;
+  font-size: 14px;
+  font-weight: 600;
+}
+.appointments-list .home-request-error {
+  margin: 0;
+}
+
+.appointments-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 24px;
+}
+.appointments-card-details {
+  min-width: 0;
+}
+.appointments-card-details h3 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.appointments-card-location {
+  margin: 4px 0 0;
+  color: var(--app-blue);
+  font-size: 14px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.appointments-card-address {
+  margin: 4px 0 0;
+  color: #555;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.appointments-card-when {
+  display: grid;
+  min-width: 200px;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #fff;
+  text-align: center;
+}
+.appointments-card-when strong {
+  color: var(--app-blue);
+  font-size: 16px;
+  font-weight: 750;
+}
+.appointments-card-when span {
+  color: #444;
+  font-size: 14px;
+}
+
+.appointments-remove-button {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 2px solid #d32f2f;
+  border-radius: 8px;
+  background: #fff;
+  color: #b93a2e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.appointments-remove-button:hover,
+.appointments-remove-button:focus-visible {
+  background: #fce4e4;
+}
+.appointments-remove-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+/* ---------- Weekly calendar ---------- */
+.appointments-calendar {
+  grid-area: calendar;
+  padding: 22px 24px 24px;
+}
+.appointments-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.appointments-calendar-header h2 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 19px;
+  font-weight: 750;
+}
+.appointments-calendar-arrows {
+  display: flex;
+  gap: 4px;
+}
+.appointments-calendar-arrows button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+.appointments-calendar-arrows svg {
+  width: 20px;
+  height: 20px;
+}
+.appointments-calendar-arrows button:hover,
+.appointments-calendar-arrows button:focus-visible {
+  background: #d6e6fa;
+}
+.appointments-calendar-arrows button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 1px;
+}
+
+.appointments-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 18px 0 0;
+  padding: 0 0 18px;
+  border-bottom: 2px solid #b8c4d6;
+  list-style: none;
+}
+.appointments-calendar-days li {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 0;
+  border-radius: 10px;
+}
+.appointments-calendar-days span {
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+}
+.appointments-calendar-days strong {
+  color: #1a1a1a;
+  font-size: 15px;
+  font-weight: 750;
+}
+.appointments-calendar-days .appointments-calendar-today {
+  background: var(--app-blue);
+}
+.appointments-calendar-today span,
+.appointments-calendar-today strong {
+  color: #fff;
+}
+
+.appointments-calendar-subtitle {
+  margin: 18px 0 0;
+  color: #555;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.appointments-calendar-list {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.appointments-calendar-list li {
+  display: grid;
+  gap: 3px;
+  padding-left: 13px;
+  border-left: 4px solid var(--app-blue);
+}
+.appointments-calendar-list strong {
+  color: #1a1a1a;
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.appointments-calendar-list span {
+  color: #555;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- New Appointment popup (blue box from Figma) ---------- */
+.appointments-modal-backdrop {
+  position: fixed;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: 16px 16px 16px calc(var(--sidebar-width) + 16px);
+  background: rgb(15 23 42 / 42%);
+  backdrop-filter: blur(2px);
+}
+.appointments-modal {
+  position: relative;
+  width: min(100%, 460px);
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
+  padding: 24px 32px 28px;
+  overflow-y: auto;
+  border: 1px solid var(--app-blue-dark);
+  border-radius: 16px;
+  background: var(--app-blue);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 24px 64px rgb(15 23 42 / 35%);
+}
+.appointments-modal h2 {
+  margin: 6px 0 0;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+}
+.appointments-modal-close {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--app-blue);
+  cursor: pointer;
+}
+.appointments-modal-close svg {
+  width: 24px;
+  height: 24px;
+}
+.appointments-modal-close:hover {
+  background: #eaf3fb;
+}
+
+.appointments-modal-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  text-align: left;
+}
+.appointments-modal-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.appointments-modal-field > span {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+.appointments-modal-field input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid #fff;
+  border-radius: 10px;
+  background: #fff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 17px;
+}
+.appointments-modal-field input::placeholder {
+  color: #6b7280;
+}
+.appointments-modal-field input[aria-invalid="true"] {
+  border: 2px solid #fca5a5;
+}
+.appointments-modal-date {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.appointments-modal-date input {
+  text-align: center;
+}
+
+.appointments-modal-error {
+  width: fit-content;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 600;
+}
+.appointments-modal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.appointments-modal-submit {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--app-blue);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.appointments-modal-submit:hover {
+  background: #eaf3fb;
+}
+.appointments-modal-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.appointments-modal-close:focus-visible,
+.appointments-modal-submit:focus-visible,
+.appointments-modal-field input:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Screen readers still read the "Date" legend, but it is not shown */
+.appointments-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Medium screens: the date box drops under the doctor ---------- */
+@media (max-width: 1150px) {
+  .appointments-content {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+  .appointments-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .appointments-card-when {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: start;
+  }
+}
+
+/* ---------- Mobile (Figma vitals-appointments-mobile, 402 wide) ---------- */
+@media (max-width: 760px) {
+  .appointments-content {
+    grid-template-areas:
+      "heading"
+      "calendar"
+      "toolbar"
+      "list";
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .appointments-page-heading {
+    margin-bottom: 18px;
+  }
+  .appointments-page-heading h1 {
+    font-size: clamp(24px, 6.5vw, 30px);
+  }
+  .appointments-page-heading p {
+    display: none;
+  }
+  .appointments-calendar {
+    margin-bottom: 20px;
+    padding: 18px;
+  }
+  .appointments-calendar-days {
+    margin-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* Doctor + Remove on top, a line, location and address, then one white row with date | time */
+  .appointments-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 16px;
+  }
+  .appointments-card-details {
+    display: contents;
+  }
+  .appointments-card-details h3 {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+  }
+  .appointments-remove-button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .appointments-card-location,
+  .appointments-card-address {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .appointments-card-location {
+    padding-top: 10px;
+    border-top: 1px solid #b8c4d6;
+  }
+  .appointments-card-when {
+    display: flex;
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-self: stretch;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 10px 16px;
+  }
+  .appointments-card-when span {
+    padding-left: 12px;
+    border-left: 1px solid #d8d8d8;
+  }
+
+  .appointments-modal {
+    padding: 20px 20px 22px;
+  }
+  .appointments-modal h2 {
+    padding-left: 36px;
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 680px) {
+  .appointments-modal-backdrop {
+    padding: 16px 16px calc(86px + 16px);
+  }
+}
