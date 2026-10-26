@@ -452,8 +452,9 @@ export interface MedicationRecord {
   medication_name: string;
   dosage: string;
   time: string; // raw TIME value, e.g. "08:00:00"
-  days: string; // comma separated weekdays, empty for "as needed"
-  status: "active" | "inactive" | "as needed";
+  days: string; // comma separated weekdays, empty for as-needed medications
+  status: "active" | "inactive";
+  as_needed: boolean;
 }
 
 // Fields sent when adding or editing a medication
@@ -475,6 +476,7 @@ export async function addMedication(input: MedicationInput): Promise<number> {
   form.append("time", input.time);
   form.append("days", input.days);
   form.append("status", input.status);
+  form.append("as_needed", input.as_needed ? "true" : "false");
 
   const data = await settingsRequest<{ mid: number }>("medications.php", {
     method: "POST",
