@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addMedication as addMedicationRequest, deleteMedication, getMedications, updateMedication } from "../api";
+import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedications, updateMedication } from "../api";
 import type { MedicationRecord } from "../api";
 import "./MedicationsPage.css";
 
@@ -107,7 +107,8 @@ const formatTimeTyping = (raw: string, isDeleting: boolean) => {
 };
 
 const maxNameLength = 70;
-const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
+type FilterValue = MedicationRecord["status"] | "as needed";
+const statusOptions: { value: FilterValue; label: string }[] = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
   { value: "as needed", label: "As Needed" },
@@ -129,7 +130,7 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
       </div>
     </div>
 
-    {(medication.days || medication.time) && (
+    {!medication.as_needed && (
       <div className="medications-schedule">
         {!(medication.time) && (
           <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
@@ -158,6 +159,7 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
       <span className={`home-status-badge medications-status medications-status-${medication.status.replace(" ", "-")}`}>
         {medication.status}
       </span>
+      {medication.as_needed && <span className="home-status-badge medications-status medications-status-as-needed">as needed</span>}
       <div className="medications-actions">
         <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`} onClick={() => onEdit(medication)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -179,6 +181,16 @@ const MedicationsPage = () => {
   const [reloadCount, setReloadCount] = useState(0);
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const [accountName, setAccountName] = useState("");
+
+  useEffect(() => {
+    getAccount()
+      .then((account) => setAccountName(account.name ?? ""))
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) navigate("/login", { replace: true });
+      });
+  }, [navigate]);
 
   // Load the user's medications, and again whenever reloadCount changes
   useEffect(() => {
@@ -214,16 +226,18 @@ const MedicationsPage = () => {
   // Filter: statusFilter is what the list shows (all three = everything). The modal edits
   // filterDraft, and it only becomes the real filter when Submit is pressed.
   const [isFiltering, setIsFiltering] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<MedicationRecord["status"][]>(["active", "inactive", "as needed"]);
+  const [statusFilter, setStatusFilter] = useState<FilterValue[]>(["active", "inactive", "as needed"]);
   const [filterDraft, setFilterDraft] = useState(statusFilter);
-  const visibleMedications = medications.filter((medication) => statusFilter.includes(medication.status));
+  const visibleMedications = medications.filter(
+    (medication) => statusFilter.includes(medication.status) || (medication.as_needed && statusFilter.includes("as needed")),
+  );
 
   const openFilterModal = () => {
     setFilterDraft(statusFilter);
     setIsFiltering(true);
   };
 
-  const toggleFilterStatus = (status: MedicationRecord["status"]) => {
+  const toggleFilterStatus = (status: FilterValue) => {
     setFilterDraft((current) =>
       current.includes(status) ? current.filter((s) => s !== status) : [...current, status],
     );
@@ -237,6 +251,7 @@ const MedicationsPage = () => {
   // mid of the medication being edited, or null when adding a new one
   const [editingMid, setEditingMid] = useState<number | null>(null);
   const [newStatus, setNewStatus] = useState<MedicationRecord["status"]>("active");
+  const [asNeeded, setAsNeeded] = useState(false);
   const [timeInput, setTimeInput] = useState("");
   const [timeError, setTimeError] = useState("");
   const [nameInput, setNameInput] = useState("");
@@ -250,6 +265,7 @@ const MedicationsPage = () => {
   const openAddModal = () => {
     setEditingMid(null);
     setNewStatus("active");
+    setAsNeeded(false);
     setTimeInput("");
     setTimeError("");
     setNameInput("");
@@ -270,6 +286,7 @@ const MedicationsPage = () => {
     setNameInput(medication.medication_name);
     setDoseInput(medication.dosage);
     setNewStatus(medication.status);
+    setAsNeeded(Boolean(medication.as_needed));
     setTimeInput(medication.time ? formatTime(medication.time) : "");
 
     const saved = medication.days.split(",").map((day) => day.trim()).filter(Boolean);
@@ -305,7 +322,7 @@ const MedicationsPage = () => {
     let hasError = Boolean(nameMessage || doseMessage);
 
     // Time and days apply to active and inactive medications
-    if (newStatus !== "as needed") {
+    if (!asNeeded) {
       const selectedDays = getSelectedDays(dayOption, customDays);
       let timeMessage = "";
       if (!timeInput.trim()) timeMessage = "Time is required.";
@@ -322,10 +339,10 @@ const MedicationsPage = () => {
     const medicationData = {
       medication_name: nameInput,
       dosage: doseInput,
-      // Time and days are only collected for active and inactive medications
-      time: newStatus !== "as needed" ? parseTime(timeInput) ?? "" : "",
-      days: newStatus !== "as needed" ? getSelectedDays(dayOption, customDays).join(",") : "",
+      time: !asNeeded ? parseTime(timeInput) ?? "" : "",
+      days: !asNeeded ? getSelectedDays(dayOption, customDays).join(",") : "",
       status: newStatus,
+      as_needed: asNeeded,
     };
     const request = editingMid === null
       ? addMedicationRequest(medicationData)
@@ -346,7 +363,7 @@ const MedicationsPage = () => {
   };
 
   return (
-  <AppLayout activeItem="Medications">
+  <AppLayout activeItem="Medications" userName={accountName || "Account"} accountLabel="Personal account">
     <div className="medications-content">
       <header className="medications-page-heading">
         <h1>My Medications</h1>
@@ -427,12 +444,19 @@ const MedicationsPage = () => {
                 <div className="medications-modal-status" role="group" aria-label="Medication status">
                   <button className={`medications-modal-status-button${newStatus === "active" ? " medications-modal-status-active" : ""}`} type="button" aria-pressed={newStatus === "active"} onClick={() => setNewStatus("active")}>Active</button>
                   <button className={`medications-modal-status-button${newStatus === "inactive" ? " medications-modal-status-inactive" : ""}`} type="button" aria-pressed={newStatus === "inactive"} onClick={() => setNewStatus("inactive")}>Inactive</button>
-                  <button className={`medications-modal-status-button${newStatus === "as needed" ? " medications-modal-status-as-needed" : ""}`} type="button" aria-pressed={newStatus === "as needed"} onClick={() => setNewStatus("as needed")}>As Needed</button>
                 </div>
-            </label>       
-            
+            </label>
 
-            {newStatus !== "as needed" && (
+            <fieldset className="medications-modal-fieldset">
+              <legend>SCHEDULE</legend>
+              <label className="medications-choice">
+                <input type="checkbox" checked={asNeeded} onChange={() => { setAsNeeded((current) => !current); setTimeError(""); setDaysError(""); }} />
+                <span className="medications-choice-mark medications-choice-square" aria-hidden="true" />
+                As Needed
+              </label>
+            </fieldset>
+
+            {!asNeeded && (
                     <>
                       <label className="medications-modal-field" htmlFor="medication-time">
                         <span>TIME</span>

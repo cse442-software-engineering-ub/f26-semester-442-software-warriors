@@ -208,7 +208,7 @@
   font-size: 18px;
 }
 .medications-modal-field input::placeholder { color: #6b7280; }
-.medications-modal-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.medications-modal-status { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .medications-modal-status-button {
   box-sizing: border-box;
   width: 100%;
