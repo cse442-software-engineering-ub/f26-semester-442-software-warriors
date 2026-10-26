@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
-require __DIR__ . '/require_auth.php';
+//require __DIR__ . '/require_auth.php';
 
 header('Content-Type: application/json');
 
@@ -9,7 +9,7 @@ function loginFail(int $status, string $message): void
 {
   http_response_code($status);
   echo json_encode(['login' => false, 'error' => $message]);
-  exit;
+  exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -27,6 +27,7 @@ $email = trim($email);
 
 if ($email === '' || $password === '') {
   loginFail(400, 'Email and password are required.');
+  exit;
 }
 
 $stmt = $pdo->prepare('SELECT id, password_hash FROM users WHERE email = ?');
@@ -40,14 +41,25 @@ $valid = password_verify($password, $hash);
 
 if (!$user || !$valid) {
   loginFail(401, 'Incorrect email or password.');
+  exit();
 }
 
+// Only reach here on successful authentication.
 if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
   $stmt = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
   $stmt->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
 }
 
+// Re-enable cookies and start a fresh session only after auth passes.
+ini_set('session.use_cookies', '1');
+session_set_cookie_params([
+    'secure'   => true,
+    'httponly' => true,
+    'samesite' => 'None',
+]);
+session_start();
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
 
 echo json_encode(['login' => true]);
+

@@ -20,6 +20,7 @@ if (ini_get("session.use_cookies")) {
   setcookie(session_name(), '', ['expires' => time() - 42000] + $params);
 }
 
+session_unset();
 session_destroy();
 
 echo json_encode(['logout' => true]);
