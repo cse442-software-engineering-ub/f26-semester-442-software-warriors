@@ -78,7 +78,6 @@ $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE email = ?");
 
 if ($stmt->execute([$hashed_password, $email])) {
     // Clear reset session variables
-    requireAuth();
 
     $_SESSION = [];
 
