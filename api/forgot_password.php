@@ -3,15 +3,17 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/CSE442/2026-Fall/cse-442ab/',
-    'domain'   => 'aptitude.cse.buffalo.edu',
-    'secure'   => true,
-    'httponly' => true,
-    'samesite' => 'None',
-]);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/CSE442/2026-Fall/cse-442ab/',
+        'domain'   => 'aptitude.cse.buffalo.edu',
+        'secure'   => true,
+        'httponly' => true,
+        'samesite' => 'None',
+    ]);
+    session_start();
+}
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
