@@ -229,7 +229,7 @@ const MedicationsPage = () => {
   const [statusFilter, setStatusFilter] = useState<FilterValue[]>(["active", "inactive", "as needed"]);
   const [filterDraft, setFilterDraft] = useState(statusFilter);
   const visibleMedications = medications.filter(
-    (medication) => statusFilter.includes(medication.status) || (medication.as_needed && statusFilter.includes("as needed")),
+    (medication) => medication.as_needed ? statusFilter.includes("as needed") : statusFilter.includes(medication.status),
   );
 
   const openFilterModal = () => {
