@@ -107,11 +107,14 @@ const formatTimeTyping = (raw: string, isDeleting: boolean) => {
 };
 
 const maxNameLength = 70;
-type FilterValue = MedicationRecord["status"] | "as needed";
-const statusOptions: { value: FilterValue; label: string }[] = [
+type ScheduleValue = "as needed" | "scheduled";
+const scheduleOptions: { value: ScheduleValue; label: string }[] = [
+  { value: "as needed", label: "As Needed" },
+  { value: "scheduled", label: "Scheduled" },
+];
+const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
   { value: "active", label: "Active" },
   { value: "inactive", label: "Inactive" },
-  { value: "as needed", label: "As Needed" },
 ];
 const maxDoseLength = 15;
 
@@ -223,29 +226,41 @@ const MedicationsPage = () => {
 
   const [isAdding, setIsAdding] = useState(false);
 
-  // Filter: statusFilter is what the list shows (all three = everything). The modal edits
-  // filterDraft, and it only becomes the real filter when Submit is pressed.
+  // Filter: statusFilter/scheduleFilter are what the list shows. The modal edits the drafts,
+  // and they only become the real filter when Submit is pressed.
   const [isFiltering, setIsFiltering] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<FilterValue[]>(["active", "inactive", "as needed"]);
-  const [filterDraft, setFilterDraft] = useState(statusFilter);
+  const [statusFilter, setStatusFilter] = useState<MedicationRecord["status"][]>(["active", "inactive"]);
+  const [scheduleFilter, setScheduleFilter] = useState<ScheduleValue[]>(["as needed", "scheduled"]);
+  const [statusDraft, setStatusDraft] = useState(statusFilter);
+  const [scheduleDraft, setScheduleDraft] = useState(scheduleFilter);
   const visibleMedications = medications.filter(
-    (medication) => statusFilter.includes(medication.status) || (medication.as_needed && statusFilter.includes("as needed")),
+    (medication) =>
+      statusFilter.includes(medication.status) &&
+      scheduleFilter.includes(medication.as_needed ? "as needed" : "scheduled"),
   );
 
   const openFilterModal = () => {
-    setFilterDraft(statusFilter);
+    setStatusDraft(statusFilter);
+    setScheduleDraft(scheduleFilter);
     setIsFiltering(true);
   };
 
-  const toggleFilterStatus = (status: FilterValue) => {
-    setFilterDraft((current) =>
-      current.includes(status) ? current.filter((s) => s !== status) : [...current, status],
+  const toggleStatusDraft = (value: MedicationRecord["status"]) => {
+    setStatusDraft((current) =>
+      current.includes(value) ? current.filter((s) => s !== value) : [...current, value],
+    );
+  };
+
+  const toggleScheduleDraft = (value: ScheduleValue) => {
+    setScheduleDraft((current) =>
+      current.includes(value) ? current.filter((s) => s !== value) : [...current, value],
     );
   };
 
   const submitFilter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setStatusFilter(filterDraft);
+    setStatusFilter(statusDraft);
+    setScheduleFilter(scheduleDraft);
     setIsFiltering(false);
   };
   // mid of the medication being edited, or null when adding a new one
@@ -371,7 +386,7 @@ const MedicationsPage = () => {
       </header>
 
       <div className="medications-toolbar">
-        <button className="medications-filter-button" type="button" aria-pressed={statusFilter.length < statusOptions.length} onClick={openFilterModal}>Filter</button>
+        <button className="medications-filter-button" type="button" aria-pressed={statusFilter.length < statusOptions.length || scheduleFilter.length < scheduleOptions.length} onClick={openFilterModal}>Filter</button>
         <button className="medications-add-button" type="button" onClick={openAddModal}>
           <span aria-hidden="true">+</span> Add Medication
         </button>
@@ -403,9 +418,20 @@ const MedicationsPage = () => {
           <h2 id="medications-filter-title">Filter Medications</h2>
           <form className="medications-modal-form" onSubmit={submitFilter}>
             <fieldset className="medications-modal-fieldset">
+              <legend>ACTIVE/INACTIVE</legend>
               {statusOptions.map((option) => (
                 <label className="medications-choice" key={option.value}>
-                  <input type="checkbox" checked={filterDraft.includes(option.value)} onChange={() => toggleFilterStatus(option.value)} />
+                  <input type="checkbox" checked={statusDraft.includes(option.value)} onChange={() => toggleStatusDraft(option.value)} />
+                  <span className="medications-choice-mark medications-choice-square" aria-hidden="true" />
+                  {option.label}
+                </label>
+              ))}
+            </fieldset>
+            <fieldset className="medications-modal-fieldset">
+              <legend>SCHEDULE</legend>
+              {scheduleOptions.map((option) => (
+                <label className="medications-choice" key={option.value}>
+                  <input type="checkbox" checked={scheduleDraft.includes(option.value)} onChange={() => toggleScheduleDraft(option.value)} />
                   <span className="medications-choice-mark medications-choice-square" aria-hidden="true" />
                   {option.label}
                 </label>
