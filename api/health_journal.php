@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 else {
     try {
-        $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at FROM readings WHERE uid = :uid ORDER BY recorded_at DESC");
+        $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC");
         $stmt->execute([':uid' => $uid]);
         $bp_readings = $stmt->fetchAll();
 

@@ -30,7 +30,7 @@ if ($email === '' || $password === '') {
   exit;
 }
 
-$stmt = $pdo->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+$stmt = $pdo->prepare('SELECT id, password_hash, isCaregiver, patientEmail FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 
@@ -60,6 +60,14 @@ session_set_cookie_params([
 session_start();
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
+$_SESSION['caregiver'] = (bool) $user['isCaregiver'];
 
-echo json_encode(['login' => true]);
-
+if (!$user['isCaregiver']) {
+  echo json_encode(['login' => true]);
+} else {
+  $stmt = $pdo->prepare('SELECT id, password_hash, isCaregiver, patientEmail FROM users WHERE email = ?');
+  $stmt->execute($user['patientEmail']);
+  $patient = $stmt->fetch(); 
+  $_SESSION['patientID'] = $patient['id'];
+  echo json_encode(['login' => true, 'isCaregiver' => $user['isCaregiver'], 'patientEmail' => $user['patientEmail'], 'patientInfo' => $patient ])
+}
