@@ -60,7 +60,7 @@ session_set_cookie_params([
 session_start();
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
-$_SESSION['caregiver'] = (bool) $user['isCaregiver'];
+$_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to PHPSESS cookie for caregivers
 
 if (!$user['isCaregiver']) {
   echo json_encode(['login' => true]);
@@ -68,6 +68,9 @@ if (!$user['isCaregiver']) {
   $stmt = $pdo->prepare('SELECT id, password_hash, isCaregiver, patientEmail FROM users WHERE email = ?');
   $stmt->execute($user['patientEmail']);
   $patient = $stmt->fetch(); 
-  $_SESSION['patientID'] = $patient['id'];
-  echo json_encode(['login' => true, 'isCaregiver' => $user['isCaregiver'], 'patientEmail' => $user['patientEmail'], 'patientInfo' => $patient ])
+  $_SESSION['patientID'] = $patient['id']; //set patientID for backend fetches to get info to show to caregivers
+  echo json_encode([
+    'login' => true, 
+    'isCaregiver' => $user['isCaregiver'],  
+    'patientInfo' => $patient ])
 }

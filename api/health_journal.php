@@ -19,14 +19,19 @@ else {
         $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC");
         $stmt->execute([':uid' => $uid]);
         $bp_readings = $stmt->fetchAll();
+        $totalPulse = 0;
 
         foreach ($bp_readings as &$reading) {
             $reading['recorded_at'] = date('F jS, Y, g:i a', strtotime($reading['recorded_at']));
+            $totalPulse += $reading['pulse']; // gets each pulse from the readings to get average
         }
+
+        $totalPulse = $totalPulse / sizeof($bp_readings);
 
         echo json_encode([
             "success" => true,
             "bp_readings" => $bp_readings ?: null,
+            "average_pulse" => $totalPulse ?: null
         ]);
     } catch (PDOException $e) {
         http_response_code(500);

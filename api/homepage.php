@@ -16,6 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
+    if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+        $stmt->execute([':uid' => $uid]);
+        $caregiverInfo = $stmt->fetch();
+        $uid = $_SESSION['patientID'];
+    }
     $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at FROM readings WHERE uid = :uid ORDER BY recorded_at DESC LIMIT 1");
     $stmt->execute([':uid' => $uid]);
     $bp_reading = $stmt->fetch();
@@ -38,13 +44,22 @@ try {
     if ($appointment) {
         $appointment['appointment_date'] = date('F jS, Y, g:i a', strtotime($appointment['appointment_date']));
     }
-
-    echo json_encode([
-        "success" => true,
-        "bp_reading" => $bp_reading ?: null,
-        "medications" => $medications ?: null,
-        "next_appointment" => $appointment ?: null
-    ]);
+    if (!$_SESSION['isCaregiver']) {
+        echo json_encode([
+            "success" => true,
+            "bp_reading" => $bp_reading ?: null,
+            "medications" => $medications ?: null,
+            "next_appointment" => $appointment ?: null
+        ]);
+    } else {
+        echo json_encode([
+            "success" => true,
+            "bp_reading" => $bp_reading ?: null,
+            "medications" => $medications ?: null,
+            "next_appointment" => $appointment ?: null
+            "caregiver_info" => $caregiverInfo ?: null
+        ]);
+    }
 } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
