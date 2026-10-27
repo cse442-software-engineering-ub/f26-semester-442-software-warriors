@@ -16,6 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 else {
     try {
+        if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+            $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+            $stmt->execute([':uid' => $uid]);
+            $caregiverInfo = $stmt->fetch();
+            $uid = $_SESSION['patientID'];
+        }
         $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC");
         $stmt->execute([':uid' => $uid]);
         $bp_readings = $stmt->fetchAll();
@@ -33,6 +39,20 @@ else {
             "bp_readings" => $bp_readings ?: null,
             "average_pulse" => $totalPulse ?: null
         ]);
+        if (!$_SESSION['isCargiver']) {
+            echo json_encode([
+                "success" => true,
+                "bp_readings" => $bp_readings ?: null,
+                "average_pulse" => $totalPulse ?: null
+            ]);
+        } else { // adds caregiver info tp json when logged in as a caregiver
+            echo json_encode([
+                "success" => true,
+                "bp_readings" => $bp_readings ?: null,
+                "average_pulse" => $totalPulse ?: null,
+                "caregiver_info" => $caregiverInfo
+            ]);
+        }
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
