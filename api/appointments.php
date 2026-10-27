@@ -19,6 +19,13 @@ function fail(int $status, array $body): void
 const APPOINTMENT_COLUMNS = 'aid, doctors_name, appointment_date, location, address';
 
 try {
+
+  if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+    $stmt->execute([':uid' => $uid]);
+    $caregiverInfo = $stmt->fetch();
+    $uid = $_SESSION['patientID'];
+  }
   // ---------- GET: my upcoming appointments, soonest first ----------
   if ($method === 'GET') {
     $stmt = $pdo->prepare(
@@ -31,7 +38,14 @@ try {
     foreach ($rows as &$row) {
       $row['aid'] = (int) $row['aid'];
     }
-    echo json_encode(['appointments' => $rows]);
+    if (!$_SESSION['isCargiver']) {
+      echo json_encode(['appointments' => $rows]);
+    } else { // adds caregiver info tp json when logged in as a caregiver
+      echo json_encode([
+        'appointments' => $rows,
+        'caregiver_info' => $caregiverInfo
+      ]);
+    }
     exit;
   }
 

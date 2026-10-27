@@ -25,6 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try { 
+    if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+        $stmt->execute([':uid' => $uid]);
+        $caregiverInfo = $stmt->fetch();
+        $uid = $_SESSION['patientID'];
+    }
     $stmt = $pdo->prepare("SELECT medication_name, dosage, time, days FROM medications WHERE uid = :uid AND FIND_IN_SET(:today, days) > 0 ORDER BY time ASC");
     $stmt->execute([':uid' => $uid, ':today' => $today]);
     $medications = $stmt->fetchAll();
@@ -40,6 +46,20 @@ try {
             'day' => $today,
             'medications' => $medications
         ]);
+        if (!$_SESSION['isCargiver']) {
+            echo json_encode([
+                'success' => true,
+                'day' => $today,
+                'medications' => $medications
+            ]);
+        } else { // adds caregiver info to json when logged in as a caregiver
+            echo json_encode([
+                'success' => true,
+                'day' => $today,
+                'medications' => $medications,
+                'caregiver_info' => $caregiverInfo
+            ]);
+        }
     } else {
         echo json_encode([
             'success' => false,

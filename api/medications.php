@@ -49,6 +49,12 @@ $userId = requireAuth();
 //Get the request method being used
 $method = $_SERVER['REQUEST_METHOD'];
 
+if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+    $stmt->execute([':uid' => $uid]);
+    $caregiverInfo = $stmt->fetch();
+    $uid = $_SESSION['patientID'];
+}
 //Handle GET requests
 if($method === 'GET') {
 
@@ -78,12 +84,20 @@ if($method === 'GET') {
 
     unset($medication);
 
-    echo json_encode([
+    if (!$_SESSION['isCargiver']) {
+      echo json_encode([
         'success' => true,
         'medications' => $medications
     ]);
+    } else { // adds caregiver info tp json when logged in as a caregiver
+      echo json_encode([
+        'success' => true,
+        'medications' => $medications,
+        'caregiver_info' => $caregiverInfo
+      ]);
+    }
 
-    exit;
+    exit();
 }
 
 //Handle POST requests
