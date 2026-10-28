@@ -1,0 +1,298 @@
+.medications-content {
+  width: min(100%, 1080px);
+  margin: 0 auto;
+  color: var(--app-ink);
+}
+
+.app-layout-main:has(> .medications-content) {
+  display: flex;
+  flex-direction: column;
+}
+
+.medications-page-heading { margin-bottom: 24px; }
+.medications-page-heading h1 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: clamp(29px, 3.05vw, 38px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+.medications-intro { max-width: 680px; margin: 10px 0 0; color: #666; font-size: 14px; line-height: 1.5; }
+
+.medications-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px;
+  border: 2px solid var(--app-blue);
+  border-radius: 10px;
+  background: var(--app-blue);
+}
+.medications-filter-button,
+.medications-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 45px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.medications-filter-button {
+  border: 0;
+  background: var(--app-blue);
+  border: 1px solid #fff;
+  color: #fff;
+}
+.medications-add-button {
+  min-width: 190px;
+  border: 1px solid var(--app-blue);
+  background: #fff;
+  color: var(--app-blue-dark);
+}
+.medications-filter-button:hover,
+.medications-filter-button:focus-visible { background: var(--app-blue-dark); }
+.medications-add-button:hover,
+.medications-add-button:focus-visible { background: #f5f5f5; }
+.medications-filter-button:focus-visible,
+.medications-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
+
+.medications-list { display: grid; gap: 12px; margin-top: 20px; }
+/* Desktop: details on the left, days/time centered, status and buttons on the right */
+.medications-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+}
+.medications-main { display: flex; grid-column: 1; align-items: center; gap: 14px; min-width: 0; }
+.medications-schedule { display: flex; flex-wrap: wrap; grid-column: 2; gap: 10px; min-width: 0; }
+/* Days/time boxes match the Remove button height, with the label and value on one line */
+.medications-schedule .home-pill-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  box-sizing: border-box;
+}
+.medications-schedule .home-pill-box span,
+.medications-schedule .home-pill-box strong { font-size: 13px; line-height: 1; }
+.medications-controls { display: flex; grid-column: 3; align-items: center; justify-content: flex-end; gap: 14px; }
+.medications-status { flex: 0 0 auto; font-size: 14px; }
+.medications-status-inactive { background: #fce4e4; color: #b93a2e; }
+.medications-status-as-needed { background: #fff1d6; color: #8a5a00; }
+.medications-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.medications-edit-button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-blue);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.medications-edit-button svg { width: 24px; height: 24px; }
+.medications-remove-button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 2px solid #d32f2f;
+  border-radius: 8px;
+  background: #fff;
+  color: #b93a2e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.medications-edit-button:hover,
+.medications-edit-button:focus-visible { background: #f5f5f5; }
+.medications-remove-button:hover,
+.medications-remove-button:focus-visible { background: #fce4e4; }
+.medications-edit-button:focus-visible,
+.medications-remove-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
+
+/* Medium screens: name and controls share the top row, days/time wrap onto their own row below */
+@media (max-width: 1150px) {
+  .medications-card { grid-template-columns: minmax(0, 1fr) auto; }
+  .medications-main { grid-column: 1; grid-row: 1; }
+  .medications-controls { grid-column: 2; grid-row: 1; }
+  .medications-schedule { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
+}
+
+
+@media (max-width: 760px) {
+  .medications-content { padding-bottom: 110px; }
+  .medications-page-heading { margin-bottom: 20px; }
+  .medications-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
+
+  /* Mobile: one column. Name, then days/time stacked, then status and buttons at the bottom */
+  .medications-card { grid-template-columns: 1fr; }
+  .medications-schedule { grid-column: 1; grid-row: 2; flex-direction: column; }
+  .medications-schedule .home-pill-box { width: 100%; }
+  .medications-controls { grid-column: 1; grid-row: 3; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+}
+
+/* Add Medication modal, styled after the settings page's Change Password modal */
+.medications-modal-backdrop {
+  position: fixed;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: 16px 16px 16px calc(var(--sidebar-width) + 16px);
+  background: rgb(15 23 42 / 42%);
+  backdrop-filter: blur(2px);
+}
+.medications-modal {
+  position: relative;
+  width: min(100%, 880px);
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
+  padding: 58px 28px 28px;
+  overflow-y: auto;
+  border: 1px solid #12348f;
+  border-radius: 16px;
+  background: #163ba2;
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 24px 64px rgb(15 23 42 / 35%);
+}
+.medications-modal h2 { margin: 0; color: #fff; font-size: 26px; font-weight: 700; line-height: 1.3; }
+.medications-filter-modal { width: min(100%, 440px); }
+.medications-filter-modal .medications-modal-fieldset { justify-items: start; }
+.medications-filter-modal .medications-modal-actions { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+.medications-modal-close {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #163ba2;
+  cursor: pointer;
+}
+.medications-modal-close svg { width: 26px; height: 26px; }
+.medications-modal-close:hover { background: #eaf3fb; }
+.medications-modal-form { display: grid; gap: 20px; margin-top: 26px; text-align: left; }
+.medications-modal-field { display: grid; gap: 8px; }
+.medications-modal-field > span { color: #fff; font-size: 16px; font-weight: 750; letter-spacing: 0.055em; }
+.medications-modal-field input {
+  width: 100%;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid #fff;
+  border-radius: 10px;
+  background: #fff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 18px;
+}
+.medications-modal-field input::placeholder { color: #6b7280; }
+.medications-modal-status { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.medications-modal-status-button {
+  box-sizing: border-box;
+  width: 100%;
+  height: 45px;
+  min-height: 45px;
+  padding: 0 8px;
+  white-space: nowrap;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+  color: #163ba2;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+.medications-modal-status-button:hover { background: #eaf3fb; }
+.medications-modal-status-button.medications-modal-status-active { border-color: #1b6b32; background: #d9f0de; color: #1b6b32; }
+.medications-modal-status-button.medications-modal-status-inactive { border-color: #d32f2f; background: #fce4e4; color: #b93a2e; }
+.medications-modal-status-button.medications-modal-status-as-needed { border-color: #c98a1b; background: #fff1d6; color: #8a5a00; }
+.medications-modal-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 5px; }
+.medications-modal-submit:disabled { opacity: 0.6; cursor: default; }
+.medications-modal-submit {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  border: 2px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+  color: #163ba2;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.medications-modal-submit:hover { background: #eaf3fb; }
+.medications-modal-close:focus-visible,
+.medications-modal-status-button:focus-visible,
+.medications-modal-submit:focus-visible,
+.medications-modal-field input:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+@media (max-width: 680px) {
+  .medications-modal { max-height: calc(100vh - 32px); padding: 56px 20px 22px; }
+  .medications-modal h2 { font-size: 22px; }
+  .medications-modal-backdrop { padding: 16px; }
+}
+
+.medications-modal-error {
+  width: fit-content;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 14px;
+  font-weight: 600;
+}
+.medications-modal-field input[aria-invalid="true"] { border: 2px solid #fca5a5; }
+.medications-modal-fieldset { display: grid; gap: 12px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.medications-modal-fieldset legend { padding: 0; margin-bottom: 12px; color: #fff; font-size: 16px; font-weight: 750; letter-spacing: 0.055em; }
+.medications-custom-days { display: grid; gap: 12px; padding-left: 38px; }
+
+/* Radio (circle) and checkbox (square) choices; the real input is hidden and the mark is drawn */
+.medications-choice { display: flex; align-items: center; gap: 12px; color: #fff; font-size: 18px; cursor: pointer; }
+.medications-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.medications-choice-mark {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  background: #fff center / 18px no-repeat;
+}
+.medications-choice-circle { border-radius: 50%; }
+.medications-choice-square { border-radius: 6px; }
+.medications-choice input:checked + .medications-choice-circle {
+  border: 2px solid #fff;
+  background: radial-gradient(circle, #163ba2 0 45%, #fff 50%);
+}
+.medications-choice input:checked + .medications-choice-square {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23163ba2' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E");
+}
+.medications-choice input:focus-visible + .medications-choice-mark { outline: 3px solid #aec9f2; outline-offset: 3px; }

@@ -357,8 +357,9 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
     body: params.toString(),
   });
   const data = await response.json().catch(() => ({}));
+  const reading = data?.reading ?? data;
 
-  if (!response.ok || !data?.reading) {
+  if (!response.ok || !reading) {
     throw {
       status: response.status,
       error:
@@ -368,5 +369,198 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
       errors: data?.errors,
     };
   }
-  return data.reading as SavedReading;
+  return reading as SavedReading;
+}
+
+export interface JournalReading {
+  systolic: number;
+  diastolic: number;
+  pulse?: number;
+  status: string;
+  date_time: string;
+}
+
+export interface JournalAverages {
+  systolic: number;
+  diastolic: number;
+  pulse?: number;
+}
+
+export interface JournalData {
+  last_reading: JournalReading | null;
+  averages: JournalAverages | null;
+  readings: JournalReading[];
+}
+
+export async function getJournal(): Promise<JournalData> {
+  const response = await fetch(`${API_BASE}/health_journal.php`, {
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+  // health_journal.php returns bp_readings/recorded_at; keep supporting older overrides too.
+  const rawReadings =
+    data?.bp_readings !== undefined ? data.bp_readings : data?.readings;
+
+  if (
+    !response.ok ||
+    typeof data !== "object" ||
+    data === null ||
+    (!Array.isArray(rawReadings) && rawReadings !== null)
+  ) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : typeof data?.message === "string"
+            ? data.message
+            : "Unable to load your journal.",
+    };
+  }
+
+  const readings: JournalReading[] = (rawReadings ?? []).map(
+    (reading: Record<string, unknown>) => ({
+      systolic: Number(reading.systolic),
+      diastolic: Number(reading.diastolic),
+      ...(reading.pulse !== undefined ? { pulse: Number(reading.pulse) } : {}),
+      status: String(reading.status ?? ""),
+      date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
+    }),
+  );
+  const averages =
+    (data.averages as JournalAverages | null | undefined) ?? null;
+  const lastReading = data.last_reading
+    ? {
+        systolic: Number(data.last_reading.systolic),
+        diastolic: Number(data.last_reading.diastolic),
+        ...(data.last_reading.pulse !== undefined
+          ? { pulse: Number(data.last_reading.pulse) }
+          : {}),
+        status: String(data.last_reading.status ?? ""),
+        date_time: String(
+          data.last_reading.date_time ?? data.last_reading.recorded_at ?? "",
+        ),
+      }
+    : (readings[0] ?? null);
+
+  return { last_reading: lastReading, averages, readings };
+}
+
+// One row from the medications table, as returned by GET medications.php
+export interface MedicationRecord {
+  mid: number;
+  medication_name: string;
+  dosage: string;
+  time: string; // raw TIME value, e.g. "08:00:00"
+  days: string; // comma separated weekdays, empty for as-needed medications
+  status: "active" | "inactive";
+  as_needed: boolean;
+}
+
+// Fields sent when adding or editing a medication
+export type MedicationInput = Omit<MedicationRecord, "mid">;
+
+// GET medications.php -> { success: true, medications: [...] } (401 when not logged in)
+export async function getMedications(): Promise<MedicationRecord[]> {
+  const data = await settingsRequest<{ medications?: MedicationRecord[] }>(
+    "medications.php",
+  );
+  return data.medications ?? [];
+}
+
+// POST medications.php (form-data) -> 201 { success: true, mid }
+export async function addMedication(input: MedicationInput): Promise<number> {
+  const form = new FormData();
+  form.append("medication_name", input.medication_name.trim());
+  form.append("dosage", input.dosage.trim());
+  form.append("time", input.time);
+  form.append("days", input.days);
+  form.append("status", input.status);
+  form.append("as_needed", input.as_needed ? "true" : "false");
+
+  const data = await settingsRequest<{ mid: number }>("medications.php", {
+    method: "POST",
+    body: form,
+  });
+  return data.mid;
+}
+
+// PUT medications.php (raw JSON) -> { success: true }
+export async function updateMedication(
+  medication: MedicationRecord,
+): Promise<void> {
+  await settingsRequest("medications.php", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(medication),
+  });
+}
+
+// DELETE medications.php (raw JSON { mid }) -> { success: true }
+export async function deleteMedication(mid: number): Promise<void> {
+  await settingsRequest("medications.php", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mid }),
+  });
+}
+
+// ---------- Appointments (#70 backend, #73 frontend) ----------
+// One row from GET appointments.php. appointment_date is "YYYY-MM-DD HH:MM:SS".
+export interface AppointmentRecord {
+  aid: number;
+  doctors_name: string;
+  appointment_date: string;
+  location: string | null;
+  address: string | null;
+}
+
+// What the New Appointment popup sends (every box is text, the server checks it)
+export interface AppointmentInput {
+  doctor_name: string;
+  month: string;
+  day: string;
+  year: string;
+  time: string;
+  location: string;
+  address: string;
+}
+
+// GET appointments.php -> 200 { appointments: [...] }, soonest first (401 when not logged in)
+export async function getAppointments(): Promise<AppointmentRecord[]> {
+  const data = await settingsRequest<{ appointments?: AppointmentRecord[] }>(
+    "appointments.php",
+  );
+  return data.appointments ?? [];
+}
+
+// POST appointments.php (form fields)
+// 201 { appointment: {...} }          -> saved, returns the new row
+// 400 { errors: { field: message } }  -> show each message under its box
+export async function addAppointment(
+  input: AppointmentInput,
+): Promise<AppointmentRecord> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    params.append(key, value.trim());
+  }
+
+  const data = await settingsRequest<{ appointment: AppointmentRecord }>(
+    "appointments.php",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      },
+      body: params.toString(),
+    },
+  );
+  return data.appointment;
+}
+
+// DELETE appointments.php?aid=N -> 200 { deleted: true }, 404 when it is not yours or not found
+export async function removeAppointment(aid: number): Promise<void> {
+  await settingsRequest<{ deleted: true }>(`appointments.php?aid=${aid}`, {
+    method: "DELETE",
+  });
 }

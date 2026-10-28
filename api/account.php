@@ -59,7 +59,7 @@ if($method === 'POST') {
         elseif (!preg_match('/[A-Z]/', $newPassword) || !preg_match('/[a-z]/', $newPassword)) {
             accountFail(400, 'Invalid password, passwords must contain at least one uppercase and lowercase letter.');
         }
-        elseif (!preg_match('/\d/', $newPassword) || !preg_match('/[!@#$%^&*]/', $newPassword)) {
+        elseif (!preg_match('/\d/', $newPassword) || !preg_match('/[!@#$%^&*_]/', $newPassword)) {
             accountFail(400, 'Invalid password, passwords must contain at least one number and special character');
         } 
 
@@ -109,7 +109,7 @@ if($method === 'POST') {
     if($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)){
         accountFail(400, 'A valid email is required.');
     }
-    if($phone === '' || !preg_match('/^\d{7,15}$/', $phone)){
+    if($phone === '' || !preg_match('/^\d{10}$/', $phone)){
         accountFail(400, 'A valid phone number (digits only) is required.');
     }
 

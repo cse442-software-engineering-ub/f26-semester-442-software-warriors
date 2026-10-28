@@ -12,6 +12,9 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoggedOutPage from "./pages/LoggedOutPage";
 import HomePage from "./pages/HomePage";
+import MedicationsPage from "./pages/MedicationsPage";
+import JournalPage from "./pages/JournalPage";
+import AppointmentsPage from "./pages/AppointmentsPage";
 
 function App() {
   return (
@@ -28,6 +31,9 @@ function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/logged-out" element={<LoggedOutPage />} />
         <Route path="/dashboard" element={<HomePage />} />
+        <Route path="/medications" element={<MedicationsPage />} />
+        <Route path="/journal" element={<JournalPage />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
       </Routes>
     </HashRouter>
   );

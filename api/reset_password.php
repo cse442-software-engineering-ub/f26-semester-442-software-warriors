@@ -3,15 +3,17 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/CSE442/2026-Fall/cse-442ab/',
-    'domain'   => 'aptitude.cse.buffalo.edu',
-    'secure'   => true,
-    'httponly' => true,
-    'samesite' => 'None',
-]);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/CSE442/2026-Fall/cse-442ab/',
+        'domain'   => 'aptitude.cse.buffalo.edu',
+        'secure'   => true,
+        'httponly' => true,
+        'samesite' => 'None',
+    ]);
+    session_start();
+}
 
 
 header('Content-Type: application/json');
@@ -72,8 +74,19 @@ $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 // Update password in the database
 $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE email = ?");
 
+
+
 if ($stmt->execute([$hashed_password, $email])) {
     // Clear reset session variables
+
+    $_SESSION = [];
+
+    if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    unset($params["lifetime"]);
+    setcookie(session_name(), '', ['expires' => time() - 42000] + $params);
+    }
+
     session_unset();
     session_destroy();
 
