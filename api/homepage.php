@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 try {
     if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
-        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
         $stmt->execute([':uid' => $uid]);
         $caregiverInfo = $stmt->fetch();
         $uid = $_SESSION['patientID'];
@@ -56,7 +56,7 @@ try {
             "success" => true,
             "bp_reading" => $bp_reading ?: null,
             "medications" => $medications ?: null,
-            "next_appointment" => $appointment ?: null
+            "next_appointment" => $appointment ?: null,
             "caregiver_info" => $caregiverInfo ?: null
         ]);
     }

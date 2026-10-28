@@ -50,10 +50,10 @@ $userId = requireAuth();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
-    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
     $stmt->execute([':uid' => $uid]);
     $caregiverInfo = $stmt->fetch();
-    $uid = $_SESSION['patientID'];
+    $userId = $_SESSION['patientID'];
 }
 //Handle GET requests
 if($method === 'GET') {

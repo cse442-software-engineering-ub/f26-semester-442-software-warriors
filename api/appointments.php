@@ -21,7 +21,7 @@ const APPOINTMENT_COLUMNS = 'aid, doctors_name, appointment_date, location, addr
 try {
 
   if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
-    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+    $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
     $stmt->execute([':uid' => $uid]);
     $caregiverInfo = $stmt->fetch();
     $uid = $_SESSION['patientID'];

@@ -65,12 +65,15 @@ $_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to P
 if (!$user['isCaregiver']) {
   echo json_encode(['login' => true]);
 } else {
-  $stmt = $pdo->prepare('SELECT id, password_hash, isCaregiver, patientEmail FROM users WHERE email = ?');
-  $stmt->execute($user['patientEmail']);
+  $stmt = $pdo->prepare('SELECT id, email, name, phone FROM users WHERE email = ?');
+  $stmt->execute([$user['patientEmail']]);
   $patient = $stmt->fetch(); 
+  if (!$patient) {
+    loginFail(500, 'Linked patient account not found.');
+  }
   $_SESSION['patientID'] = $patient['id']; //set patientID for backend fetches to get info to show to caregivers
   echo json_encode([
     'login' => true, 
     'isCaregiver' => $user['isCaregiver'],  
-    'patientInfo' => $patient ])
+    'patientInfo' => $patient ]);
 }

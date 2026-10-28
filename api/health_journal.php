@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 else {
     try {
         if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
-            $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE uid = :uid");
+            $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
             $stmt->execute([':uid' => $uid]);
             $caregiverInfo = $stmt->fetch();
             $uid = $_SESSION['patientID'];
@@ -34,12 +34,7 @@ else {
 
         $totalPulse = $totalPulse / sizeof($bp_readings);
 
-        echo json_encode([
-            "success" => true,
-            "bp_readings" => $bp_readings ?: null,
-            "average_pulse" => $totalPulse ?: null
-        ]);
-        if (!$_SESSION['isCargiver']) {
+        if (!$_SESSION['isCaregiver']) {
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,
