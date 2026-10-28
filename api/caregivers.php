@@ -124,7 +124,7 @@ if($method === 'PUT') {
 
     //make sure there is a caregiver ID
     if($cid === null || filter_var($cid, FILTER_VALIDATE_INT) === false || (int)$cid <= 0) {
-        caregiverFail(400, 'Caregiver ID is required.');
+        caregiverFail(400, 'Valid caregiver ID is required.');
     }
 
     //make sure all required fields are provided
