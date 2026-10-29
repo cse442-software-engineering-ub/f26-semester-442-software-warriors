@@ -44,7 +44,7 @@ else {
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,
-                "averages" => [$totalPulse ?: null, $totalSystolic ?: null, $totalDiastolic ?: null],
+                "averages" => ["systolic" => round($totalSystolic) ?: null, "diastolic" => round($totalDiastolic) ?: null, "pulse" => round($totalPulse) ?: null],
             ]);
         } else { // adds caregiver info tp json when logged in as a caregiver
             echo json_encode([
