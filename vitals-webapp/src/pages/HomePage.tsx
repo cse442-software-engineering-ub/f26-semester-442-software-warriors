@@ -62,12 +62,14 @@ const HomePage = () => {
   const bp = data?.bp_reading ?? null;
   const medications = data?.medications ?? [];
   const appointment = data?.next_appointment ?? null;
+  const isCaregiver = account?.isCaregiver ?? Boolean(data?.caregiver_info);
+  const canAddReading = !isLoading && data !== null && !isCaregiver;
 
   return (
     <AppLayout
       activeItem="Home"
       userName={userName || "Account"}
-      accountLabel="Personal account"
+      accountLabel={isCaregiver ? "Caregiver account" : "Personal account"}
     >
       <div className="home-content">
         <header className="home-heading">
@@ -75,7 +77,9 @@ const HomePage = () => {
             {firstName ? `Hello, ${firstName}` : "Hello"}
           </h1>
           <p className="home-intro">
-            Here is your health overview for today.
+            {isCaregiver
+              ? "Here is your patient’s health overview for today."
+              : "Here is your health overview for today."}
           </p>
         </header>
 
@@ -97,10 +101,15 @@ const HomePage = () => {
         <HealthCard
           isLoading={isLoading}
           type="BPCard"
-          emptyString="No blood pressure readings. Add a new reading."
+          emptyString={
+            isCaregiver
+              ? "No blood pressure readings."
+              : "No blood pressure readings. Add a new reading."
+          }
           bloodPressureReading={bp}
         />
-        <button
+        {canAddReading && (
+          <button
             className="home-add-reading"
             type="button"
             onClick={() => {
@@ -110,11 +119,12 @@ const HomePage = () => {
           >
             <span aria-hidden="true">+</span> Add Blood Pressure Reading
           </button>
-          {savedMessage && (
-            <p className="home-reading-saved" role="status">
-              {savedMessage}
-            </p>
-          )}
+        )}
+        {canAddReading && savedMessage && (
+          <p className="home-reading-saved" role="status">
+            {savedMessage}
+          </p>
+        )}
         </section>
 
         <div className="home-columns grid grid-cols-1 gap-x-6">
@@ -161,7 +171,7 @@ const HomePage = () => {
         </section>
         </div>
       </div>
-      {isAddingReading && (
+      {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
           onSaved={(reading) => {

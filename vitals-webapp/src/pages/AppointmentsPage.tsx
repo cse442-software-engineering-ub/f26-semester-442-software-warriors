@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddAppointmentModal from "../components/AddAppointmentModal";
 import WeekCalendar from "../components/WeekCalendar";
-import { getAppointments, removeAppointment } from "../api";
+import { getAccount, getAppointments, removeAppointment } from "../api";
 import type { AppointmentRecord } from "../api";
 import {
   formatClock,
@@ -73,11 +73,26 @@ const AppointmentsPage = () => {
   const [toRemove, setToRemove] = useState<AppointmentRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState("");
+  const [isCaregiver, setIsCaregiver] = useState(false);
+  const [patientName, setPatientName] = useState<string | null>(null);
 
   const goToLogin = () => navigate("/login", { replace: true });
 
   // Load the list once when the page opens
   useEffect(() => {
+    getAccount()
+      .then((account) => {
+        setIsCaregiver(account.isCaregiver);
+        setPatientName(
+          account.relatedPersonName?.trim().split(/\s+/)[0] || null,
+        );
+      })
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+        }
+      });
+
     getAppointments()
       .then((list) => setAppointments(list))
       .catch((error: unknown) => {
@@ -139,8 +154,16 @@ const AppointmentsPage = () => {
     <AppLayout activeItem="Appointments">
       <div className="appointments-content">
         <header className="appointments-page-heading">
-          <h1>My Appointments</h1>
-          <p>View, add, and manage your upcoming doctor appointments.</p>
+          <h1>
+            {isCaregiver && patientName
+              ? `${patientName}’s Appointments`
+              : "My Appointments"}
+          </h1>
+          <p>
+            {isCaregiver && patientName
+              ? `Manage and book ${patientName}’s clinical consultations and telehealth sessions.`
+              : "View, add, and manage your upcoming doctor appointments."}
+          </p>
         </header>
 
         <div className="appointments-toolbar">

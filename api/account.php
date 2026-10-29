@@ -27,11 +27,27 @@ if ($method === 'GET') {
         accountFail(401, 'You must be logged in to view your account.');
     }
 
+    // Include the other side of the patient-caregiver link for the shared sidebar and page headings.
+    $isCaregiver = !empty($_SESSION['isCaregiver']);
+    if ($isCaregiver) {
+        $stmt = $pdo->prepare('SELECT name FROM users WHERE id = ?');
+        $stmt->execute([$_SESSION['patientID'] ?? 0]);
+    } else {
+        // A patient may have multiple linked caregiver accounts; use the first one for the single-name UI.
+        $stmt = $pdo->prepare(
+            'SELECT name FROM users WHERE patientEmail = ? AND isCaregiver = 1 ORDER BY id ASC LIMIT 1'
+        );
+        $stmt->execute([$user['email']]);
+    }
+    $relatedPerson = $stmt->fetch();
+
     echo json_encode([
         'id' => (int) $user['id'],
         'name' => $user['name'],
         'email' => $user['email'],
-        'phone' => $user['phone']
+        'phone' => $user['phone'],
+        'isCaregiver' => $isCaregiver,
+        'relatedPersonName' => $relatedPerson ? $relatedPerson['name'] : null
     ]);
 
     exit;

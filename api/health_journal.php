@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 else {
     try {
-        if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+        if ($_SESSION['isCaregiver']) {
+            // Return caregiver identity while reading journal data for the linked patient.
             $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
             $stmt->execute([':uid' => $uid]);
             $caregiverInfo = $stmt->fetch();
@@ -36,21 +37,28 @@ else {
             $totalDiastolic += $reading['diastolic'];
         }
 
-        $totalPulse = $totalPulse / sizeof($bp_readings);
-        $totalSystolic = $totalSystolic / sizeof($bp_readings);
-        $totalDiastolic = $totalDiastolic / sizeof($bp_readings);
+        $averages = null;
+        if (count($bp_readings) > 0) {
+            $readingCount = count($bp_readings);
+            $averages = [
+                "systolic" => round($totalSystolic / $readingCount),
+                "diastolic" => round($totalDiastolic / $readingCount),
+                "pulse" => round($totalPulse / $readingCount)
+            ];
+        }
 
         if (!$_SESSION['isCaregiver']) {
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,
-                "averages" => ["systolic" => round($totalSystolic) ?: null, "diastolic" => round($totalDiastolic) ?: null, "pulse" => round($totalPulse) ?: null],
+                "averages" => $averages,
             ]);
-        } else { // adds caregiver info tp json when logged in as a caregiver
+        } else {
+            // Include caregiver identity so the frontend can identify caregiver mode.
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,
-                "averages" => [$totalPulse ?: null, $totalSystolic ?: null, $totalDiastolic ?: null],
+                "averages" => $averages,
                 "caregiver_info" => $caregiverInfo
             ]);
         }
