@@ -26,25 +26,31 @@ else {
         $stmt->execute([':uid' => $uid]);
         $bp_readings = $stmt->fetchAll();
         $totalPulse = 0;
+        $totalSystolic = 0;
+        $totalDiastolic = 0;
 
         foreach ($bp_readings as &$reading) {
             $reading['recorded_at'] = date('F jS, Y, g:i a', strtotime($reading['recorded_at']));
             $totalPulse += $reading['pulse']; // gets each pulse from the readings to get average
+            $totalSystolic += $reading['systolic'];
+            $totalDiastolic += $reading['diastolic'];
         }
 
         $totalPulse = $totalPulse / sizeof($bp_readings);
+        $totalSystolic = $totalSystolic / sizeof($bp_readings);
+        $totalDiastolic = $totalDiastolic / sizeof($bp_readings);
 
         if (!$_SESSION['isCaregiver']) {
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,
-                "average_pulse" => $totalPulse ?: null
+                "averages" => [$totalPulse ?: null, $totalSystolic ?: null, $totalDiastolic ?: null],
             ]);
         } else { // adds caregiver info tp json when logged in as a caregiver
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,
-                "average_pulse" => $totalPulse ?: null,
+                "averages" => [$totalPulse ?: null, $totalSystolic ?: null, $totalDiastolic ?: null],
                 "caregiver_info" => $caregiverInfo
             ]);
         }
