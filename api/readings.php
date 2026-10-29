@@ -64,6 +64,7 @@ $status = bpStatus($values['systolic'], $values['diastolic']);
 try {
   if ($_SESSION['isCaregiver']) {
     echo json_encode(['error' => 'Caregivers cannot save blood pressure readings, go to a patient profile to add a reading.']);
+    exit();
   }
   $stmt = $pdo->prepare(
     'INSERT INTO readings (uid, systolic, diastolic, pulse, status, recorded_at)
