@@ -3,15 +3,6 @@
   flex-direction: column;
 }
 
-.caregivers-card {
-  padding: 16px 20px;
-  border: 2px solid var(--app-blue);
-  border-radius: 12px;
-  background: #fff;
-}
-.caregivers-card h2 { margin: 0 0 6px; color: var(--app-blue-dark); font-size: 20px; }
-.caregivers-card p { margin: 2px 0; color: #444; font-size: 14px; }
-
 .caregivers-modal { width: min(100%, 440px); }
 
 .caregivers-add-button {

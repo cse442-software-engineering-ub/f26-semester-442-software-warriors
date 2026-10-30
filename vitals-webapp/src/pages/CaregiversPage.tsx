@@ -146,10 +146,23 @@ const CaregiversPage = () => {
           <p className="home-empty">No caregivers. Add a caregiver to get started.</p>
         )}
         {caregivers.map((caregiver) => (
-          <article className="caregivers-card" key={caregiver.cid}>
-            <h2>{caregiver.name}</h2>
-            <p>{caregiver.email}</p>
-            <p>{formatPhone(caregiver.phone_number)}</p>
+          <article className="home-card home-medication-card medications-card" key={caregiver.cid}>
+            <div className="medications-main">
+              <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21a8 8 0 0 1 16 0" />
+                </svg>
+              </span>
+              <div className="home-medication-details">
+                <h3>{caregiver.name}</h3>
+                <p>{caregiver.email}</p>
+                <p>{formatPhone(caregiver.phone_number)}</p>
+              </div>
+            </div>
+            <div className="medications-controls">
+              <button className="medications-remove-button" type="button">Remove</button>
+            </div>
           </article>
         ))}
       </section>
