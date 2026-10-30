@@ -13,7 +13,8 @@ import {
 import "./AppointmentsPage.css";
 
 // My Appointments (#73): list + New Appointment popup + Remove with confirm + weekly calendar.
-// Backend: api/appointments.php (#70)  GET list, POST add, DELETE ?aid=N remove.
+// #90: Edit (pencil) on each card opens the same popup filled in.
+// Backend: api/appointments.php (#70, #89)  GET list, POST add, PUT ?aid=N edit, DELETE ?aid=N remove.
 
 const isUnauthorized = (error: unknown) =>
   typeof error === "object" &&
@@ -30,9 +31,11 @@ const sortSoonestFirst = (list: AppointmentRecord[]) =>
 
 const AppointmentCard = ({
   appointment,
+  onEdit,
   onRemove,
 }: {
   appointment: AppointmentRecord;
+  onEdit: (Appointment: AppointmentRecord) => void;
   onRemove: (appointment: AppointmentRecord) => void;
 }) => {
   const date = parseAppointmentDate(appointment.appointment_date);
@@ -51,14 +54,37 @@ const AppointmentCard = ({
         <strong>{formatDayLabel(date)}</strong>
         <span>{formatClock(date)}</span>
       </div>
-      <button
-        className="appointments-remove-button"
-        type="button"
-        aria-label={`Remove appointment with ${appointment.doctors_name}`}
-        onClick={() => onRemove(appointment)}
-      >
-        Remove
-      </button>
+      <div className="appointments-card-actions">
+        {/* Same pencil as the Medications page */}
+        <button
+          className="appointments-edit-button"
+          type="button"
+          title="Edit"
+          aria-label={`Edit appointment with ${appointment.doctors_name}`}
+          onClick={() => onEdit(appointment)}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+            <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+          </svg>
+        </button>
+        <button
+          className="appointments-remove-button"
+          type="button"
+          aria-label={`Remove appointment with ${appointment.doctors_name}`}
+          onClick={() => onRemove(appointment)}
+        >
+          Remove
+        </button>
+      </div>
     </article>
   );
 };
@@ -69,6 +95,8 @@ const AppointmentsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  // The appointment being edited, or null when the Edit popup is closed
+  const [editing, setEditing] = useState<AppointmentRecord | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [toRemove, setToRemove] = useState<AppointmentRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -118,6 +146,23 @@ const AppointmentsPage = () => {
     setIsAdding(false);
     setAppointments((current) => sortSoonestFirst([...current, saved]));
     setStatusMessage(`Appointment with ${saved.doctors_name} added.`);
+  };
+
+  // After an edit: swap the old card for the saved one (same aid), then re-sort,
+  // because a new date can move it up or down the list
+  const handleEdited = (saved: AppointmentRecord) => {
+    setEditing(null);
+    setAppointments((current) =>
+      sortSoonestFirst(
+        current.map((item) => (item.aid === saved.aid ? saved : item)),
+      ),
+    );
+    setStatusMessage(`Appointment with ${saved.doctors_name} updated.`);
+  };
+
+  const closePopup = () => {
+    setIsAdding(false);
+    setEditing(null);
   };
 
   const askToRemove = (appointment: AppointmentRecord) => {
@@ -214,6 +259,7 @@ const AppointmentsPage = () => {
               <AppointmentCard
                 key={appointment.aid}
                 appointment={appointment}
+                onEdit={setEditing}
                 onRemove={askToRemove}
               />
             ))}
@@ -224,8 +270,20 @@ const AppointmentsPage = () => {
 
       {isAdding && (
         <AddAppointmentModal
-          onClose={() => setIsAdding(false)}
+          //onClose={() => setIsAdding(false)}
+          onClose={closePopup}
           onSaved={handleSaved}
+          onUnauthorized={goToLogin}
+        />
+      )}
+
+      {/* key: a fresh popup for each appointment, so its boxes start with that one's values */}
+      {editing && (
+        <AddAppointmentModal
+          key={editing.aid}
+          appointment={editing}
+          onClose={closePopup}
+          onSaved={handleEdited}
           onUnauthorized={goToLogin}
         />
       )}

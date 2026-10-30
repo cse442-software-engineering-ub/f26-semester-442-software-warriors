@@ -150,6 +150,38 @@
   font-size: 14px;
 }
 
+/* Edit (pencil) and Remove side by side (#90) */
+.appointments-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.appointments-edit-button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-blue);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.appointments-edit-button svg {
+  width: 22px;
+  height: 22px;
+}
+.appointments-edit-button:hover,
+.appointments-edit-button:focus-visible {
+  background: #d6e6fa;
+}
+.appointments-edit-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
 .appointments-remove-button {
   min-height: 34px;
   padding: 0 16px;
@@ -487,7 +519,7 @@
     padding-bottom: 12px;
   }
 
-  /* Doctor + Remove on top, a line, location and address, then one white row with date | time */
+  /* Doctor + Edit/Remove on top, a line, location and address, then one white row with date | time */
   .appointments-card {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
@@ -501,7 +533,7 @@
     grid-row: 1;
     align-self: center;
   }
-  .appointments-remove-button {
+  .appointments-card-actions {
     grid-column: 2;
     grid-row: 1;
   }
