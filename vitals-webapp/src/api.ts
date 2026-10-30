@@ -400,9 +400,7 @@ export interface JournalData {
 const averageValue = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const normalizeJournalAverages = (
-  value: unknown,
-): JournalAverages | null => {
+const normalizeJournalAverages = (value: unknown): JournalAverages | null => {
   if (value === null || typeof value !== "object") return null;
   const averages = value as Record<string, unknown>;
   if (
@@ -572,10 +570,10 @@ export async function getAppointments(): Promise<AppointmentRecord[]> {
 export async function addAppointment(
   input: AppointmentInput,
 ): Promise<AppointmentRecord> {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(input)) {
-    params.append(key, value.trim());
-  }
+  //const params = new URLSearchParams();
+  //for (const [key, value] of Object.entries(input)) {
+  //  params.append(key, value.trim());
+  //}
 
   const data = await settingsRequest<{ appointment: AppointmentRecord }>(
     "appointments.php",
@@ -584,12 +582,42 @@ export async function addAppointment(
       headers: {
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
       },
-      body: params.toString(),
+      //body: params.toString(),
+      body: appointmentFormBody(input),
     },
   );
   return data.appointment;
 }
 
+// PUT appointments.php?aid=N (same form fields as POST) (#89 backend, #90 frontend)
+// 200 { appointment: {...} }          -> saved, returns the updated row (same aid)
+// 400 { errors: { field: message } }  -> show each message under its box
+// 404                                 -> not yours, or already removed
+export async function updateAppointment(
+  aid: number,
+  input: AppointmentInput,
+): Promise<AppointmentRecord> {
+  const data = await settingsRequest<{ appointment: AppointmentRecord }>(
+    `appointments.php?aid=${aid}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      },
+      body: appointmentFormBody(input),
+    },
+  );
+  return data.appointment;
+}
+
+// The 7 popup boxes as "doctor_name=...&month=..." (trimmed), for POST and PUT
+function appointmentFormBody(input: AppointmentInput): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    params.append(key, value.trim());
+  }
+  return params.toString();
+}
 // DELETE appointments.php?aid=N -> 200 { deleted: true }, 404 when it is not yours or not found
 export async function removeAppointment(aid: number): Promise<void> {
   await settingsRequest<{ deleted: true }>(`appointments.php?aid=${aid}`, {

@@ -37,6 +37,14 @@ export const isSameDay = (a: Date, b: Date) =>
 export const formatClock = (date: Date) =>
   date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 
+// -> "10:30 AM" for a form box. Built by hand on purpose: Chrome's toLocaleTimeString puts an
+//    invisible special space (U+202F) before AM/PM, and appointments.php would reject it.
+export const formatTimeForInput = (date: Date) => {
+  const hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours % 12 || 12}:${minutes} ${hours >= 12 ? "PM" : "AM"}`;
+};
+
 // -> "Today, October 24", "Tomorrow, October 25", "Tuesday, December 15",
 //    and the year is added when it is not this year: "Friday, January 8, 2027"
 export const formatDayLabel = (date: Date, now = new Date()) => {

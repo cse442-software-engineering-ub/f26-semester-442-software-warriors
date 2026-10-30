@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, SubmitEvent } from "react";
-import { addAppointment } from "../api";
+import { addAppointment, updateAppointment } from "../api";
 import type { AppointmentInput, AppointmentRecord } from "../api";
+import { formatTimeForInput, parseAppointmentDate } from "../appointmentDates";
 
-// The blue "New Appointment" popup from Figma (#73, Story 2).
+// The blue appointment popup from Figma, used two ways:
+//   no `appointment` prop -> "New Appointment", empty boxes, POST    (#73)
+//   `appointment` given   -> "Edit Appointment", filled boxes, PUT   (#90)
 // The browser only checks that the required boxes are filled in. The real rules
 // (a real date, in the future, a valid time, lengths) live in appointments.php,
 // and its messages are shown under the matching box.
@@ -13,6 +16,7 @@ type FieldErrors = Partial<
 >;
 
 interface AddAppointmentModalProps {
+  appointment?: AppointmentRecord; // the one being edited; leave out to add a new one
   onClose: () => void;
   onSaved: (appointment: AppointmentRecord) => void;
   onUnauthorized: () => void;
@@ -28,12 +32,34 @@ const emptyForm: AppointmentInput = {
   address: "",
 };
 
+// The saved appointment as popup boxes: "2026-12-15 10:30:00" -> 12 / 15 / 2026 / "10:30 AM"
+const formFromAppointment = (
+  appointment: AppointmentRecord,
+): AppointmentInput => {
+  const date = parseAppointmentDate(appointment.appointment_date);
+  return {
+    doctor_name: appointment.doctors_name,
+    month: String(date.getMonth() + 1),
+    day: String(date.getDate()),
+    year: String(date.getFullYear()),
+    time: formatTimeForInput(date),
+    location: appointment.location ?? "",
+    address: appointment.address ?? "",
+  };
+};
+
 const AddAppointmentModal = ({
+  appointment,
   onClose,
   onSaved,
   onUnauthorized,
 }: AddAppointmentModalProps) => {
-  const [form, setForm] = useState<AppointmentInput>(emptyForm);
+  // const [form, setForm] = useState<AppointmentInput>(emptyForm);
+  const isEditing = appointment !== undefined;
+  // Starts filled in when editing, empty when adding (only read when the popup opens)
+  const [form, setForm] = useState<AppointmentInput>(() =>
+    appointment ? formFromAppointment(appointment) : emptyForm,
+  );
   const [errors, setErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -75,7 +101,10 @@ const AddAppointmentModal = ({
 
     setIsSaving(true);
     try {
-      const saved = await addAppointment(form);
+      //const saved = await addAppointment(form);
+      const saved = appointment
+        ? await updateAppointment(appointment.aid, form)
+        : await addAppointment(form);
       onSaved(saved);
     } catch (error: unknown) {
       const err = error as {
@@ -138,7 +167,9 @@ const AddAppointmentModal = ({
             <path d="m5 5 14 14M19 5 5 19" />
           </svg>
         </button>
-        <h2 id="appointments-modal-title">New Appointment</h2>
+        <h2 id="appointment-modal-title">
+          {isEditing ? "Edit Appointment" : "New Appointment"}
+        </h2>
 
         <form
           className="appointments-modal-form"
@@ -259,6 +290,8 @@ const AddAppointmentModal = ({
             >
               {isSaving ? (
                 "Saving..."
+              ) : isEditing ? (
+                "Save Changes"
               ) : (
                 <>
                   <span aria-hidden="true">+</span> Add Appointment
