@@ -1,0 +1,23 @@
+.app-layout-main:has(> .caregivers-content) {
+  display: flex;
+  flex-direction: column;
+}
+
+.caregivers-back-button {
+  align-self: flex-start;
+  margin-bottom: 20px;
+  min-height: 45px;
+  padding: 0 20px;
+  border: 2px solid var(--app-blue);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--app-blue-dark);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.caregivers-back-button:hover,
+.caregivers-back-button:focus-visible { background: #f5f5f5; }
+.caregivers-back-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
