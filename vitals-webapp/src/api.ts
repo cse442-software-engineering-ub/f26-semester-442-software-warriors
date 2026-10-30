@@ -535,6 +535,39 @@ export async function deleteMedication(mid: number): Promise<void> {
   });
 }
 
+// ---------- Caregivers ----------
+// One row from GET caregivers.php
+export interface CaregiverRecord {
+  cid: number;
+  name: string;
+  email: string;
+  phone_number: string; // exactly 10 digits
+}
+
+// GET caregivers.php -> { success: true, caregivers: [...] }
+export async function getCaregivers(): Promise<CaregiverRecord[]> {
+  const data = await settingsRequest<{ caregivers?: CaregiverRecord[] }>(
+    "caregivers.php",
+  );
+  return data.caregivers ?? [];
+}
+
+// POST caregivers.php (form-data) -> 201 { success: true, cid }; also emails the invitation
+export async function addCaregiver(
+  input: Omit<CaregiverRecord, "cid">,
+): Promise<number> {
+  const form = new FormData();
+  form.append("name", input.name.trim());
+  form.append("email", input.email.trim());
+  form.append("phone_number", input.phone_number);
+
+  const data = await settingsRequest<{ cid: number }>("caregivers.php", {
+    method: "POST",
+    body: form,
+  });
+  return data.cid;
+}
+
 // ---------- Appointments (#70 backend, #73 frontend) ----------
 // One row from GET appointments.php. appointment_date is "YYYY-MM-DD HH:MM:SS".
 export interface AppointmentRecord {

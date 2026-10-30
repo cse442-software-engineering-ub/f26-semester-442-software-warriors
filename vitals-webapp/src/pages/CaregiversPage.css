@@ -3,6 +3,36 @@
   flex-direction: column;
 }
 
+.caregivers-card {
+  padding: 16px 20px;
+  border: 2px solid var(--app-blue);
+  border-radius: 12px;
+  background: #fff;
+}
+.caregivers-card h2 { margin: 0 0 6px; color: var(--app-blue-dark); font-size: 20px; }
+.caregivers-card p { margin: 2px 0; color: #444; font-size: 14px; }
+
+.caregivers-modal { width: min(100%, 440px); }
+
+.caregivers-add-button {
+  align-self: flex-start;
+  min-height: 45px;
+  min-width: 190px;
+  padding: 0 20px;
+  border: 2px solid var(--app-blue);
+  border-radius: 8px;
+  background: var(--app-blue);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.caregivers-add-button:hover,
+.caregivers-add-button:focus-visible { background: var(--app-blue-dark); }
+.caregivers-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
+
 .caregivers-back-button {
   align-self: flex-start;
   margin-bottom: 20px;
