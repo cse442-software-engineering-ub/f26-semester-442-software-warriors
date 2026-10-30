@@ -157,7 +157,7 @@ if($method === 'POST') {
         $mail->Port = 465;
 
         $mail->Username = '442.warriors@gmail.com';
-        $mail->Password = 'YOUR_GMAIL_APP_PASSWORD';
+        $mail->Password = 'vlfqqdftkbjhrgpg';
 
         $mail->addAddress($email, $name);
 

@@ -34,7 +34,7 @@ if(!is_array($data)) {
     exit;
 }
 
-$token = trim($data['token'] ?? '');
+$token = rawurldecode(trim($data['token'] ?? ''));
 
 if($token === '') {
     http_response_code(400);
@@ -55,7 +55,7 @@ if(count($tokenParts) !== 2) {
 
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid invitation.'
+        'error' => 'Invalid invitation: format.'
     ]);
 
     exit;
@@ -77,7 +77,7 @@ if(!hash_equals($expectedSignature, $signature)) {
 
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid invitation.'
+        'error' => 'Invalid invitation: signature.'
     ]);
 
     exit;
@@ -91,7 +91,7 @@ if(!is_array($inviteData)) {
 
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid invitation.'
+        'error' => 'Invalid invitation: payload.'
     ]);
 
     exit;
