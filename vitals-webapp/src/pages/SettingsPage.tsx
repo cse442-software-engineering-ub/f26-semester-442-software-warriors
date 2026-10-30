@@ -326,6 +326,16 @@ const SettingsPage = () => {
                 <div className="settings-account-actions-column">
                   <section className="settings-preference-row settings-security-row">
                     <div>
+                      <h2>Caregivers</h2>
+                      <p>Add caregivers who can help you manage your health information.</p>
+                      <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => navigate("/caregivers")}>
+                        Manage Caregivers
+                      </button>
+                    </div>
+                  </section>
+
+                  <section className="settings-preference-row settings-security-row">
+                    <div>
                       <h2>Password</h2>
                       <p>Update your password to help keep your account secure.</p>
                       <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => showModal("password")}>

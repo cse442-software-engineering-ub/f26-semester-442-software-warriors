@@ -130,7 +130,7 @@ const CaregiversPage = () => {
   return (
   <AppLayout activeItem="Caregivers" userName={accountName || "Account"} accountLabel="Personal account">
     <div className="medications-content caregivers-content">
-      <button className="caregivers-back-button" type="button">Back to Profile</button>
+      <button className="caregivers-back-button" type="button">&lt; Back to Profile</button>
 
       <header className="medications-page-heading">
         <h1>Caregivers</h1>
