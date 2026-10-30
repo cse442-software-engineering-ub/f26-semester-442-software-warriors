@@ -160,9 +160,6 @@ const CaregiversPage = () => {
                 <p>{formatPhone(caregiver.phone_number)}</p>
               </div>
             </div>
-            <div className="medications-controls">
-              <button className="medications-remove-button" type="button">Remove</button>
-            </div>
           </article>
         ))}
       </section>
