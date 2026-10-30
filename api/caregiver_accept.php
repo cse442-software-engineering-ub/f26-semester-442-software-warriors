@@ -55,7 +55,7 @@ if(count($tokenParts) !== 2) {
 
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid invitation: format.'
+        'error' => 'Invalid invitation.'
     ]);
 
     exit;
@@ -77,7 +77,7 @@ if(!hash_equals($expectedSignature, $signature)) {
 
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid invitation: signature.'
+        'error' => 'Invalid invitation.'
     ]);
 
     exit;
@@ -91,7 +91,7 @@ if(!is_array($inviteData)) {
 
     echo json_encode([
         'success' => false,
-        'error' => 'Invalid invitation: payload.'
+        'error' => 'Invalid invitation.'
     ]);
 
     exit;
