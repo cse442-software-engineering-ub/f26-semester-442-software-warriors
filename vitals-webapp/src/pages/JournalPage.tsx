@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
-import { getJournal } from "../api";
-import type { JournalData, JournalReading } from "../api";
+import { getAccount, getJournal } from "../api";
+import type { AccountInfo, JournalData, JournalReading } from "../api";
 import "./JournalPage.css";
 
-const EMPTY_MESSAGE = "No blood pressure readings. Add a new reading.";
+const EMPTY_MESSAGE = "No blood pressure readings have been recorded yet.";
+const PATIENT_EMPTY_MESSAGE = "No blood pressure readings. Add a new reading.";
 
 const isUnauthorized = (error: unknown) =>
   typeof error === "object" &&
@@ -115,6 +116,7 @@ const ReadingCard = ({ reading }: { reading: JournalReading }) => (
 const JournalPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<JournalData | null>(null);
+  const [account, setAccount] = useState<AccountInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
@@ -127,8 +129,14 @@ const JournalPage = () => {
       setIsLoading(true);
       setRequestError("");
       try {
-        const journal = await getJournal();
-        if (isCurrent) setData(journal);
+        const [journal, accountInfo] = await Promise.all([
+          getJournal(),
+          getAccount(),
+        ]);
+        if (isCurrent) {
+          setData(journal);
+          setAccount(accountInfo);
+        }
       } catch (error: unknown) {
         if (!isCurrent) return;
         if (isUnauthorized(error)) {
@@ -150,14 +158,27 @@ const JournalPage = () => {
   const readings = data?.readings ?? [];
   const lastReading = data?.last_reading ?? null;
   const averages = data?.averages ?? null;
+  const isCaregiver = account?.isCaregiver ?? Boolean(data?.caregiver_info);
+  const patientName =
+    account?.relatedPersonName?.trim().split(/\s+/)[0] || null;
+  const emptyReadingsMessage = isCaregiver
+    ? EMPTY_MESSAGE
+    : PATIENT_EMPTY_MESSAGE;
+  const canAddReading = !isLoading && data !== null && !isCaregiver;
 
   return (
     <AppLayout activeItem="Journal">
       <div className="home-content journal-content" aria-busy={isLoading}>
         <header className="home-heading">
-          <h1 className="formTitle home-page-title">Health Journal</h1>
+          <h1 className="formTitle home-page-title">
+            {isCaregiver && patientName
+              ? `${patientName}’s Health Journal`
+              : "Health Journal"}
+          </h1>
           <p className="home-intro">
-            Measure and track your blood pressure over time.
+            {isCaregiver && patientName
+              ? `Verify and track ${patientName}’s past and recent readings.`
+              : "Measure and track your blood pressure over time."}
           </p>
         </header>
 
@@ -195,7 +216,7 @@ const JournalPage = () => {
                 </p>
               </>
             ) : (
-              <p className="home-empty">{EMPTY_MESSAGE}</p>
+              <p className="home-empty">{emptyReadingsMessage}</p>
             )}
           </article>
 
@@ -223,13 +244,15 @@ const JournalPage = () => {
         </section>
 
         <section className="min-w-0" aria-label="Journal actions">
-          <button
-            className="home-add-reading"
-            type="button"
-            onClick={() => setIsAddingReading(true)}
-          >
-            <span aria-hidden="true">+</span> Add Blood Pressure Reading
-          </button>
+          {canAddReading && (
+            <button
+              className="home-add-reading"
+              type="button"
+              onClick={() => setIsAddingReading(true)}
+            >
+              <span aria-hidden="true">+</span> Add Blood Pressure Reading
+            </button>
+          )}
         </section>
 
         <section
@@ -248,7 +271,9 @@ const JournalPage = () => {
                 Loading readings...
               </p>
             ) : readings.length === 0 ? (
-              <p className="home-empty">{EMPTY_MESSAGE}</p>
+              <p className="home-empty">
+                {emptyReadingsMessage}
+              </p>
             ) : (
               <>
                 <div className="journal-table-wrapper">
@@ -293,7 +318,7 @@ const JournalPage = () => {
         </section>
       </div>
 
-      {isAddingReading && (
+      {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
           onSaved={() => {

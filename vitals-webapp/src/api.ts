@@ -37,9 +37,12 @@ export interface AccountInfo {
   name: string;
   phone: string;
   email: string;
+  isCaregiver: boolean;
+  relatedPersonName: string | null;
 }
 
 export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
+export const ACCOUNT_UPDATED_EVENT = "vitals:account-updated";
 
 // account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
 async function settingsRequest<T>(
@@ -299,6 +302,7 @@ export interface HomepageData {
   bp_reading: BpReading | null;
   medications: Medication[] | null;
   next_appointment: Appointment | null;
+  caregiver_info?: Pick<AccountInfo, "name" | "email" | "phone"> | null;
 }
 
 // GET homepage.php -> dashboard data (401 when not logged in)
@@ -381,16 +385,40 @@ export interface JournalReading {
 }
 
 export interface JournalAverages {
-  systolic: number;
-  diastolic: number;
-  pulse?: number;
+  systolic: number | null;
+  diastolic: number | null;
+  pulse?: number | null;
 }
 
 export interface JournalData {
   last_reading: JournalReading | null;
   averages: JournalAverages | null;
   readings: JournalReading[];
+  caregiver_info: Pick<AccountInfo, "name" | "email" | "phone"> | null;
 }
+
+const averageValue = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const normalizeJournalAverages = (
+  value: unknown,
+): JournalAverages | null => {
+  if (value === null || typeof value !== "object") return null;
+  const averages = value as Record<string, unknown>;
+  if (
+    !("systolic" in averages) &&
+    !("diastolic" in averages) &&
+    !("pulse" in averages)
+  ) {
+    return null;
+  }
+
+  return {
+    systolic: averageValue(averages.systolic),
+    diastolic: averageValue(averages.diastolic),
+    pulse: averageValue(averages.pulse),
+  };
+};
 
 export async function getJournal(): Promise<JournalData> {
   const response = await fetch(`${API_BASE}/health_journal.php`, {
@@ -427,8 +455,7 @@ export async function getJournal(): Promise<JournalData> {
       date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
     }),
   );
-  const averages =
-    (data.averages as JournalAverages | null | undefined) ?? null;
+  const averages = normalizeJournalAverages(data.averages);
   const lastReading = data.last_reading
     ? {
         systolic: Number(data.last_reading.systolic),
@@ -443,7 +470,12 @@ export async function getJournal(): Promise<JournalData> {
       }
     : (readings[0] ?? null);
 
-  return { last_reading: lastReading, averages, readings };
+  return {
+    last_reading: lastReading,
+    averages,
+    readings,
+    caregiver_info: data?.caregiver_info ?? null,
+  };
 }
 
 // One row from the medications table, as returned by GET medications.php

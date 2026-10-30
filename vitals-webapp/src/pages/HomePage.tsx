@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getAccount, getHomepage } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
 import HealthCard from "../components/HealthCard";
@@ -59,15 +59,19 @@ const HomePage = () => {
 
   const userName = account?.name ?? "";
   const firstName = userName.trim().split(/\s+/)[0];
+  const patientFirstName =
+    account?.relatedPersonName?.trim().split(/\s+/)[0] || "your patient";
   const bp = data?.bp_reading ?? null;
   const medications = data?.medications ?? [];
   const appointment = data?.next_appointment ?? null;
+  const isCaregiver = account?.isCaregiver ?? Boolean(data?.caregiver_info);
+  const canAddReading = !isLoading && data !== null && !isCaregiver;
 
   return (
     <AppLayout
       activeItem="Home"
       userName={userName || "Account"}
-      accountLabel="Personal account"
+      accountLabel={isCaregiver ? "Caregiver account" : "Personal account"}
     >
       <div className="home-content">
         <header className="home-heading">
@@ -75,7 +79,9 @@ const HomePage = () => {
             {firstName ? `Hello, ${firstName}` : "Hello"}
           </h1>
           <p className="home-intro">
-            Here is your health overview for today.
+            {isCaregiver
+              ? `Here is ${patientFirstName}’s health overview for today.`
+              : "Here is your health overview for today."}
           </p>
         </header>
 
@@ -97,10 +103,15 @@ const HomePage = () => {
         <HealthCard
           isLoading={isLoading}
           type="BPCard"
-          emptyString="No blood pressure readings. Add a new reading."
+          emptyString={
+            isCaregiver
+              ? "No blood pressure readings."
+              : "No blood pressure readings. Add a new reading."
+          }
           bloodPressureReading={bp}
         />
-        <button
+        {canAddReading && (
+          <button
             className="home-add-reading"
             type="button"
             onClick={() => {
@@ -110,11 +121,12 @@ const HomePage = () => {
           >
             <span aria-hidden="true">+</span> Add Blood Pressure Reading
           </button>
-          {savedMessage && (
-            <p className="home-reading-saved" role="status">
-              {savedMessage}
-            </p>
-          )}
+        )}
+        {canAddReading && savedMessage && (
+          <p className="home-reading-saved" role="status">
+            {savedMessage}
+          </p>
+        )}
         </section>
 
         <div className="home-columns grid grid-cols-1 gap-x-6">
@@ -126,19 +138,22 @@ const HomePage = () => {
               >
                 Medication Schedule
               </h2>
+              <Link className="home-see-all" to="/medications">
+                See all
+              </Link>
             </div>
             {medications && medications.length > 0 ? (
-              medications.map((medication) => (
-                <div key={`${medication.medication_name}-${medication.time}`}>
+              <div className="home-dashboard-card-list">
+                {medications.map((medication) => (
                   <HealthCard
+                    key={`${medication.medication_name}-${medication.time}`}
                     isLoading={isLoading}
                     type="MedicationCard"
                     emptyString="No medications. Visit the Medications page to add a medication"
                     medication={medication}
                   />
-                  <div className="p-1" />
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <HealthCard
                 isLoading={isLoading}
@@ -151,6 +166,9 @@ const HomePage = () => {
           <section className="mt-6 min-w-0" aria-labelledby="home-appointment-title">
           <div className="home-section-header flex items-baseline justify-between gap-3">
             <h2 className="mb-3 text-xl font-bold text-gray-900" id="home-appointment-title">Next Appointment</h2>
+            <Link className="home-see-all" to="/appointments">
+              See all
+            </Link>
           </div>
           <HealthCard 
             isLoading={isLoading}
@@ -161,7 +179,7 @@ const HomePage = () => {
         </section>
         </div>
       </div>
-      {isAddingReading && (
+      {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
           onSaved={(reading) => {
