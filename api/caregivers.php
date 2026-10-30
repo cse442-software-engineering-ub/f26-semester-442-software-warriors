@@ -4,6 +4,13 @@ require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require_once __DIR__ . '/PHPMailer/PHPMailer/src/Exception.php';
+require_once __DIR__ . '/PHPMailer/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/PHPMailer/PHPMailer/src/SMTP.php';
+
 header('Content-Type: application/json');
 
 //Returns an error response whenever a caregiver request fails
@@ -89,6 +96,40 @@ if($method === 'POST') {
         caregiverFail(400, 'A valid phone number is required');
     }
 
+    //Get the logged-in patient's email
+    $stmt = $pdo->prepare(
+        'SELECT email FROM users WHERE id = ?'
+    );
+
+    $stmt->execute([$userId]);
+
+    $patient = $stmt->fetch();
+
+    if(!$patient) {
+        caregiverFail(404, 'Patient account not found');
+    }
+
+    $patientEmail = $patient['email'];
+
+    //Create caregiver invitation that expires in 24 hours
+    $inviteData = [
+        'patient_id' => $userId,
+        'caregiver_email' => $email,
+        'expires' => time() + 86400
+    ];
+
+    $payload = base64_encode(json_encode($inviteData));
+
+    $inviteSecret = '1f77babcb8faff6367ed7d745a261b2ba756136cc258d8c8408e4cdc7065909f';
+
+    $signature = hash_hmac(
+        'sha256',
+        $payload,
+        $inviteSecret
+    );
+
+    $inviteToken = $payload . '.' . $signature;
+
     //Add the caregiver to the database for the currently logged in user
     $stmt = $pdo->prepare(
         'INSERT INTO caregivers (uid, name, email, phone_number)
@@ -97,12 +138,73 @@ if($method === 'POST') {
 
     $stmt->execute([$userId, $name, $email, $phoneNumber]);
 
+    $cid = (int) $pdo->lastInsertId();
+
+    $createAccountLink =
+    'https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab/#/register';
+
+    $acceptInviteLink =
+        'https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab/#/caregiver-invite?token=' . urlencode($inviteToken);
+
+    $mail = new PHPMailer(true);
+
+    try {
+
+        $mail->isSMTP();
+        $mail->SMTPAuth = true;
+        $mail->SMTPSecure = 'ssl';
+        $mail->Host = 'smtp.gmail.com';
+        $mail->Port = 465;
+
+        $mail->Username = '442.warriors@gmail.com';
+        $mail->Password = 'YOUR_GMAIL_APP_PASSWORD';
+
+        $mail->addAddress($email, $name);
+
+        $mail->setFrom(
+            '442.warriors@gmail.com',
+            'VITALS, 442 Warriors'
+        );
+
+        $mail->Subject = 'VITALS Caregiver Invitation';
+
+        $mail->isHTML(true);
+
+        $mail->Body =
+            "You have been invited to become a caregiver on VITALS.<br><br>" .
+            "If you do not have an account, create one here:<br>" .
+            "<a href=\"$createAccountLink\">Create Account</a><br><br>" .
+            "After logging in, return to this email and accept the invitation:<br>" .
+            "<a href=\"$acceptInviteLink\">Accept Caregiver Invitation</a><br><br>" .
+            "This invitation expires in 24 hours.";
+
+        $mail->send();
+
+    }
+    catch(Exception $e) {
+
+        //Remove the caregiver because the invitation could not be sent
+        $stmt = $pdo->prepare(
+            'DELETE FROM caregivers WHERE cid = ? AND uid = ?'
+        );
+
+        $stmt->execute([
+            $cid,
+            $userId
+        ]);
+
+        caregiverFail(
+            500,
+            'Caregiver could not be added because the invitation email could not be sent'
+        );
+    }
+
     http_response_code(201);
 
     echo json_encode([
         
         'success' => true,
-        'cid' => (int) $pdo->lastInsertId(),
+        'cid' => $cid,
         'message' => 'Caregiver added successfully'
     ]);
 
