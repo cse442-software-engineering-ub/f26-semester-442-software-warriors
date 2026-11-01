@@ -25,6 +25,22 @@ function caregiverFail(int $status, string $message): void
     exit;
 }
 
+//Build the API URL based on where caregivers.php is currently deployed
+//Use https when the server is using https, otherwise use http
+$scheme = (
+    !empty($_SERVER['HTTPS']) &&
+    $_SERVER['HTTPS'] !== 'off'
+) ? 'https' : 'http';
+
+//Get the current website host
+$host = $_SERVER['HTTP_HOST'];
+
+//Get the folder that caregivers.php is currently inside
+$apiPath = dirname($_SERVER['SCRIPT_NAME']);
+
+//Create the full API base URL
+$apiBase = $scheme . '://' . $host . $apiPath;
+
 //Get the logged-in user's ID from their session
 $userId = requireAuth();
 
@@ -221,10 +237,7 @@ if($method === 'POST') {
 
     $iid = (int)$pdo->lastInsertId();
 
-    //One invitation link will handle login or registration
-    $inviteLink =
-        'https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab/api/caregiver_invite.php?token=' .
-        urlencode($inviteToken);
+    $inviteLink = $apiBase . '/caregiver_invite.php?token=' . urlencode($inviteToken);
 
     $mail = new PHPMailer(true);
 

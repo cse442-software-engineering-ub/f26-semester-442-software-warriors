@@ -15,6 +15,20 @@ session_set_cookie_params([
 
 session_start();
 
+//Build URLs based on where the backend is currently deployed
+$scheme = (
+    !empty($_SERVER['HTTPS']) &&
+    $_SERVER['HTTPS'] !== 'off'
+) ? 'https' : 'http';
+
+$host = $_SERVER['HTTP_HOST'];
+
+//caregiver_invite.php is inside /api,
+//so go up one folder to get the frontend location
+$frontendPath = dirname(dirname($_SERVER['SCRIPT_NAME']));
+
+$frontendBase = $scheme . '://' . $host . $frontendPath;
+
 //The invitation link should use GET
 if($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -114,7 +128,7 @@ $caregiverAccount = $stmt->fetch();
 //No account exists yet, so send them to registration
 if(!$caregiverAccount) {
     header(
-        'Location: https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab/#/register'
+        'Location: ' . $frontendBase . '/#/register'
     );
 
     exit;
@@ -125,7 +139,7 @@ $caregiverUserId = (int)$caregiverAccount['id'];
 //The caregiver has an account but is not logged in
 if(!isset($_SESSION['user_id'])) {
     header(
-        'Location: https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab/#/login'
+        'Location: ' . $frontendBase . '/#/login'
     );
 
     exit;
@@ -138,7 +152,7 @@ if((int)$_SESSION['user_id'] !== $caregiverUserId) {
     unset($_SESSION['user_id']);
 
     header(
-        'Location: https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab/#/login'
+        'Location: ' . $frontendBase . '/#/login'
     );
 
     exit;
