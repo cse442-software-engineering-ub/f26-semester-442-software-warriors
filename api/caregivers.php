@@ -237,7 +237,7 @@ if($method === 'POST') {
         $mail->Username = '442.warriors@gmail.com';
 
         //Keep your existing working Gmail app password here
-        $mail->Password = 'YOUR_EXISTING_GMAIL_APP_PASSWORD';
+        $mail->Password = 'vlfqqdftkbjhrgpg';
 
         $mail->addAddress($email, $name);
 
