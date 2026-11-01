@@ -372,5 +372,131 @@ if($method === 'PUT') {
     exit;
 }
 
-header('Allow: GET, POST, PUT');
+//handle DELETE requests
+if($method === 'DELETE') {
+
+    $data = json_decode(
+        file_get_contents('php://input'),
+        true
+    );
+
+    if(!is_array($data)) {
+        caregiverFail(400, 'Invalid request data.');
+    }
+
+    $cid = $data['cid'] ?? null;
+
+    //Make sure a valid caregiver record ID was provided
+    if(
+        $cid === null ||
+        filter_var($cid, FILTER_VALIDATE_INT) === false ||
+        (int)$cid <= 0
+    ) {
+        caregiverFail(
+            400,
+            'Valid caregiver ID is required.'
+        );
+    }
+
+    //Make sure this caregiver belongs to the logged-in patient
+    //and get the caregiver's actual users.id
+    $stmt = $pdo->prepare(
+        'SELECT caregiver_uid
+         FROM caregivers
+         WHERE cid = ?
+         AND uid = ?
+         LIMIT 1'
+    );
+
+    $stmt->execute([
+        (int)$cid,
+        $userId
+    ]);
+
+    $caregiver = $stmt->fetch();
+
+    if(!$caregiver) {
+        caregiverFail(
+            404,
+            'Caregiver not found.'
+        );
+    }
+
+    $caregiverUserId = $caregiver['caregiver_uid'];
+
+    try {
+
+        $pdo->beginTransaction();
+
+        //Delete this patient-caregiver relationship
+        $stmt = $pdo->prepare(
+            'DELETE FROM caregivers
+             WHERE cid = ?
+             AND uid = ?'
+        );
+
+        $stmt->execute([
+            (int)$cid,
+            $userId
+        ]);
+
+        //If this caregiver has a user account,
+        //check whether they are still a caregiver for anyone else
+        if($caregiverUserId !== null) {
+
+            $caregiverUserId = (int)$caregiverUserId;
+
+            $stmt = $pdo->prepare(
+                'SELECT COUNT(*)
+                 FROM caregivers
+                 WHERE caregiver_uid = ?'
+            );
+
+            $stmt->execute([
+                $caregiverUserId
+            ]);
+
+            $remainingRelationships =
+                (int)$stmt->fetchColumn();
+
+            //If they are no longer anyone's caregiver,
+            //remove their caregiver status
+            if($remainingRelationships === 0) {
+
+                $stmt = $pdo->prepare(
+                    'UPDATE users
+                     SET isCaregiver = 0,
+                         patientEmail = NULL
+                     WHERE id = ?'
+                );
+
+                $stmt->execute([
+                    $caregiverUserId
+                ]);
+            }
+        }
+
+        $pdo->commit();
+    }
+    catch(Throwable $e) {
+
+        if($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        caregiverFail(
+            500,
+            'Caregiver could not be deleted.'
+        );
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Caregiver deleted successfully.'
+    ]);
+
+    exit;
+}
+
+header('Allow: GET, POST, PUT, DELETE');
 caregiverFail(405, 'Method not allowed.');
