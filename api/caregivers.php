@@ -3,6 +3,8 @@
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+$config = require __DIR__ . '/mail_config.php';
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -245,12 +247,11 @@ if($method === 'POST') {
         $mail->isSMTP();
         $mail->SMTPAuth = true;
         $mail->SMTPSecure = 'ssl';
-        $mail->Host = 'smtp.gmail.com';
+        $mail->Host = $config['host'];
         $mail->Port = 465;
-        $mail->Username = '442.warriors@gmail.com';
 
-        //Keep your existing working Gmail app password here
-        $mail->Password = 'vlfqqdftkbjhrgpg';
+        $mail->Username = $config['username'];
+        $mail->Password = $config['password'];
 
         $mail->addAddress($email, $name);
 
