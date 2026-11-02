@@ -37,9 +37,12 @@ export interface AccountInfo {
   name: string;
   phone: string;
   email: string;
+  isCaregiver: boolean;
+  relatedPersonName: string | null;
 }
 
 export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
+export const ACCOUNT_UPDATED_EVENT = "vitals:account-updated";
 
 // account.php reads URL-encoded POST fields from $_POST; keep these methods and field names aligned with that contract.
 async function settingsRequest<T>(
@@ -299,6 +302,7 @@ export interface HomepageData {
   bp_reading: BpReading | null;
   medications: Medication[] | null;
   next_appointment: Appointment | null;
+  caregiver_info?: Pick<AccountInfo, "name" | "email" | "phone"> | null;
 }
 
 // GET homepage.php -> dashboard data (401 when not logged in)
@@ -381,16 +385,38 @@ export interface JournalReading {
 }
 
 export interface JournalAverages {
-  systolic: number;
-  diastolic: number;
-  pulse?: number;
+  systolic: number | null;
+  diastolic: number | null;
+  pulse?: number | null;
 }
 
 export interface JournalData {
   last_reading: JournalReading | null;
   averages: JournalAverages | null;
   readings: JournalReading[];
+  caregiver_info: Pick<AccountInfo, "name" | "email" | "phone"> | null;
 }
+
+const averageValue = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const normalizeJournalAverages = (value: unknown): JournalAverages | null => {
+  if (value === null || typeof value !== "object") return null;
+  const averages = value as Record<string, unknown>;
+  if (
+    !("systolic" in averages) &&
+    !("diastolic" in averages) &&
+    !("pulse" in averages)
+  ) {
+    return null;
+  }
+
+  return {
+    systolic: averageValue(averages.systolic),
+    diastolic: averageValue(averages.diastolic),
+    pulse: averageValue(averages.pulse),
+  };
+};
 
 export async function getJournal(): Promise<JournalData> {
   const response = await fetch(`${API_BASE}/health_journal.php`, {
@@ -427,8 +453,7 @@ export async function getJournal(): Promise<JournalData> {
       date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
     }),
   );
-  const averages =
-    (data.averages as JournalAverages | null | undefined) ?? null;
+  const averages = normalizeJournalAverages(data.averages);
   const lastReading = data.last_reading
     ? {
         systolic: Number(data.last_reading.systolic),
@@ -443,7 +468,12 @@ export async function getJournal(): Promise<JournalData> {
       }
     : (readings[0] ?? null);
 
-  return { last_reading: lastReading, averages, readings };
+  return {
+    last_reading: lastReading,
+    averages,
+    readings,
+    caregiver_info: data?.caregiver_info ?? null,
+  };
 }
 
 // One row from the medications table, as returned by GET medications.php
@@ -505,6 +535,39 @@ export async function deleteMedication(mid: number): Promise<void> {
   });
 }
 
+// ---------- Caregivers ----------
+// One row from GET caregivers.php
+export interface CaregiverRecord {
+  cid: number;
+  name: string;
+  email: string;
+  phone_number: string; // exactly 10 digits
+}
+
+// GET caregivers.php -> { success: true, caregivers: [...] }
+export async function getCaregivers(): Promise<CaregiverRecord[]> {
+  const data = await settingsRequest<{ caregivers?: CaregiverRecord[] }>(
+    "caregivers.php",
+  );
+  return data.caregivers ?? [];
+}
+
+// POST caregivers.php (form-data) -> 201 { success: true, cid }; also emails the invitation
+export async function addCaregiver(
+  input: Omit<CaregiverRecord, "cid">,
+): Promise<number> {
+  const form = new FormData();
+  form.append("name", input.name.trim());
+  form.append("email", input.email.trim());
+  form.append("phone_number", input.phone_number);
+
+  const data = await settingsRequest<{ cid: number }>("caregivers.php", {
+    method: "POST",
+    body: form,
+  });
+  return data.cid;
+}
+
 // ---------- Appointments (#70 backend, #73 frontend) ----------
 // One row from GET appointments.php. appointment_date is "YYYY-MM-DD HH:MM:SS".
 export interface AppointmentRecord {
@@ -540,10 +603,10 @@ export async function getAppointments(): Promise<AppointmentRecord[]> {
 export async function addAppointment(
   input: AppointmentInput,
 ): Promise<AppointmentRecord> {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(input)) {
-    params.append(key, value.trim());
-  }
+  //const params = new URLSearchParams();
+  //for (const [key, value] of Object.entries(input)) {
+  //  params.append(key, value.trim());
+  //}
 
   const data = await settingsRequest<{ appointment: AppointmentRecord }>(
     "appointments.php",
@@ -552,12 +615,42 @@ export async function addAppointment(
       headers: {
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
       },
-      body: params.toString(),
+      //body: params.toString(),
+      body: appointmentFormBody(input),
     },
   );
   return data.appointment;
 }
 
+// PUT appointments.php?aid=N (same form fields as POST) (#89 backend, #90 frontend)
+// 200 { appointment: {...} }          -> saved, returns the updated row (same aid)
+// 400 { errors: { field: message } }  -> show each message under its box
+// 404                                 -> not yours, or already removed
+export async function updateAppointment(
+  aid: number,
+  input: AppointmentInput,
+): Promise<AppointmentRecord> {
+  const data = await settingsRequest<{ appointment: AppointmentRecord }>(
+    `appointments.php?aid=${aid}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      },
+      body: appointmentFormBody(input),
+    },
+  );
+  return data.appointment;
+}
+
+// The 7 popup boxes as "doctor_name=...&month=..." (trimmed), for POST and PUT
+function appointmentFormBody(input: AppointmentInput): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    params.append(key, value.trim());
+  }
+  return params.toString();
+}
 // DELETE appointments.php?aid=N -> 200 { deleted: true }, 404 when it is not yours or not found
 export async function removeAppointment(aid: number): Promise<void> {
   await settingsRequest<{ deleted: true }>(`appointments.php?aid=${aid}`, {

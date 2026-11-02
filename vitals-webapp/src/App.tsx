@@ -15,6 +15,7 @@ import HomePage from "./pages/HomePage";
 import MedicationsPage from "./pages/MedicationsPage";
 import JournalPage from "./pages/JournalPage";
 import AppointmentsPage from "./pages/AppointmentsPage";
+import CaregiversPage from "./pages/CaregiversPage";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
         <Route path="/medications" element={<MedicationsPage />} />
         <Route path="/journal" element={<JournalPage />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/caregivers" element={<CaregiversPage />} />
       </Routes>
     </HashRouter>
   );

@@ -30,7 +30,7 @@ if ($email === '' || $password === '') {
   exit;
 }
 
-$stmt = $pdo->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+$stmt = $pdo->prepare('SELECT id, password_hash, isCaregiver, patientEmail FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 
@@ -60,6 +60,7 @@ session_set_cookie_params([
 session_start();
 session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
+$_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to PHPSESS cookie for caregivers
 
 //Check if this login came from a caregiver invitation
 if(isset($_SESSION['caregiver_invite_iid'])) {

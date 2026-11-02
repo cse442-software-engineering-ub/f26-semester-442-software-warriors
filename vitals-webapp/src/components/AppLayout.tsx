@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import VitalsLogo from "../assets/logo.png";
 import LogoutButton from "./LogoutButton";
+import { ACCOUNT_UPDATED_EVENT, getAccount } from "../api";
+import type { AccountInfo } from "../api";
 import "./AppLayout.css";
 
 // Shared layout for signed-in pages; set activeItem to highlight the current section.
@@ -151,16 +154,69 @@ const AppLayout = ({
   userName = "Jane Doe",
   accountLabel = "Personal account",
   destinations,
-}: AppLayoutProps) => (
-  <div className="app-layout">
-    <AppSidebar
-      activeItem={activeItem}
-      userName={userName}
-      accountLabel={accountLabel}
-      destinations={destinations}
-    />
-    <main className="app-layout-main">{children}</main>
-  </div>
-);
+}: AppLayoutProps) => {
+  const navigate = useNavigate();
+  const [account, setAccount] = useState<AccountInfo | null>(null);
+  const [accountLoadFailed, setAccountLoadFailed] = useState(false);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const loadAccount = async () => {
+      try {
+        const accountInfo = await getAccount();
+        if (!isCurrent) return;
+        setAccount(accountInfo);
+        setAccountLoadFailed(false);
+      } catch (error: unknown) {
+        if (!isCurrent) return;
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "status" in error &&
+          error.status === 401
+        ) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setAccountLoadFailed(true);
+      }
+    };
+
+    const handleAccountUpdated = () => {
+      void loadAccount();
+    };
+
+    window.addEventListener(ACCOUNT_UPDATED_EVENT, handleAccountUpdated);
+    void loadAccount();
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(ACCOUNT_UPDATED_EVENT, handleAccountUpdated);
+    };
+  }, [navigate]);
+
+  const relatedPersonLabel = account?.relatedPersonName
+    ? `${account.isCaregiver ? "Patient" : "Caregiver"}: ${account.relatedPersonName}`
+    : account
+      ? account.isCaregiver
+        ? "Patient account"
+        : "Personal account"
+      : accountLoadFailed
+        ? "Account details unavailable"
+        : accountLabel;
+
+  return (
+    <div className="app-layout">
+      <AppSidebar
+        activeItem={activeItem}
+        userName={account?.name ?? userName}
+        accountLabel={relatedPersonLabel}
+        destinations={destinations}
+      />
+      <main className="app-layout-main">{children}</main>
+    </div>
+  );
+};
 
 export default AppLayout;
