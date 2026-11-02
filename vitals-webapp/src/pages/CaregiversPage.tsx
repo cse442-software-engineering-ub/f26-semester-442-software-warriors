@@ -138,7 +138,7 @@ const CaregiversPage = () => {
 
       <header className="medications-page-heading">
         <h1>Caregivers</h1>
-        <p className="medications-intro">Below are cards for your caregivers information</p>
+        <p className="medications-intro">Below are cards for your caregivers information. If the status is expired, please add the cargiver again to renew the request.</p>
       </header>
 
       <button className="caregivers-add-button" type="button" onClick={openAddModal}>+ Add Caregiver</button>
