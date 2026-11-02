@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addCaregiver, getAccount, getCaregivers } from "../api";
+import { addCaregiver, deleteCaregiver, getAccount, getCaregivers } from "../api";
 import type { CaregiverRecord } from "../api";
 import "./MedicationsPage.css";
 import "./CaregiversPage.css";
@@ -38,6 +38,7 @@ const CaregiversPage = () => {
   const [accountName, setAccountName] = useState("");
   const [caregivers, setCaregivers] = useState<CaregiverRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
 
@@ -75,6 +76,18 @@ const CaregiversPage = () => {
       .finally(() => setIsLoading(false));
   }, [navigate, reloadCount]);
 
+  const removeCaregiver = (cid: number) => {
+    deleteCaregiver(cid)
+      .then(() => setReloadCount((count) => count + 1))
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setRequestError(getErrorMessage(error));
+      });
+  };
+
   const clearErrors = () => {
     setNameError("");
     setPhoneError("");
@@ -87,6 +100,7 @@ const CaregiversPage = () => {
     setPhoneInput("");
     setEmailInput("");
     clearErrors();
+    setSuccessMessage("");
     setIsAdding(true);
   };
 
@@ -112,9 +126,11 @@ const CaregiversPage = () => {
     if (hasError) return;
 
     setIsSaving(true);
+    const invitedEmail = emailInput.trim();
     addCaregiver({ name: nameInput, email: emailInput, phone_number: phone })
       .then(() => {
         setIsAdding(false);
+        setSuccessMessage(`Request sent to: ${invitedEmail}`);
         setReloadCount((count) => count + 1);
       })
       .catch((error: unknown) => {
@@ -138,6 +154,7 @@ const CaregiversPage = () => {
       </header>
 
       <button className="caregivers-add-button" type="button" onClick={openAddModal}>+ Add Caregiver</button>
+      {successMessage && <p className="caregivers-success" role="status">{successMessage}</p>}
 
       <section className="medications-list" aria-label="Your caregivers">
         {isLoading && <p className="home-empty">Loading...</p>}
@@ -158,6 +175,11 @@ const CaregiversPage = () => {
                 <h3>{caregiver.name}</h3>
                 <p>{caregiver.email}</p>
                 <p>{formatPhone(caregiver.phone_number)}</p>
+              </div>
+            </div>
+            <div className="medications-controls">
+              <div className="medications-actions">
+                <button className="medications-remove-button" type="button" onClick={() => removeCaregiver(caregiver.cid)}>Remove</button>
               </div>
             </div>
           </article>

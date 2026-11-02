@@ -544,6 +544,15 @@ export interface CaregiverRecord {
   phone_number: string; // exactly 10 digits
 }
 
+// DELETE caregivers.php (raw JSON { cid }) -> { success: true }
+export async function deleteCaregiver(cid: number): Promise<void> {
+  await settingsRequest("caregivers.php", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cid }),
+  });
+}
+
 // GET caregivers.php -> { success: true, caregivers: [...] }
 export async function getCaregivers(): Promise<CaregiverRecord[]> {
   const data = await settingsRequest<{ caregivers?: CaregiverRecord[] }>(
