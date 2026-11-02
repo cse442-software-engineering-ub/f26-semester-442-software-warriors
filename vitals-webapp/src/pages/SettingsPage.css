@@ -178,6 +178,7 @@
 .settings-delete-confirm { min-height: 52px; min-width: 180px; border-color: #fff; background: #fef2f2; color: #991b1b; font-size: 18px; font-weight: 700; }
 .settings-delete-confirm:hover { background: #fee2e2; }
 @media (max-width: 680px) {
+  .settings-content { padding-bottom: 110px; }
   .settings-page-heading { margin-bottom: 20px; }
   .settings-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
   .settings-intro { font-size: 14px; }

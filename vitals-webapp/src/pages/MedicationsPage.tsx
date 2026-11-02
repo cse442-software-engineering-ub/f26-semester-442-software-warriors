@@ -186,10 +186,18 @@ const MedicationsPage = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [accountName, setAccountName] = useState("");
+  const [isCaregiver, setIsCaregiver] = useState(false);
+  const [patientName, setPatientName] = useState<string | null>(null);
 
   useEffect(() => {
     getAccount()
-      .then((account) => setAccountName(account.name ?? ""))
+      .then((account) => {
+        setAccountName(account.name ?? "");
+        setIsCaregiver(account.isCaregiver);
+        setPatientName(
+          account.relatedPersonName?.trim().split(/\s+/)[0] || null,
+        );
+      })
       .catch((error: unknown) => {
         if (isUnauthorized(error)) navigate("/login", { replace: true });
       });
@@ -381,8 +389,16 @@ const MedicationsPage = () => {
   <AppLayout activeItem="Medications" userName={accountName || "Account"} accountLabel="Personal account">
     <div className="medications-content">
       <header className="medications-page-heading">
-        <h1>My Medications</h1>
-        <p className="medications-intro">Track, organize, and manage your daily medication schedules.</p>
+        <h1>
+          {isCaregiver && patientName
+            ? `${patientName}’s Medications`
+            : "My Medications"}
+        </h1>
+        <p className="medications-intro">
+          {isCaregiver && patientName
+            ? `Track, organize, and manage ${patientName}’s daily medication schedules.`
+            : "Track, organize, and manage your daily medication schedules."}
+        </p>
       </header>
 
       <div className="medications-toolbar">

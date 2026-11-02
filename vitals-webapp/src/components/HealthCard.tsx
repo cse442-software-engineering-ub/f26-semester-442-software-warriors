@@ -23,16 +23,18 @@ const HealthCard: React.FC<HealthCardProps> = ({
     if (type == 'BPCard') {
         // Badge colour for the status the server calculated (readings.php)
         const statusBadgeClass = (status: string) => {
-        if (status === "Within range" || status === "Normal")  {
+          if (status === "Within range" || status === "Normal") {
             return "home-status-badge";
-        }
-        if (status === "Slightly elevated")
+          }
+          if (status === "Slightly elevated") {
             return "home-status-badge home-status-badge-warn";
-        return "home-status-badge home-status-badge-alert";
+          }
+          return "home-status-badge home-status-badge-alert";
         };
-        if (bloodPressureReading && bloodPressureReading.status.toLowerCase() === "normal") {
-            bloodPressureReading.status = "Within range";
-        }
+        const readingStatus =
+          bloodPressureReading?.status?.toLowerCase() === "normal"
+            ? "Within range"
+            : bloodPressureReading?.status;
         return (
           <div className="home-card home-bp-card">
             <span className="home-bp-label">Last Reading</span>
@@ -44,11 +46,11 @@ const HealthCard: React.FC<HealthCardProps> = ({
                   {bloodPressureReading.systolic}/{bloodPressureReading.diastolic}
                   <span className="home-bp-unit">mmHg</span>
                 </p>
-                {bloodPressureReading.status && (
-                  <span className={statusBadgeClass(bloodPressureReading.status)}>
-                    {bloodPressureReading.status}
-                  </span>
-                )}
+                  {readingStatus && (
+                    <span className={statusBadgeClass(readingStatus)}>
+                      {readingStatus}
+                    </span>
+                  )}
               </>
             ) : (
               <p className="home-empty">{emptyString}</p>
@@ -58,59 +60,85 @@ const HealthCard: React.FC<HealthCardProps> = ({
     }
     else if (type == 'MedicationCard') {
         return (
-            <div className="home-card home-medication-card">
-      {isLoading ? (
-        <p className="home-empty" role="status">Loading...</p>
-      ) : medication ? (
-        <article className="home-medication-card flex items-center gap-3.5 p-2" key={`${medication.medication_name}-${medication.time}`}>
-          <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m7 17 10-10" />
-              <path d="M5 15a4 4 0 0 0 6 6l8-8a4 4 0 0 0-6-6Z" />
-            </svg>
-          </span>
-          <div className="home-medication-details">
-            <h3>{medication.medication_name}</h3>
-            <p>{medication.dosage}</p>
-          </div>
-          <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
-            <span>TIME</span>
-            <strong>{medication.time}</strong>
-          </div>
-        </article>
-      ) : (
-        <p className="home-empty">{emptyString}</p>
-      )}
-    </div>
+          <article className="home-card home-dashboard-card home-medication-card">
+            {isLoading ? (
+              <p className="home-empty" role="status">Loading...</p>
+            ) : medication ? (
+              <div className="home-dashboard-card-content">
+                <span className="home-dashboard-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m5.2 14.8 9.6-9.6a4.2 4.2 0 0 1 5.9 5.9l-9.6 9.6a4.2 4.2 0 0 1-5.9-5.9Z" />
+                    <path d="m8.2 17.8 9.6-9.6" />
+                  </svg>
+                </span>
+                <div className="home-dashboard-card-details home-medication-details">
+                  <h3>{medication.medication_name}</h3>
+                  <p>{medication.dosage}</p>
+                  {medication.days && (
+                    <p className="home-dashboard-card-schedule">
+                      {medication.days.split(",").map((day) => day.trim().slice(0, 3)).join(", ")}
+                    </p>
+                  )}
+                </div>
+                <div className="home-dashboard-card-meta home-medication-time">
+                  <span>TIME</span>
+                  <strong>{medication.time}</strong>
+                </div>
+              </div>
+            ) : (
+              <p className="home-empty">{emptyString}</p>
+            )}
+          </article>
         )
     }
     else if (type == 'AppointmentCard') {
         const splitAppointmentDate = (value: string) => {
             const separator = value.lastIndexOf(", ");
             if (separator === -1) return { date: value, time: "" };
-            return { date: value.slice(0, separator), time: value.slice(separator + 2).toUpperCase() };
+            const formattedDate = value.slice(0, separator);
+            const time = value.slice(separator + 2).toUpperCase();
+            const parsedDate = new Date(formattedDate.replace(/(\d+)(st|nd|rd|th)/i, "$1"));
+            if (Number.isNaN(parsedDate.getTime())) {
+              return { date: formattedDate, time };
+            }
+            const today = new Date();
+            const dateOnly = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+            const dayDifference = Math.round((dateOnly(parsedDate) - dateOnly(today)) / 86400000);
+            const dateLabel = dayDifference === 0
+              ? `Today, ${parsedDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`
+              : dayDifference === 1
+                ? `Tomorrow, ${parsedDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`
+                : formattedDate.replace(/(\d+)(st|nd|rd|th)/i, "$1");
+            return { date: dateLabel, time };
             };
         const appointmentTime = nextAppointment ? splitAppointmentDate(nextAppointment.appointment_date) : null;
         
         return (
-            <div className="home-card-list grid gap-3">
-              {isLoading ? (
-                <div className="home-card"><p className="home-empty" role="status">Loading...</p></div>
-              ) : nextAppointment && appointmentTime ? (
-                <article className="home-card home-appointment-card flex items-center gap-3.5">
-                  <div className="home-appointment-details">
-                    <h3>{nextAppointment.doctors_name}</h3>
-                    {nextAppointment.notes && <p>{nextAppointment.notes}</p>}
-                  </div>
-                  <div className="home-pill-box home-appointment-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
-                    <strong>{appointmentTime.date}</strong>
-                    {appointmentTime.time && <span>{appointmentTime.time}</span>}
-                  </div>
-                </article>
-              ) : (
-                <div className="home-card"><p className="home-empty">{emptyString}</p></div>
-              )}
-            </div>
+          <article className="home-card home-dashboard-card home-appointment-card">
+            {isLoading ? (
+              <p className="home-empty" role="status">Loading...</p>
+            ) : nextAppointment && appointmentTime ? (
+              <div className="home-dashboard-card-content">
+                <span className="home-dashboard-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3.5" y="5" width="17" height="16" rx="2" />
+                    <path d="M7.5 3v4M16.5 3v4M3.5 10h17" />
+                    <path d="m9 15 2 2 4-4" />
+                  </svg>
+                </span>
+                <div className="home-dashboard-card-details home-appointment-details">
+                  <h3>{nextAppointment.doctors_name}</h3>
+                  {nextAppointment.notes && <p>{nextAppointment.notes}</p>}
+                </div>
+                <div className="home-dashboard-card-meta home-appointment-time">
+                  <strong>{appointmentTime.date}</strong>
+                  {appointmentTime.time && <span>{appointmentTime.time}</span>}
+                </div>
+              </div>
+            ) : (
+              <p className="home-empty">{emptyString}</p>
+            )}
+          </article>
         )
     }
 }
