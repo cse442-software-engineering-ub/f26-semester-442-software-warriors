@@ -278,5 +278,33 @@ if(isset($_SESSION['caregiver_invite_iid'])) {
     }
 }
 
-echo json_encode(['login' => true]);
+//Check whether the logged-in user is a caregiver
+$stmt = $pdo->prepare(
+    'SELECT uid
+     FROM caregivers
+     WHERE caregiver_uid = ?
+     LIMIT 1'
+);
 
+$stmt->execute([
+    (int)$user['id']
+]);
+
+$caregiverRelationship = $stmt->fetch();
+
+//Set the session values used by the rest of the website
+if($caregiverRelationship) {
+
+    $_SESSION['isCaregiver'] = 1;
+
+    $_SESSION['patientID'] =
+        (int)$caregiverRelationship['uid'];
+}
+else {
+
+    $_SESSION['isCaregiver'] = 0;
+
+    unset($_SESSION['patientID']);
+}
+
+echo json_encode(['login' => true]);
