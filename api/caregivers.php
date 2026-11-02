@@ -5,7 +5,6 @@ require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
 $config = require __DIR__ . '/mail_config.php';
 
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -249,14 +248,15 @@ if($method === 'POST') {
         $mail->SMTPSecure = 'ssl';
         $mail->Host = $config['host'];
         $mail->Port = 465;
-
         $mail->Username = $config['username'];
+
+        //Keep your existing working Gmail app password here
         $mail->Password = $config['password'];
 
         $mail->addAddress($email, $name);
 
         $mail->setFrom(
-            '442.warriors@gmail.com',
+            $config['username'],
             'VITALS, 442 Warriors'
         );
 
