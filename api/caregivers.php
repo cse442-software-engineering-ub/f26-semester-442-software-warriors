@@ -51,7 +51,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 //Handle GET requests
 if($method === 'GET') {
 
-    //Get only caregivers belonging to the logged-in user
+    //Get accepted caregivers belonging to the logged-in patient
     $stmt = $pdo->prepare(
         'SELECT cid, name, email, phone_number
          FROM caregivers
@@ -63,16 +63,82 @@ if($method === 'GET') {
 
     $caregivers = $stmt->fetchAll();
 
-    //Make sure caregiver IDs are returned as whole numbers
+    //Mark each accepted caregiver as accepted
     foreach($caregivers as &$caregiver) {
-        $caregiver['cid'] = (int) $caregiver['cid'];
+
+        $caregiver['cid'] = (int)$caregiver['cid'];
+
+        $caregiver['iid'] = null;
+
+        $caregiver['status'] = 'accepted';
     }
 
     unset($caregiver);
 
+    //Get active pending caregiver invitations
+    $stmt = $pdo->prepare(
+        'SELECT iid, name, email, phone_number
+         FROM caregiver_invitations
+         WHERE patient_uid = ?
+         AND used = 0
+         AND expires_at > NOW()
+         ORDER BY name ASC'
+    );
+
+    $stmt->execute([$userId]);
+
+    $pendingInvitations = $stmt->fetchAll();
+
+    //Format pending invitations like caregiver records
+    foreach($pendingInvitations as &$invitation) {
+
+        $invitation['iid'] = (int)$invitation['iid'];
+
+        $invitation['cid'] = null;
+
+        $invitation['status'] = 'pending';
+    }
+
+    unset($invitation);
+
+    //Get expired caregiver invitations
+    $stmt = $pdo->prepare(
+        'SELECT iid, name, email, phone_number
+        FROM caregiver_invitations
+        WHERE patient_uid = ?
+        AND used = 0
+        AND expires_at <= NOW()
+        ORDER BY name ASC'
+    );
+
+    $stmt->execute([$userId]);
+
+    $rejectedInvitations = $stmt->fetchAll();
+
+    //Mark expired invitations as rejected
+    foreach($rejectedInvitations as &$invitation) {
+
+        $invitation['iid'] = (int)$invitation['iid'];
+
+        $invitation['cid'] = null;
+
+        $invitation['status'] = 'rejected';
+    }
+
+    unset($invitation);
+
+    //Combine accepted caregivers and pending invitations
+    $allCaregivers = array_merge(
+        $caregivers,
+        $pendingInvitations,
+        $rejectedInvitations
+    );
+
+
+
     echo json_encode([
         'success' => true,
-        'caregivers' => $caregivers
+        'caregivers' => $allCaregivers
     ]);
 
     exit;
@@ -192,15 +258,20 @@ if($method === 'POST') {
         }
     }
 
-    //Make sure there is not already an active invitation
+    //Create a random invitation token
+    $inviteToken = bin2hex(random_bytes(32));
+
+    //Only store a hash of the token in the database
+    $tokenHash = hash('sha256', $inviteToken);
+
+    //Check for an existing invitation for this patient and email
     $stmt = $pdo->prepare(
-        'SELECT iid
-         FROM caregiver_invitations
-         WHERE patient_uid = ?
-         AND LOWER(email) = LOWER(?)
-         AND used = 0
-         AND expires_at > NOW()
-         LIMIT 1'
+        'SELECT iid, expires_at, used
+        FROM caregiver_invitations
+        WHERE patient_uid = ?
+        AND LOWER(email) = LOWER(?)
+        ORDER BY iid DESC
+        LIMIT 1'
     );
 
     $stmt->execute([
@@ -208,50 +279,88 @@ if($method === 'POST') {
         $email
     ]);
 
-    if($stmt->fetch()) {
+    $existingInvitation = $stmt->fetch();
+
+    //If there is already an active invitation, do not send another one
+    if(
+        $existingInvitation &&
+        (int)$existingInvitation['used'] === 0 &&
+        strtotime($existingInvitation['expires_at']) > time()
+    ) {
         caregiverFail(
             409,
             'An active invitation already exists for this caregiver.'
         );
     }
 
-    //Create a random invitation token
-    $inviteToken = bin2hex(random_bytes(32));
-
-    //Only store a hash of the token in the database
-    $tokenHash = hash('sha256', $inviteToken);
-
-    //Store the pending caregiver invitation
-    $stmt = $pdo->prepare(
-        'INSERT INTO caregiver_invitations
-         (patient_uid, name, email, phone_number, token_hash, expires_at, used)
-         VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR), 0)'
-    );
-
-    $stmt->execute([
-        $userId,
-        $name,
-        $email,
-        $phoneNumber,
-        $tokenHash
-    ]);
-
-    $iid = (int)$pdo->lastInsertId();
-
-    $inviteLink = $apiBase . '/caregiver_invite.php?token=' . urlencode($inviteToken);
-
-    $mail = new PHPMailer(true);
-
     try {
+
+        $pdo->beginTransaction();
+
+        //If an old invitation exists, reuse and update that row
+        if($existingInvitation) {
+
+            $stmt = $pdo->prepare(
+                'UPDATE caregiver_invitations
+                SET name = ?,
+                    email = ?,
+                    phone_number = ?,
+                    token_hash = ?,
+                    expires_at = DATE_ADD(NOW(), INTERVAL 3 HOUR),
+                    used = 0
+                WHERE iid = ?
+                AND patient_uid = ?'
+            );
+
+            $stmt->execute([
+                $name,
+                $email,
+                $phoneNumber,
+                $tokenHash,
+                (int)$existingInvitation['iid'],
+                $userId
+            ]);
+
+            $iid = (int)$existingInvitation['iid'];
+        }
+
+        //If no old invitation exists, create a brand new row
+        else {
+
+            $stmt = $pdo->prepare(
+                'INSERT INTO caregiver_invitations
+                (patient_uid, name, email, phone_number, token_hash, expires_at, used)
+                VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 3 HOUR), 0)'
+            );
+
+            $stmt->execute([
+                $userId,
+                $name,
+                $email,
+                $phoneNumber,
+                $tokenHash
+            ]);
+
+            $iid = (int)$pdo->lastInsertId();
+        }
+
+        $inviteLink =
+            $apiBase .
+            '/caregiver_invite.php?token=' .
+            urlencode($inviteToken);
+
+        $mail = new PHPMailer(true);
+
         $mail->isSMTP();
         $mail->SMTPAuth = true;
-        $mail->SMTPSecure = 'ssl';
-        $mail->Host = $config['host'];
-        $mail->Port = 465;
-        $mail->Username = $config['username'];
 
-        //Keep your existing working Gmail app password here
+        //load credentials from config file
+        $mail->Host = $config['host'];
+        $mail->Username = $config['username'];
         $mail->Password = $config['password'];
+
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = 465;
 
         $mail->addAddress($email, $name);
 
@@ -275,22 +384,17 @@ if($method === 'POST') {
             "<a href=\"$inviteLink\">Accept Caregiver Invitation</a><br><br>" .
             "If you already have a VITALS account, you will be asked to log in.<br>" .
             "If you do not have an account, you will be asked to create one.<br><br>" .
-            "This invitation expires in 24 hours.";
+            "This invitation expires in 3 hours.";
 
         $mail->send();
+
+        $pdo->commit();
     }
-    catch(Exception $e) {
+    catch(Throwable $e) {
 
-        //Remove the invitation if the email could not be sent
-        $stmt = $pdo->prepare(
-            'DELETE FROM caregiver_invitations
-             WHERE iid = ? AND patient_uid = ?'
-        );
-
-        $stmt->execute([
-            $iid,
-            $userId
-        ]);
+        if($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
 
         caregiverFail(
             500,
