@@ -503,10 +503,71 @@ if($method === 'DELETE') {
     }
 
     $cid = $data['cid'] ?? null;
+    $iid = $data['iid'] ?? null;
 
-    //Make sure a valid caregiver record ID was provided
+    //At least one ID must be provided
+    if($cid === null && $iid === null) {
+        caregiverFail(
+            400,
+            'Valid caregiver ID is required.'
+        );
+    }
+
+    //Do not allow both IDs at the same time
+    if($cid !== null && $iid !== null) {
+        caregiverFail(
+            400,
+            'Provide either a caregiver ID or invitation ID, not both.'
+        );
+    }
+
+
+    //Delete a pending or rejected caregiver invitation
+    if($iid !== null) {
+
+        if(
+            filter_var($iid, FILTER_VALIDATE_INT) === false ||
+            (int)$iid <= 0
+        ) {
+            caregiverFail(
+                400,
+                'Valid invitation ID is required.'
+            );
+        }
+
+        //Delete the invitation only if it belongs to the logged-in patient
+        //and has not already been accepted
+        $stmt = $pdo->prepare(
+            'DELETE FROM caregiver_invitations
+             WHERE iid = ?
+             AND patient_uid = ?
+             AND used = 0'
+        );
+
+        $stmt->execute([
+            (int)$iid,
+            $userId
+        ]);
+
+        //No matching pending or rejected invitation was found
+        if($stmt->rowCount() === 0) {
+            caregiverFail(
+                404,
+                'Invitation not found.'
+            );
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Caregiver invitation deleted successfully.'
+        ]);
+
+        exit;
+    }
+
+
+    //Delete an accepted caregiver
     if(
-        $cid === null ||
         filter_var($cid, FILTER_VALIDATE_INT) === false ||
         (int)$cid <= 0
     ) {
@@ -546,7 +607,7 @@ if($method === 'DELETE') {
 
         $pdo->beginTransaction();
 
-        //Delete this patient-caregiver relationship
+        //Delete the patient-caregiver relationship
         $stmt = $pdo->prepare(
             'DELETE FROM caregivers
              WHERE cid = ?
@@ -558,40 +619,19 @@ if($method === 'DELETE') {
             $userId
         ]);
 
-        //If this caregiver has a user account,
-        //check whether they are still a caregiver for anyone else
+        //remove their caregiver status after deleting the relationship
         if($caregiverUserId !== null) {
 
-            $caregiverUserId = (int)$caregiverUserId;
-
             $stmt = $pdo->prepare(
-                'SELECT COUNT(*)
-                 FROM caregivers
-                 WHERE caregiver_uid = ?'
+                'UPDATE users
+                 SET isCaregiver = 0,
+                     patientEmail = NULL
+                 WHERE id = ?'
             );
 
             $stmt->execute([
-                $caregiverUserId
+                (int)$caregiverUserId
             ]);
-
-            $remainingRelationships =
-                (int)$stmt->fetchColumn();
-
-            //If they are no longer anyone's caregiver,
-            //remove their caregiver status
-            if($remainingRelationships === 0) {
-
-                $stmt = $pdo->prepare(
-                    'UPDATE users
-                     SET isCaregiver = 0,
-                         patientEmail = NULL
-                     WHERE id = ?'
-                );
-
-                $stmt->execute([
-                    $caregiverUserId
-                ]);
-            }
         }
 
         $pdo->commit();
