@@ -3,6 +3,7 @@ ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
+$config = require __DIR__ . '/mail_config.php';
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/CSE442/2026-Fall/cse-442ab/',
@@ -56,11 +57,11 @@ if ($user) {
         $mail->isSMTP();
         $mail->SMTPAuth = true;
         $mail->SMTPSecure = "ssl";
-        $mail->Host = 'smtp.gmail.com';
+        $mail->Host = $config['host'];
         $mail->Port = 465;
-        $mail->Username = "442.warriors@gmail.com";
+        $mail->Username = $config['username'];
         // NOTE: Replace this with an environment variable or secure config
-        $mail->Password = 'vlfqqdftkbjhrgpg';
+        $mail->Password = $config['password'];
 
         $mail->addAddress($email, $name);
         $mail->setFrom("442.warriors@gmail.com", "VITALS, 442 Warriors");
@@ -83,7 +84,7 @@ if ($user) {
         echo json_encode([
             'status' => 'warning',
             'message' => 'Mail delivery failed, but OTP was generated for testing.',
-            'debug_otp' => $otp, //AFTER TESTING COMPLETES THIS SHOULD BE DELETED
+            //'debug_otp' => $otp, //AFTER TESTING COMPLETES THIS SHOULD BE DELETED (If testing is needed uncomment this on aptitude and test through there)
             'mailer_error' => $mail->ErrorInfo
         ]);
         exit();
