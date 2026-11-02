@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addCaregiver, deleteCaregiver, getAccount, getCaregivers } from "../api";
+import { addCaregiver, getAccount, getCaregivers } from "../api";
 import type { CaregiverRecord } from "../api";
 import "./MedicationsPage.css";
 import "./CaregiversPage.css";
@@ -75,18 +75,6 @@ const CaregiversPage = () => {
       })
       .finally(() => setIsLoading(false));
   }, [navigate, reloadCount]);
-
-  const removeCaregiver = (cid: number) => {
-    deleteCaregiver(cid)
-      .then(() => setReloadCount((count) => count + 1))
-      .catch((error: unknown) => {
-        if (isUnauthorized(error)) {
-          navigate("/login", { replace: true });
-          return;
-        }
-        setRequestError(getErrorMessage(error));
-      });
-  };
 
   const clearErrors = () => {
     setNameError("");
@@ -163,7 +151,7 @@ const CaregiversPage = () => {
           <p className="home-empty">No caregivers. Add a caregiver to get started.</p>
         )}
         {caregivers.map((caregiver) => (
-          <article className="home-card home-medication-card medications-card" key={caregiver.cid}>
+          <article className="home-card home-medication-card medications-card" key={caregiver.cid !== null ? `c${caregiver.cid}` : `i${caregiver.iid}`}>
             <div className="medications-main">
               <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -178,9 +166,9 @@ const CaregiversPage = () => {
               </div>
             </div>
             <div className="medications-controls">
-              <div className="medications-actions">
-                <button className="medications-remove-button" type="button" onClick={() => removeCaregiver(caregiver.cid)}>Remove</button>
-              </div>
+              <span className={`home-status-badge medications-status caregivers-status-${caregiver.status}`}>
+                {caregiver.status === "accepted" ? "active" : caregiver.status === "rejected" ? "expired" : "pending"}
+              </span>
             </div>
           </article>
         ))}

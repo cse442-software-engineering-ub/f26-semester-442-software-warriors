@@ -537,8 +537,11 @@ export async function deleteMedication(mid: number): Promise<void> {
 
 // ---------- Caregivers ----------
 // One row from GET caregivers.php
+// accepted rows have a cid; pending/rejected (expired) invitations have an iid instead
 export interface CaregiverRecord {
-  cid: number;
+  cid: number | null;
+  iid: number | null;
+  status: "accepted" | "pending" | "rejected";
   name: string;
   email: string;
   phone_number: string; // exactly 10 digits
@@ -561,20 +564,20 @@ export async function getCaregivers(): Promise<CaregiverRecord[]> {
   return data.caregivers ?? [];
 }
 
-// POST caregivers.php (form-data) -> 201 { success: true, cid }; also emails the invitation
+// POST caregivers.php (form-data) -> 201 { success: true, iid }; emails the invitation
 export async function addCaregiver(
-  input: Omit<CaregiverRecord, "cid">,
+  input: Pick<CaregiverRecord, "name" | "email" | "phone_number">,
 ): Promise<number> {
   const form = new FormData();
   form.append("name", input.name.trim());
   form.append("email", input.email.trim());
   form.append("phone_number", input.phone_number);
 
-  const data = await settingsRequest<{ cid: number }>("caregivers.php", {
+  const data = await settingsRequest<{ iid: number }>("caregivers.php", {
     method: "POST",
     body: form,
   });
-  return data.cid;
+  return data.iid;
 }
 
 // ---------- Appointments (#70 backend, #73 frontend) ----------

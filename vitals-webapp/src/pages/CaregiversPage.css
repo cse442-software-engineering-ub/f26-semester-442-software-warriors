@@ -3,6 +3,9 @@
   flex-direction: column;
 }
 
+.caregivers-status-pending { background: #fff1d6; color: #8a5a00; }
+.caregivers-status-rejected { background: #fce4e4; color: #b93a2e; }
+
 .caregivers-modal { width: min(100%, 440px); }
 
 .caregivers-success {
