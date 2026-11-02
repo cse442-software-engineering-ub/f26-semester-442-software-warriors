@@ -63,6 +63,7 @@ $status = bpStatus($values['systolic'], $values['diastolic']);
 
 try {
   if ($_SESSION['isCaregiver']) {
+    http_response_code(403);
     echo json_encode(['error' => 'Caregivers cannot save blood pressure readings, go to a patient profile to add a reading.']);
     exit();
   }
