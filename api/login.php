@@ -62,18 +62,222 @@ session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
 $_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to PHPSESS cookie for caregivers
 
-if (!$user['isCaregiver']) {
-  echo json_encode(['login' => true]);
-} else {
-  $stmt = $pdo->prepare('SELECT id, email, name, phone FROM users WHERE email = ?');
-  $stmt->execute([$user['patientEmail']]);
-  $patient = $stmt->fetch(); 
-  if (!$patient) {
-    loginFail(500, 'Linked patient account not found.');
-  }
-  $_SESSION['patientID'] = $patient['id']; //set patientID for backend fetches to get info to show to caregivers
-  echo json_encode([
-    'login' => true, 
-    'isCaregiver' => $user['isCaregiver'],  
-    'patientInfo' => $patient ]);
+//Check if this login came from a caregiver invitation
+if(isset($_SESSION['caregiver_invite_iid'])) {
+
+    $invitationId = (int)$_SESSION['caregiver_invite_iid'];
+
+    //Get the pending invitation
+    $stmt = $pdo->prepare(
+        'SELECT iid, patient_uid, name, email, phone_number, expires_at, used
+         FROM caregiver_invitations
+         WHERE iid = ?
+         LIMIT 1'
+    );
+
+    $stmt->execute([$invitationId]);
+
+    $invitation = $stmt->fetch();
+
+    //Make sure the invitation still exists
+    if(!$invitation) {
+
+        unset($_SESSION['caregiver_invite_iid']);
+        unset($_SESSION['caregiver_invite_email']);
+        unset($_SESSION['user_id']);
+
+        http_response_code(400);
+
+        echo json_encode([
+            'login' => false,
+            'error' => 'Invalid invitation.'
+        ]);
+
+        exit;
+    }
+
+    //Make sure the invitation has not already been used
+    if((int)$invitation['used'] === 1) {
+
+        unset($_SESSION['caregiver_invite_iid']);
+        unset($_SESSION['caregiver_invite_email']);
+        unset($_SESSION['user_id']);
+
+        http_response_code(400);
+
+        echo json_encode([
+            'login' => false,
+            'error' => 'This invitation has already been used.'
+        ]);
+
+        exit;
+    }
+
+    //Make sure the invitation has not expired
+    if(strtotime($invitation['expires_at']) <= time()) {
+
+        unset($_SESSION['caregiver_invite_iid']);
+        unset($_SESSION['caregiver_invite_email']);
+        unset($_SESSION['user_id']);
+
+        http_response_code(400);
+
+        echo json_encode([
+            'login' => false,
+            'error' => 'Invitation has expired.'
+        ]);
+
+        exit;
+    }
+
+    //Get the account that just logged in
+    $stmt = $pdo->prepare(
+        'SELECT id, email
+         FROM users
+         WHERE id = ?
+         LIMIT 1'
+    );
+
+    $stmt->execute([
+        (int)$_SESSION['user_id']
+    ]);
+
+    $loggedInUser = $stmt->fetch();
+
+    if(!$loggedInUser) {
+
+        unset($_SESSION['user_id']);
+
+        http_response_code(404);
+
+        echo json_encode([
+            'login' => false,
+            'error' => 'User account not found.'
+        ]);
+
+        exit;
+    }
+
+    //Make sure the logged-in account is the account that was invited
+    if(
+        strtolower($loggedInUser['email']) !==
+        strtolower($invitation['email'])
+    ) {
+
+        //Keep the invitation in the session so they can
+        //try logging in with the correct account
+        unset($_SESSION['user_id']);
+
+        http_response_code(403);
+
+        echo json_encode([
+            'login' => false,
+            'error' => 'This invitation belongs to a different account.'
+        ]);
+
+        exit;
+    }
+
+    $caregiverUserId = (int)$loggedInUser['id'];
+    $patientId = (int)$invitation['patient_uid'];
+
+    //Make sure the relationship does not already exist
+    $stmt = $pdo->prepare(
+        'SELECT cid
+         FROM caregivers
+         WHERE uid = ?
+         AND caregiver_uid = ?
+         LIMIT 1'
+    );
+
+    $stmt->execute([
+        $patientId,
+        $caregiverUserId
+    ]);
+
+    if($stmt->fetch()) {
+
+        //The relationship already exists, so this invitation
+        //should no longer be usable
+        $stmt = $pdo->prepare(
+            'UPDATE caregiver_invitations
+             SET used = 1
+             WHERE iid = ?'
+        );
+
+        $stmt->execute([$invitationId]);
+
+        unset($_SESSION['caregiver_invite_iid']);
+        unset($_SESSION['caregiver_invite_email']);
+    }
+    else {
+
+        try {
+
+            $pdo->beginTransaction();
+
+            //Create the accepted caregiver relationship
+            $stmt = $pdo->prepare(
+                'INSERT INTO caregivers
+                 (uid, name, email, phone_number, caregiver_uid)
+                 VALUES (?, ?, ?, ?, ?)'
+            );
+
+            $stmt->execute([
+                $patientId,
+                $invitation['name'],
+                $invitation['email'],
+                $invitation['phone_number'],
+                $caregiverUserId
+            ]);
+
+            //Mark this user as a caregiver
+            $stmt = $pdo->prepare(
+                'UPDATE users
+                 SET isCaregiver = 1
+                 WHERE id = ?'
+            );
+
+            $stmt->execute([
+                $caregiverUserId
+            ]);
+
+            //Expire the invitation permanently
+            $stmt = $pdo->prepare(
+                'UPDATE caregiver_invitations
+                 SET used = 1
+                 WHERE iid = ?'
+            );
+
+            $stmt->execute([
+                $invitationId
+            ]);
+
+            $pdo->commit();
+        }
+        catch(Throwable $e) {
+
+            if($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            unset($_SESSION['user_id']);
+
+            http_response_code(500);
+
+            echo json_encode([
+                'login' => false,
+                'error' => 'Caregiver invitation could not be accepted.'
+            ]);
+
+            exit;
+        }
+
+        //Invitation has been completed, so remove it from the session
+        unset($_SESSION['caregiver_invite_iid']);
+        unset($_SESSION['caregiver_invite_email']);
+    }
 }
+
+echo json_encode(['login' => true]);
+
