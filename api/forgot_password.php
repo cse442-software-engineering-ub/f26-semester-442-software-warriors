@@ -75,7 +75,7 @@ if ($user) {
         echo json_encode([
             'status' => 'success',
             'message' => 'An OTP has been sent to your email address.',
-            'debug_otp' => $otp // Capturable by Postman tewsts AFTER TESTING COMPLETES THIS SHOULD BE DELETED
+            //'debug_otp' => $otp // Capturable by Postman tewsts AFTER TESTING COMPLETES THIS SHOULD BE DELETED
         ]);
         exit();
     } catch (Exception $e) {

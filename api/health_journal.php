@@ -46,21 +46,30 @@ else {
             $totalPulse += $reading['pulse']; // gets each pulse from the readings to get average
             $totalSystolic += $reading['systolic'];
             $totalDiastolic += $reading['diastolic'];
-            if ($reading['pulse'] == 0) {
+            if ($reading['pulse'] == null) {
                 $null_pulses += 1;
             }
         }
 
         $averages = null;
+        $avgStatus = null;
         if (count($bp_readings) > 0) {
             $readingCount = count($bp_readings);
-            $averages = [
-                "systolic" => round($totalSystolic / $readingCount),
-                "diastolic" => round($totalDiastolic / $readingCount),
-                "pulse" => round($totalPulse / ($readingCount - 1))
-            ];
+            if (($readingCount-$null_pulses) <= 0) {
+                $averages = [
+                    "systolic" => round($totalSystolic / $readingCount),
+                    "diastolic" => round($totalDiastolic / $readingCount),
+                    "pulse" => 0
+                ];
+            } else {
+                $averages = [
+                    "systolic" => round($totalSystolic / $readingCount),
+                    "diastolic" => round($totalDiastolic / $readingCount),
+                    "pulse" => round($totalPulse / $readingCount)
+                ];
+            }
+            $avgStatus = bpStatus($averages['systolic'], $averages['diastolic']);
         }
-        $avgStatus = bpStatus($averages['systolic'],$averages['diastolic'];) 
 
         if (!$_SESSION['isCaregiver']) {
             echo json_encode([
