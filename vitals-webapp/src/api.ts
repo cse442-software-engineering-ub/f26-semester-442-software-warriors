@@ -580,6 +580,23 @@ export async function addCaregiver(
   return data.iid;
 }
 
+// PUT caregivers.php (raw JSON) -> { success: true }; only accepted caregivers (with a cid) can be edited
+export async function updateCaregiver(
+  cid: number,
+  input: Pick<CaregiverRecord, "name" | "email" | "phone_number">,
+): Promise<void> {
+  await settingsRequest("caregivers.php", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cid,
+      name: input.name.trim(),
+      email: input.email.trim(),
+      phone_number: input.phone_number,
+    }),
+  });
+}
+
 // ---------- Appointments (#70 backend, #73 frontend) ----------
 // One row from GET appointments.php. appointment_date is "YYYY-MM-DD HH:MM:SS".
 export interface AppointmentRecord {

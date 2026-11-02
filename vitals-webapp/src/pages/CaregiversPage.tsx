@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addCaregiver, getAccount, getCaregivers } from "../api";
+import { addCaregiver, deleteCaregiver, getAccount, getCaregivers, updateCaregiver } from "../api";
 import type { CaregiverRecord } from "../api";
 import "./MedicationsPage.css";
 import "./CaregiversPage.css";
@@ -43,6 +43,7 @@ const CaregiversPage = () => {
   const [reloadCount, setReloadCount] = useState(0);
 
   const [isAdding, setIsAdding] = useState(false);
+  const [editingCid, setEditingCid] = useState<number | null>(null);
   const [nameInput, setNameInput] = useState("");
   const [phoneInput, setPhoneInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
@@ -76,6 +77,18 @@ const CaregiversPage = () => {
       .finally(() => setIsLoading(false));
   }, [navigate, reloadCount]);
 
+  const removeCaregiver = (cid: number) => {
+    deleteCaregiver(cid)
+      .then(() => setReloadCount((count) => count + 1))
+      .catch((error: unknown) => {
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setRequestError(getErrorMessage(error));
+      });
+  };
+
   const clearErrors = () => {
     setNameError("");
     setPhoneError("");
@@ -84,9 +97,20 @@ const CaregiversPage = () => {
   };
 
   const openAddModal = () => {
+    setEditingCid(null);
     setNameInput("");
     setPhoneInput("");
     setEmailInput("");
+    clearErrors();
+    setSuccessMessage("");
+    setIsAdding(true);
+  };
+
+  const openEditModal = (caregiver: CaregiverRecord) => {
+    setEditingCid(caregiver.cid);
+    setNameInput(caregiver.name);
+    setPhoneInput(formatPhoneNumber(caregiver.phone_number));
+    setEmailInput(caregiver.email);
     clearErrors();
     setSuccessMessage("");
     setIsAdding(true);
@@ -115,19 +139,33 @@ const CaregiversPage = () => {
 
     setIsSaving(true);
     const invitedEmail = emailInput.trim();
+    const handleError = (error: unknown) => {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      showServerError(getErrorMessage(error));
+    };
+
+    if (editingCid !== null) {
+      updateCaregiver(editingCid, { name: nameInput, email: emailInput, phone_number: phone })
+        .then(() => {
+          setIsAdding(false);
+          setSuccessMessage("Caregiver updated");
+          setReloadCount((count) => count + 1);
+        })
+        .catch(handleError)
+        .finally(() => setIsSaving(false));
+      return;
+    }
+
     addCaregiver({ name: nameInput, email: emailInput, phone_number: phone })
       .then(() => {
         setIsAdding(false);
         setSuccessMessage(`Request sent to: ${invitedEmail}`);
         setReloadCount((count) => count + 1);
       })
-      .catch((error: unknown) => {
-        if (isUnauthorized(error)) {
-          navigate("/login", { replace: true });
-          return;
-        }
-        showServerError(getErrorMessage(error));
-      })
+      .catch(handleError)
       .finally(() => setIsSaving(false));
   };
 
@@ -169,6 +207,17 @@ const CaregiversPage = () => {
               <span className={`home-status-badge medications-status caregivers-status-${caregiver.status}`}>
                 {caregiver.status === "accepted" ? "active" : caregiver.status === "rejected" ? "expired" : "pending"}
               </span>
+              {caregiver.cid !== null && (
+                <div className="medications-actions">
+                  <button className="medications-edit-button" type="button" aria-label={`Edit ${caregiver.name}`} onClick={() => openEditModal(caregiver)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+                      <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                    </svg>
+                  </button>
+                  <button className="medications-remove-button" type="button" onClick={() => removeCaregiver(caregiver.cid as number)}>Remove</button>
+                </div>
+              )}
             </div>
           </article>
         ))}
@@ -183,7 +232,7 @@ const CaregiversPage = () => {
               <path d="m5 5 14 14M19 5 5 19" />
             </svg>
           </button>
-          <h2 id="caregivers-modal-title">New Caregiver</h2>
+          <h2 id="caregivers-modal-title">{editingCid !== null ? "Edit Caregiver" : "New Caregiver"}</h2>
           <form className="medications-modal-form" onSubmit={submitCaregiver} noValidate>
             <label className="medications-modal-field" htmlFor="caregiver-name">
               <span>CAREGIVER NAME</span>
@@ -203,7 +252,9 @@ const CaregiversPage = () => {
             {formError && <p className="medications-modal-error" role="alert">{formError}</p>}
             <div className="medications-modal-actions">
               <button className="medications-modal-submit" type="submit" disabled={isSaving}>
-                <span aria-hidden="true">+</span> {isSaving ? "Adding..." : "Add Caregiver"}
+                {editingCid !== null
+                  ? <>{isSaving ? "Saving..." : "Save Changes"}</>
+                  : <><span aria-hidden="true">+</span> {isSaving ? "Adding..." : "Add Caregiver"}</>}
               </button>
             </div>
           </form>
