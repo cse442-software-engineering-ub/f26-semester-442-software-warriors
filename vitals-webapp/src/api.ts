@@ -547,13 +547,14 @@ export interface CaregiverRecord {
   phone_number: string; // exactly 10 digits
 }
 
-// DELETE caregivers.php (raw JSON { cid }) -> { success: true }
-export async function deleteCaregiver(cid: number): Promise<void> {
-  await settingsRequest("caregivers.php", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cid }),
-  });
+// DELETE caregivers.php (raw JSON { cid } or { iid }) -> { success: true }
+export async function deleteCaregiver(cid: number | null, iid: number | null, ): Promise<void> {
+    const body = cid !== null ? { cid } : { iid };
+    await settingsRequest("caregivers.php", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
 }
 
 // GET caregivers.php -> { success: true, caregivers: [...] }

@@ -77,8 +77,8 @@ const CaregiversPage = () => {
       .finally(() => setIsLoading(false));
   }, [navigate, reloadCount]);
 
-  const removeCaregiver = (cid: number) => {
-    deleteCaregiver(cid)
+  const removeCaregiver = (caregiver: CaregiverRecord) => {
+    deleteCaregiver(caregiver.cid, caregiver.iid)
       .then(() => setReloadCount((count) => count + 1))
       .catch((error: unknown) => {
         if (isUnauthorized(error)) {
@@ -176,7 +176,7 @@ const CaregiversPage = () => {
 
       <header className="medications-page-heading">
         <h1>Caregivers</h1>
-        <p className="medications-intro">Below are cards for your caregivers information. If the status is expired, please add the cargiver again to renew the request.</p>
+        <p className="medications-intro">Below are cards for your caregivers information.</p>
       </header>
 
       <button className="caregivers-add-button" type="button" onClick={openAddModal}>+ Add Caregiver</button>
@@ -207,17 +207,24 @@ const CaregiversPage = () => {
               <span className={`home-status-badge medications-status caregivers-status-${caregiver.status}`}>
                 {caregiver.status === "accepted" ? "active" : caregiver.status === "rejected" ? "expired" : "pending"}
               </span>
+              <div className="medications-actions">
               {caregiver.cid !== null && (
-                <div className="medications-actions">
-                  <button className="medications-edit-button" type="button" aria-label={`Edit ${caregiver.name}`} onClick={() => openEditModal(caregiver)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
-                      <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
-                    </svg>
-                  </button>
-                  <button className="medications-remove-button" type="button" onClick={() => removeCaregiver(caregiver.cid as number)}>Remove</button>
-                </div>
+                <button className="medications-edit-button" type="button" aria-label={`Edit ${caregiver.name}`} onClick={() => openEditModal(caregiver)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+                    <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                  </svg>
+                </button>
               )}
+              <button
+                className="medications-remove-button"
+                type="button"
+                onClick={() => removeCaregiver(caregiver)}
+              >
+                Remove
+              </button>
+
+            </div>
             </div>
           </article>
         ))}
