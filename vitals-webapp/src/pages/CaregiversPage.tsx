@@ -41,6 +41,7 @@ const CaregiversPage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
+  const [caregiverToRemove, setCaregiverToRemove] = useState<CaregiverRecord | null>(null);
 
   const [isAdding, setIsAdding] = useState(false);
   const [editingCid, setEditingCid] = useState<number | null>(null);
@@ -217,19 +218,58 @@ const CaregiversPage = () => {
                 </button>
               )}
               <button
-                className="medications-remove-button"
-                type="button"
-                onClick={() => removeCaregiver(caregiver)}
+                className="medications-remove-button" type="button" onClick={() => setCaregiverToRemove(caregiver)} 
               >
                 Remove
               </button>
-
             </div>
             </div>
           </article>
         ))}
       </section>
     </div>
+
+    {caregiverToRemove && (
+      <div
+        className="app-logout-dialog-backdrop"
+        onMouseDown={(event) =>
+          event.target === event.currentTarget &&
+          setCaregiverToRemove(null)
+        }
+      >
+        <section
+          className="app-logout-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="caregiver-remove-title"
+        >
+          <h2 id="caregiver-remove-title">
+            {caregiverToRemove.status === "accepted"
+              ? "Are you sure you want to remove this caregiver?"
+              : "Are you sure you want to remove this invitation?"}
+          </h2>
+
+          <div className="app-logout-dialog-actions">
+            <button
+              type="button"
+              onClick={() => setCaregiverToRemove(null)}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                removeCaregiver(caregiverToRemove);
+                setCaregiverToRemove(null);
+              }}
+            >
+              Confirm
+            </button>
+          </div>
+        </section>
+      </div>
+    )}
 
     {isAdding && (
       <div className="medications-modal-backdrop">

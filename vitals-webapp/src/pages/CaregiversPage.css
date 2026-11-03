@@ -55,3 +55,94 @@
 .caregivers-back-button:hover,
 .caregivers-back-button:focus-visible { background: #f5f5f5; }
 .caregivers-back-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
+
+.caregiver-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(31, 41, 55, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.caregiver-confirm-modal {
+  width: min(100%, 420px);
+
+  padding: 38px 44px 30px;
+
+  border-radius: 16px;
+
+  background: #2149ad;
+  color: white;
+
+  text-align: center;
+
+  box-shadow: 0 22px 50px rgba(0, 0, 0, 0.3);
+}
+
+.caregiver-confirm-modal h2 {
+  margin: 0 0 26px;
+
+  color: white;
+
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.caregiver-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.caregiver-confirm-actions button {
+  flex: 1;
+
+  min-height: 52px;
+
+  border-radius: 8px;
+
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.caregiver-confirm-cancel {
+  border: 2px solid white;
+
+  background: transparent;
+  color: white;
+}
+
+.caregiver-confirm-submit {
+  border: 2px solid white;
+
+  background: white;
+  color: #2149ad;
+}
+
+.caregiver-confirm-cancel:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.caregiver-confirm-submit:hover {
+  background: #f1f5ff;
+}
+
+@media (max-width: 500px) {
+  .caregiver-confirm-modal {
+    padding: 30px 24px 24px;
+  }
+
+  .caregiver-confirm-modal h2 {
+    font-size: 21px;
+  }
+}
