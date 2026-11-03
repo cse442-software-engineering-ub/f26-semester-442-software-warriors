@@ -147,18 +147,163 @@ if($method === 'POST') {
 
 //handle DELETE requests
 if($method === 'DELETE') {
-    $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-    $stmt->execute([$userId]);
 
-    if($stmt->rowCount() === 0) {
-        accountFail(401, 'You must be logged in to delete your account.');
+    try {
+        $pdo->beginTransaction();
+
+        //Get the user's email before deleting the account
+        $stmt = $pdo->prepare(
+            'SELECT email
+             FROM users
+             WHERE id = ?'
+        );
+
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+
+        if(!$user) {
+            $pdo->rollBack();
+            accountFail(401, 'You must be logged in to delete your account.');
+        }
+
+        $userEmail = $user['email'];
+
+        //Get caregiver accounts connected to this patient
+        //so their caregiver status can be updated afterward
+        $stmt = $pdo->prepare(
+            'SELECT DISTINCT caregiver_uid
+             FROM caregivers
+             WHERE uid = ?
+             AND caregiver_uid IS NOT NULL'
+        );
+
+        $stmt->execute([$userId]);
+
+        $affectedCaregiverIds = $stmt->fetchAll(
+            PDO::FETCH_COLUMN
+        );
+
+        //Delete all medications belonging to the user
+        $stmt = $pdo->prepare(
+            'DELETE FROM medications
+             WHERE uid = ?'
+        );
+
+        $stmt->execute([$userId]);
+
+        //Delete all appointments belonging to the user
+        $stmt = $pdo->prepare(
+            'DELETE FROM appointments
+             WHERE uid = ?'
+        );
+
+        $stmt->execute([$userId]);
+
+        //Delete all readings belonging to the user
+        $stmt = $pdo->prepare(
+            'DELETE FROM readings
+             WHERE uid = ?'
+        );
+
+        $stmt->execute([$userId]);
+
+        //Delete pending caregiver invitations sent by this patient
+        //or sent to this user's email
+        $stmt = $pdo->prepare(
+            'DELETE FROM caregiver_invitations
+             WHERE patient_uid = ?
+             OR LOWER(email) = LOWER(?)'
+        );
+
+        $stmt->execute([
+            $userId,
+            $userEmail
+        ]);
+
+        //Delete caregiver relationships where this user is either
+        //the patient or the caregiver
+        $stmt = $pdo->prepare(
+            'DELETE FROM caregivers
+             WHERE uid = ?
+             OR caregiver_uid = ?'
+        );
+
+        $stmt->execute([
+            $userId,
+            $userId
+        ]);
+
+        //If any caregivers belonged to this patient,
+        //check whether they still care for another patient
+        foreach($affectedCaregiverIds as $caregiverUserId) {
+
+            $caregiverUserId = (int)$caregiverUserId;
+
+            $stmt = $pdo->prepare(
+                'SELECT COUNT(*)
+                 FROM caregivers
+                 WHERE caregiver_uid = ?'
+            );
+
+            $stmt->execute([
+                $caregiverUserId
+            ]);
+
+            $remainingRelationships =
+                (int)$stmt->fetchColumn();
+
+            if($remainingRelationships === 0) {
+
+                $stmt = $pdo->prepare(
+                    'UPDATE users
+                     SET isCaregiver = 0
+                     WHERE id = ?'
+                );
+
+                $stmt->execute([
+                    $caregiverUserId
+                ]);
+            }
+        }
+
+        //Delete the user's account last
+        $stmt = $pdo->prepare(
+            'DELETE FROM users
+             WHERE id = ?'
+        );
+
+        $stmt->execute([$userId]);
+
+        if($stmt->rowCount() === 0) {
+            throw new Exception(
+                'User account could not be deleted.'
+            );
+        }
+
+        $pdo->commit();
+    }
+    catch(Throwable $e) {
+
+        if($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        accountFail(
+            500,
+            'Account could not be deleted.'
+        );
     }
 
-    //clears the session and returns successful account deletion message
+    //Clear the session after successful deletion
     $_SESSION = [];
     session_destroy();
+
     http_response_code(200);
-    echo json_encode(['message' => 'Account deleted successfully.']);
+
+    echo json_encode([
+        'message' => 'Account deleted successfully.'
+    ]);
+
     exit;
 }
 

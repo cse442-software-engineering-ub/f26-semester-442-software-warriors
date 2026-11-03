@@ -50,15 +50,15 @@ if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
   $stmt->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);
 }
 
-// Re-enable cookies and start a fresh session only after auth passes.
+//Re-enable cookies and start the session only after auth passes.
 ini_set('session.use_cookies', '1');
 session_set_cookie_params([
     'secure'   => true,
     'httponly' => true,
     'samesite' => 'None',
 ]);
+
 session_start();
-session_regenerate_id(true);
 $_SESSION['user_id'] = (int) $user['id'];
 $_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to PHPSESS cookie for caregivers
 
@@ -296,14 +296,14 @@ $caregiverRelationship = $stmt->fetch();
 //Set the session values used by the rest of the website
 if($caregiverRelationship) {
 
-    $_SESSION['isCaregiver'] = 1;
+    $_SESSION['isCaregiver'] = true;
 
     $_SESSION['patientID'] =
         (int)$caregiverRelationship['uid'];
 }
 else {
 
-    $_SESSION['isCaregiver'] = 0;
+    $_SESSION['isCaregiver'] = false;
 
     unset($_SESSION['patientID']);
 }
