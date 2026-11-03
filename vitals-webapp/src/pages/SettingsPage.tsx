@@ -324,15 +324,17 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="settings-account-actions-column">
-                  <section className="settings-preference-row settings-security-row">
-                    <div>
-                      <h2>Caregivers</h2>
-                      <p>Add caregivers who can help you manage your health information.</p>
-                      <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => navigate("/caregivers")}>
-                        Manage Caregivers
-                      </button>
-                    </div>
-                  </section>
+                  {!isCaregiver && (
+                    <section className="settings-preference-row settings-security-row">
+                      <div>
+                        <h2>Caregivers</h2>
+                        <p>Add caregivers who can help you manage your health information.</p>
+                        <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => navigate("/caregivers")}>
+                          Manage Caregivers
+                        </button>
+                      </div>
+                    </section>
+                  )}
 
                   <section className="settings-preference-row settings-security-row">
                     <div>
