@@ -113,6 +113,12 @@ function aidFromUrl(): int
 }
 
 try {
+  if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
+        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
+        $stmt->execute([':uid' => $uid]);
+        $caregiverInfo = $stmt->fetch();
+        $uid = $_SESSION['patientID'];
+    }
   // ---------- GET: my upcoming appointments, soonest first ----------
   if ($method === 'GET') {
     $stmt = $pdo->prepare(
@@ -124,6 +130,10 @@ try {
     $rows = $stmt->fetchAll();
     foreach ($rows as &$row) {
       $row['aid'] = (int) $row['aid'];
+    }
+    if ($_SESSION['isCaregiver']) {
+      echo json_encode(['appointments' => $rows, 'caregiverInfo' => $caregiverInfo]);
+      exit();
     }
     echo json_encode(['appointments' => $rows]);
     exit;
