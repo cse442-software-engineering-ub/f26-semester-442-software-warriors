@@ -223,23 +223,14 @@ const JournalPage = () => {
           <article className="journal-average-card">
             <h3>Systolic Average</h3>
             <p><strong>{averages?.systolic ?? "—"}</strong> mmHg</p>
-            {typeof averages?.systolic === "number" && (
-              <StatusBadge status="WITHIN RANGE" />
-            )}
           </article>
           <article className="journal-average-card">
             <h3>Diastolic Average</h3>
             <p><strong>{averages?.diastolic ?? "—"}</strong> mmHg</p>
-            {typeof averages?.diastolic === "number" && (
-              <StatusBadge status="WITHIN RANGE" />
-            )}
           </article>
           <article className="journal-average-card">
             <h3>Pulse Rate Average</h3>
             <p><strong>{averages?.pulse ?? "—"}</strong> bpm</p>
-            {typeof averages?.pulse === "number" && (
-              <StatusBadge status="WITHIN RANGE" />
-            )}
           </article>
         </section>
 
