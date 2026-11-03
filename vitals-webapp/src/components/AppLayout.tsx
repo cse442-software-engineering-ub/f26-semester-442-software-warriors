@@ -151,8 +151,7 @@ const AppSidebar = ({
 const AppLayout = ({
   activeItem,
   children,
-  userName = "Jane Doe",
-  accountLabel = "Personal account",
+  userName = "Account",
   destinations,
 }: AppLayoutProps) => {
   const navigate = useNavigate();
@@ -196,21 +195,22 @@ const AppLayout = ({
     };
   }, [navigate]);
 
-  const relatedPersonLabel = account?.relatedPersonName
-    ? `${account.isCaregiver ? "Patient" : "Caregiver"}: ${account.relatedPersonName}`
-    : account
-      ? account.isCaregiver
-        ? "Patient account"
-        : "Personal account"
-      : accountLoadFailed
-        ? "Account details unavailable"
-        : accountLabel;
+  const relatedPersonLabel = account
+    ? account.isCaregiver
+      ? "Caregiver Account"
+      : "Personal Account"
+    : accountLoadFailed
+      ? "Account details unavailable"
+      : "";
+
+  // Page-supplied values are only a fallback if loading fails, so placeholders never flash.
+  const displayName = account?.name ?? (accountLoadFailed ? userName : "");
 
   return (
     <div className="app-layout">
       <AppSidebar
         activeItem={activeItem}
-        userName={account?.name ?? userName}
+        userName={displayName}
         accountLabel={relatedPersonLabel}
         destinations={destinations}
       />
