@@ -1,5 +1,4 @@
 <?php
-
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
@@ -133,8 +132,6 @@ if($method === 'GET') {
         $pendingInvitations,
         $rejectedInvitations
     );
-
-
 
     echo json_encode([
         'success' => true,

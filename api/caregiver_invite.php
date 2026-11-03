@@ -1,10 +1,8 @@
 <?php
-
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
-
 ini_set('session.use_cookies', '1');
 
 session_set_cookie_params([
