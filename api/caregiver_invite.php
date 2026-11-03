@@ -1,10 +1,8 @@
 <?php
-
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
-
 ini_set('session.use_cookies', '1');
 
 session_set_cookie_params([
@@ -29,6 +27,41 @@ $frontendPath = dirname(dirname($_SERVER['SCRIPT_NAME']));
 
 $frontendBase = $scheme . '://' . $host . $frontendPath;
 
+//Show invitation errors on the frontend when opened in a browser,
+//but keep JSON responses for Postman/API testing
+function invitationFail(
+    string $frontendBase,
+    string $reason,
+    int $status,
+    string $message
+): void {
+
+    $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+
+    //Normal browser navigation
+    if(stripos($accept, 'text/html') !== false) {
+
+        header(
+            'Location: ' .
+            $frontendBase .
+            '/#/caregiver-invite-result?status=invalid&reason=' .
+            urlencode($reason)
+        );
+
+        exit;
+    }
+
+    //Postman/API response
+    http_response_code($status);
+
+    echo json_encode([
+        'success' => false,
+        'error' => $message
+    ]);
+
+    exit;
+}
+
 //The invitation link should use GET
 if($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -45,14 +78,12 @@ if($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $token = trim($_GET['token'] ?? '');
 
 if($token === '') {
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invitation token is required.'
-    ]);
-
-    exit;
+    invitationFail(
+        $frontendBase,
+        'missing',
+        400,
+        'Invitation token is required.'
+    );
 }
 
 //Hash the token so it can be compared with the database
@@ -71,38 +102,32 @@ $stmt->execute([$tokenHash]);
 $invitation = $stmt->fetch();
 
 if(!$invitation) {
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invalid invitation.'
-    ]);
-
-    exit;
+    invitationFail(
+        $frontendBase,
+        'invalid',
+        400,
+        'Invalid invitation.'
+    );
 }
 
 //Make sure the invitation has not already been used
 if((int)$invitation['used'] === 1) {
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'This invitation has already been used.'
-    ]);
-
-    exit;
+    invitationFail(
+        $frontendBase,
+        'used',
+        400,
+        'This invitation has already been used.'
+    );
 }
 
 //Make sure the invitation has not expired
 if(strtotime($invitation['expires_at']) <= time()) {
-    http_response_code(400);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'Invitation has expired.'
-    ]);
-
-    exit;
+    invitationFail(
+        $frontendBase,
+        'expired',
+        400,
+        'Invitation has expired.'
+    );
 }
 
 $invitationId = (int)$invitation['iid'];
@@ -174,14 +199,12 @@ $stmt->execute([
 ]);
 
 if($stmt->fetch()) {
-    http_response_code(409);
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'This caregiver has already been added.'
-    ]);
-
-    exit;
+    invitationFail(
+        $frontendBase,
+        'used',
+        409,
+        'This caregiver has already been added.'
+    );
 }
 
 try {
@@ -247,9 +270,15 @@ catch(Throwable $e) {
 unset($_SESSION['caregiver_invite_iid']);
 unset($_SESSION['caregiver_invite_email']);
 
-echo json_encode([
-    'success' => true,
-    'message' => 'Caregiver invitation accepted successfully.'
-]);
+//Update the current session now that this user is a caregiver
+$_SESSION['isCaregiver'] = true;
+$_SESSION['patientID'] = $patientId;
+
+//Send the caregiver back to the frontend without exposing the token
+header(
+    'Location: ' .
+    $frontendBase .
+    '/#/caregiver-invite-result?status=accepted'
+);
 
 exit;
