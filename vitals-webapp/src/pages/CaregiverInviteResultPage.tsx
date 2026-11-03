@@ -1,7 +1,10 @@
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./CaregiverInviteResultPage.css";
+import SplitLayout from "../components/Layout";
+import Button from "../components/Button";
+import VitalLogo from "../assets/logo.png";
 
-const CaregiverInviteResultPage = () => {
+const CaregiverInviteResultPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -11,116 +14,95 @@ const CaregiverInviteResultPage = () => {
   const reason = params.get("reason");
 
   const accepted = status === "accepted";
+  const alreadyUsed = reason === "used";
+  const expired = reason === "expired";
+  const missing = reason === "missing";
 
-  let title = "Invalid Invitation";
+  let title = "Invalid Caregiver Invitation";
   let message =
     "This caregiver invitation is invalid. Please ask the patient to send you a new invitation.";
+  let buttonText = "Go to Login";
+  let buttonPath = "/login";
 
-  if (reason === "expired") {
-    title = "Invitation Expired";
+  if (accepted) {
+    title = "You're now a caregiver!";
+    message = "Caregiver invitation accepted successfully.";
+    buttonText = "Go to your patient's Home";
+    buttonPath = "/dashboard";
+  }
+  else if (alreadyUsed) {
+    title = "Invitation already used";
+    message =
+      "This caregiver invitation has already been accepted and cannot be used again.";
+    buttonText = "Go to Login";
+    buttonPath = "/login";
+  }
+  else if (expired) {
+    title = "Invitation expired";
     message =
       "This caregiver invitation has expired. Please ask the patient to send you a new invitation.";
   }
-
-  if (reason === "used") {
-    title = "Invitation Already Used";
-    message =
-      "This caregiver invitation has already been accepted and cannot be used again.";
-  }
-
-  if (reason === "missing") {
-    title = "Invitation Not Found";
+  else if (missing) {
+    title = "Invitation not found";
     message =
       "The caregiver invitation link is missing the information needed to continue.";
   }
 
-  if (accepted) {
-    title = "Invitation Accepted";
-    message =
-      "You have successfully been added as a caregiver. You can now view the patient's health information.";
-  }
-
   return (
-    <div className="caregiver-invite-result-page">
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      <SplitLayout
+        left_css="auth-left-panel"
+        right_css="auth-right-panel"
+        mobileBrand
+        leftContent={
+          <div className="leftWrap">
+            <div className="leftBox">
 
-      <aside className="caregiver-invite-brand">
-        <div className="caregiver-invite-logo">
-          <svg
-            viewBox="0 0 40 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <path d="M1 12h7l3-8 5 16 5-12 4 8 3-4h11" />
-          </svg>
+              <img
+                src={VitalLogo}
+                alt="VITALS Logo"
+                className="logoImg"
+              />
 
-          <span>VITALS</span>
-        </div>
-      </aside>
+              <div className="infoText">
+                <h1 className="leftTitle">
+                  Caregiver Invitation
+                </h1>
 
-      <main className="caregiver-invite-main">
+                <p className="leftSubtitle">
+                  Accepting links your account to your patient, so you can
+                  follow their readings, medications and appointments.
+                </p>
+              </div>
 
-        <section className="caregiver-invite-card">
-
-          <div
-            className={
-              accepted
-                ? "caregiver-invite-icon caregiver-invite-icon-success"
-                : "caregiver-invite-icon caregiver-invite-icon-error"
-            }
-            aria-hidden="true"
-          >
-            {accepted ? (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="m5 12 4 4L19 6" />
-              </svg>
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <path d="M12 7v6" />
-                <path d="M12 17h.01" />
-                <circle cx="12" cy="12" r="10" />
-              </svg>
-            )}
+            </div>
           </div>
+        }
+        rightContent={
+          <div className="formBox">
 
-          <p className="caregiver-invite-label">
-            CAREGIVER INVITATION
-          </p>
+            <div className="text-center">
+              <h2 className="formTitle">
+                {title}
+              </h2>
 
-          <h1>{title}</h1>
+              <h3 className="formSubtitle">
+                {message}
+              </h3>
+            </div>
 
-          <p className="caregiver-invite-message">
-            {message}
-          </p>
+            <Button
+              type="button"
+              variant="primary"
+              className="submitBtn"
+              onClick={() => navigate(buttonPath)}
+            >
+              {buttonText}
+            </Button>
 
-          <button
-            className="caregiver-invite-button"
-            type="button"
-            onClick={() =>
-              navigate(accepted ? "/dashboard" : "/login")
-            }
-          >
-            {accepted ? "Go to Home" : "Go to Login"}
-          </button>
-
-        </section>
-
-      </main>
-
+          </div>
+        }
+      />
     </div>
   );
 };
