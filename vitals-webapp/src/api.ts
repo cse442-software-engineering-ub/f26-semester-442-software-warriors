@@ -537,11 +537,24 @@ export async function deleteMedication(mid: number): Promise<void> {
 
 // ---------- Caregivers ----------
 // One row from GET caregivers.php
+// accepted rows have a cid; pending/rejected (expired) invitations have an iid instead
 export interface CaregiverRecord {
-  cid: number;
+  cid: number | null;
+  iid: number | null;
+  status: "accepted" | "pending" | "rejected";
   name: string;
   email: string;
   phone_number: string; // exactly 10 digits
+}
+
+// DELETE caregivers.php (raw JSON { cid } or { iid }) -> { success: true }
+export async function deleteCaregiver(cid: number | null, iid: number | null, ): Promise<void> {
+    const body = cid !== null ? { cid } : { iid };
+    await settingsRequest("caregivers.php", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
 }
 
 // GET caregivers.php -> { success: true, caregivers: [...] }
@@ -552,20 +565,37 @@ export async function getCaregivers(): Promise<CaregiverRecord[]> {
   return data.caregivers ?? [];
 }
 
-// POST caregivers.php (form-data) -> 201 { success: true, cid }; also emails the invitation
+// POST caregivers.php (form-data) -> 201 { success: true, iid }; emails the invitation
 export async function addCaregiver(
-  input: Omit<CaregiverRecord, "cid">,
+  input: Pick<CaregiverRecord, "name" | "email" | "phone_number">,
 ): Promise<number> {
   const form = new FormData();
   form.append("name", input.name.trim());
   form.append("email", input.email.trim());
   form.append("phone_number", input.phone_number);
 
-  const data = await settingsRequest<{ cid: number }>("caregivers.php", {
+  const data = await settingsRequest<{ iid: number }>("caregivers.php", {
     method: "POST",
     body: form,
   });
-  return data.cid;
+  return data.iid;
+}
+
+// PUT caregivers.php (raw JSON) -> { success: true }; only accepted caregivers (with a cid) can be edited
+export async function updateCaregiver(
+  cid: number,
+  input: Pick<CaregiverRecord, "name" | "email" | "phone_number">,
+): Promise<void> {
+  await settingsRequest("caregivers.php", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cid,
+      name: input.name.trim(),
+      email: input.email.trim(),
+      phone_number: input.phone_number,
+    }),
+  });
 }
 
 // ---------- Appointments (#70 backend, #73 frontend) ----------

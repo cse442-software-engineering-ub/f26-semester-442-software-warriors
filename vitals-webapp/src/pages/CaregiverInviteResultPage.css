@@ -1,0 +1,135 @@
+.caregiver-invite-result-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  background: #ffffff;
+}
+
+.caregiver-invite-brand {
+  min-height: 100vh;
+  padding: 24px;
+  background: #2149ad;
+  color: #ffffff;
+}
+
+.caregiver-invite-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.caregiver-invite-logo svg {
+  width: 32px;
+  height: 24px;
+}
+
+.caregiver-invite-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 90px 40px;
+}
+
+.caregiver-invite-card {
+  width: min(100%, 620px);
+  padding: 50px 45px;
+  border-radius: 16px;
+  background: #eef6fd;
+  box-shadow: 0 4px 14px rgba(31, 73, 173, 0.1);
+  text-align: center;
+}
+
+.caregiver-invite-icon {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.caregiver-invite-icon svg {
+  width: 38px;
+  height: 38px;
+}
+
+.caregiver-invite-icon-success {
+  background: #d9f0de;
+  color: #1b6b32;
+}
+
+.caregiver-invite-icon-error {
+  background: #fce4e4;
+  color: #b93a2e;
+}
+
+.caregiver-invite-label {
+  margin: 0 0 8px;
+  color: #2149ad;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.caregiver-invite-card h1 {
+  margin: 0;
+  color: #111111;
+  font-size: 36px;
+  line-height: 1.15;
+}
+
+.caregiver-invite-message {
+  max-width: 470px;
+  margin: 18px auto 30px;
+  color: #4b5563;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.caregiver-invite-button {
+  min-height: 46px;
+  padding: 0 28px;
+  border: 2px solid #2149ad;
+  border-radius: 8px;
+  background: #2149ad;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.caregiver-invite-button:hover {
+  background: #173987;
+}
+
+.caregiver-invite-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .caregiver-invite-result-page {
+    display: block;
+  }
+
+  .caregiver-invite-brand {
+    min-height: auto;
+    padding: 20px 24px;
+  }
+
+  .caregiver-invite-main {
+    padding: 50px 20px;
+  }
+
+  .caregiver-invite-card {
+    padding: 40px 24px;
+  }
+
+  .caregiver-invite-card h1 {
+    font-size: 30px;
+  }
+}

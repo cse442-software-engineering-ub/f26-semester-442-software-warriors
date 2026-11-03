@@ -3,7 +3,20 @@
   flex-direction: column;
 }
 
+.caregivers-status-pending { background: #fff1d6; color: #8a5a00; }
+.caregivers-status-rejected { background: #fce4e4; color: #b93a2e; }
+
 .caregivers-modal { width: min(100%, 440px); }
+
+.caregivers-success {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #d9f0de;
+  color: #1b6b32;
+  font-size: 14px;
+  font-weight: 600;
+}
 
 .caregivers-add-button {
   align-self: flex-start;
