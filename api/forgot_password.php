@@ -70,8 +70,6 @@ if ($user) {
         $mail->Body = "Your OTP for password reset is: <b>$otp</b><br>This OTP will expire in 10 minutes.";
 
         $mail->send();
-        $mail->SMTPDebug = 2;
-        $mail->Debugoutput = function ($str) { error_log("SMTP: $str"); };
 
         http_response_code(200);
         echo json_encode([
@@ -81,14 +79,12 @@ if ($user) {
         ]);
         exit();
     } catch (Exception $e) {
-        // Return 200 with debug_otp even if SMTP fails locally, so tests can proceed
-        http_response_code(403);
+        // Never send config, OTP or mailer details to the browser. Log them on the server only.
+        error_log('forgot_password.php mail failed: ' . $mail->ErrorInfo);
+        http_response_code(500);
         echo json_encode([
-            'status' => 'warning',
-            'message' => 'Mail delivery failed, but OTP was generated for testing.',
-            'mail_cf'=> $config,
-            //'debug_otp' => $otp, //AFTER TESTING COMPLETES THIS SHOULD BE DELETED (If testing is needed uncomment this on aptitude and test through there)
-            'mailer_error' => $mail->ErrorInfo
+            'status' => 'error',
+            'message' => 'We could not send the email right now. Please try again later.'
         ]);
         exit();
     }
