@@ -5,13 +5,7 @@ require __DIR__ . '/db.php';
 header('Content-Type: application/json');
 ini_set('session.use_cookies', '1');
 
-session_set_cookie_params([
-    'secure' => true,
-    'httponly' => true,
-    'samesite' => 'None',
-]);
-
-session_start();
+require __DIR__ . '/session_setup.php';
 
 //Build URLs based on where the backend is currently deployed
 $scheme = (

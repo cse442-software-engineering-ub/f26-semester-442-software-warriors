@@ -1,11 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'secure' => true,
-        'httponly' => true,
-        'samesite' => 'None',
-    ]);
-    session_start();
+    require __DIR__ . '/session_setup.php';
 }
 
 function requireAuth(): int
