@@ -1,5 +1,5 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
@@ -89,10 +89,11 @@ else {
             ]);
         }
     } catch (PDOException $e) {
+        error_log(basename(__FILE__) . ': ' . $e->getMessage());
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Database error: ' . $e->getMessage()
+            'message' => 'Something went wrong. Please try again.'
         ]);
     }
 }
