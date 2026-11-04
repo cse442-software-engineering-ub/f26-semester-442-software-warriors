@@ -17,6 +17,9 @@ export default defineConfig({
         target: 'https://aptitude.cse.buffalo.edu/CSE442/2026-Fall/cse-442ab',
         changeOrigin: true,
         secure: true,
+        // aptitude scopes the login cookie to /CSE442/2026-Fall/cse-442ab/.
+        // On localhost:5173 the API is at /api, so store the cookie for / instead.
+        cookiePathRewrite: { "*": "/" },
       }
     }
   }

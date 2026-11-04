@@ -29,6 +29,20 @@ const validate = (values: ReadingInput): FieldErrors => {
     else if (!/^\d+$/.test(values[key].trim()))
       errors[key] = `${name} must be a whole number.`;
   }
+
+  if (Object.keys(errors).length > 0) return errors;
+
+  const systolic = Number(values.systolic);
+  const diastolic = Number(values.diastolic);
+  const pulse = Number(values.pulse);
+  if (systolic < 70 || systolic > 250)
+    errors.systolic = "Systolic must be between 70 and 250.";
+  if (diastolic < 40 || diastolic > 150)
+    errors.diastolic = "Diastolic must be between 40 and 150.";
+  if (pulse < 30 || pulse > 220)
+    errors.pulse = "Pulse rate must be between 30 and 220.";
+  if (!errors.systolic && !errors.diastolic && systolic <= diastolic)
+    errors.systolic = "Systolic must be higher than diastolic.";
   return errors;
 };
 
@@ -55,7 +69,8 @@ const AddReadingModal: React.FC<AddReadingModalProps> = ({
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const key = event.target.name as keyof ReadingInput;
-    setValues((prev) => ({ ...prev, [key]: event.target.value.slice(0, 3) }));
+    const value = event.target.value.replace(/\D/g, "").slice(0, 3);
+    setValues((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
     setFormError("");
   };

@@ -1,17 +1,10 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path'     => '/CSE442/2026-Fall/cse-442ab/',
-    'domain'   => 'aptitude.cse.buffalo.edu',
-    'secure'   => true,
-    'httponly' => true,
-    'samesite' => 'None',
-]);
-session_start();
+$config = require __DIR__ . '/mail_config.php';
+    require __DIR__ . '/session_setup.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -45,10 +38,11 @@ if ($user) {
     $name = $user['name'] ?? 'User';
 
     // Generate 6-digit OTP code
-    $otp = rand(100000, 999999);
+    $otp = random_int(100000, 999999); // random_int is safe for codes; rand() can be predicted
     $_SESSION['reset_otp'] = $otp;
     $_SESSION['reset_email'] = $email;
     $_SESSION['otp_time'] = time();
+    $_SESSION['otp_tries'] = 0; // a new code gets 5 new tries
 
     $mail = new PHPMailer(true);
 
@@ -56,11 +50,11 @@ if ($user) {
         $mail->isSMTP();
         $mail->SMTPAuth = true;
         $mail->SMTPSecure = "ssl";
-        $mail->Host = 'smtp.gmail.com';
+        $mail->Host = $config['host'];
         $mail->Port = 465;
-        $mail->Username = "442.warriors@gmail.com";
+        $mail->Username = $config['username'];
         // NOTE: Replace this with an environment variable or secure config
-        $mail->Password = 'vlfqqdftkbjhrgpg';
+        $mail->Password = $config['password'];
 
         $mail->addAddress($email, $name);
         $mail->setFrom("442.warriors@gmail.com", "VITALS, 442 Warriors");
@@ -74,17 +68,16 @@ if ($user) {
         echo json_encode([
             'status' => 'success',
             'message' => 'An OTP has been sent to your email address.',
-            'debug_otp' => $otp // Capturable by Postman tewsts AFTER TESTING COMPLETES THIS SHOULD BE DELETED
+            //'debug_otp' => $otp // Capturable by Postman tewsts AFTER TESTING COMPLETES THIS SHOULD BE DELETED
         ]);
         exit();
     } catch (Exception $e) {
-        // Return 200 with debug_otp even if SMTP fails locally, so tests can proceed
-        http_response_code(200);
+        // Never send config, OTP or mailer details to the browser. Log them on the server only.
+        error_log('forgot_password.php mail failed: ' . $mail->ErrorInfo);
+        http_response_code(500);
         echo json_encode([
-            'status' => 'warning',
-            'message' => 'Mail delivery failed, but OTP was generated for testing.',
-            'debug_otp' => $otp, //AFTER TESTING COMPLETES THIS SHOULD BE DELETED
-            'mailer_error' => $mail->ErrorInfo
+            'status' => 'error',
+            'message' => 'We could not send the email right now. Please try again later.'
         ]);
         exit();
     }

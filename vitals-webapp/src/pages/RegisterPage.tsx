@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from "react";
 import SplitLayout from "../components/Layout";
 import InputField from "../components/InputField";
-import Button from "../components/Button";
 import VitalLogo from "../assets/logo.png";
 import RegisterIcon from "../assets/register_page_icon.png";
 import type { RegisterFormData } from "../types";
 import { registerUser } from "../api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import "./RegisterPage.css";
 
 function mapBackendErrors(backendErrors: { [field: string]: string }) {
   const mapped: { [key: string]: string } = {};
@@ -30,6 +30,8 @@ function mapBackendErrors(backendErrors: { [field: string]: string }) {
   return mapped;
 }
 const RegisterPage: React.FC = () => {
+  const navigate = useNavigate();
+
   //to make sets of data along with a boolean counterpart use the useState built in component/function
   const [formData, setFormData] = useState<RegisterFormData>({
     firstName: "",
@@ -43,20 +45,9 @@ const RegisterPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
-  const [successMessage, setSuccessMessage] = useState("");
-
   //const [showPassword, setShowPassword] = useState(false);
   //const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000); // Clear success message after 3 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
 
   useEffect(() => {
     if (generalError) {
@@ -108,6 +99,14 @@ const RegisterPage: React.FC = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    }
+
     // Email Regex validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
@@ -138,7 +137,7 @@ const RegisterPage: React.FC = () => {
     }
 
     if (formData.password != formData.confirmPassword) {
-      newErrors.confirmPassword = "Password do not match";
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -168,10 +167,7 @@ const RegisterPage: React.FC = () => {
 
     try {
       await registerUser(formData);
-      setSuccessMessage(
-        "Thank you! Your account has been created successfully.",
-      );
-      // Redirect to login page or another page if needed
+      navigate("/login", { state: { accountCreated: true } });
     } catch (err: any) {
       if (err.errors) {
         // backend found validation errors (442), map them to the form fields
@@ -191,10 +187,10 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       <SplitLayout
-        left_css="lg:w-1/2 bg-blue-800 flex items-center justify-center lg:p-45 lg:h-screen"
-        left_css_mobile="w-full sm:p-60 min-h-[500px]"
-        right_css="lg:w-1/2 bg-white flex items-center justify-center lg:p-8 lg:h-screen"
-        right_css_mobile="w-full sm:p-40 min-h-[500px]"
+        left_css="auth-left-panel"
+        right_css="auth-right-panel"
+        spacer_css="hidden"
+        mobileBrand
         leftContent={
           <div className="flex p-8">
             <div className="max-w-md w-full text-white">
@@ -221,15 +217,22 @@ const RegisterPage: React.FC = () => {
           </div>
         }
         rightContent={
-          <div className="w-full max-w-md">
-            <h2 className="text-3xl font-bold text-gray-800 text-center">
-              Create Account
-            </h2>
-            <h3 className="text-m font-bold text-gray-400 mb-8 text-center">
-              Enter your details to set up your new account.
-            </h3>
-            <form onSubmit={handleSubmit}>
-              <div className="flex space-x-4">
+          <div className="registerFormBox">
+            <div className="login-heading">
+              <h1 className="formTitle">Create Account</h1>
+              <p className="formSubtitle login-subtitle">
+                Enter your details to set up your new account.
+              </p>
+            </div>
+
+            {generalError && (
+              <div className="login-server-error" role="alert">
+                {generalError}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="register-name-fields">
                 <InputField
                   label="First Name"
                   type="text"
@@ -295,38 +298,26 @@ const RegisterPage: React.FC = () => {
                 error={errors.confirmPassword}
               />
 
-              <div className="mt-4 flex gap-4">
-                <Button
+              <div className="register-actions">
+                <button
                   type="submit"
-                  variant="primary"
-                  className={`flex-1 ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
+                  className="login-submit"
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? "Creating account..." : "Register"}
-                </Button>
+                </button>
                 <Link
                   to="/login"
-                  className="flex flex-1 items-center justify-center rounded-lg border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-800 transition hover:bg-gray-50"
+                  className="outlineBtn"
                 >
                   Back to Login
                 </Link>
               </div>
 
-              <p className="mt-6 text-center text-gray-600 text-sm">
+              <p className="helpNote login-help-note">
                 Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Log in</Link> to access your dashboard.
               </p>
 
-              {successMessage && (
-                <div className="mt-4 p-3 rounded-lg bg-green-50 text-green-700 text-sm">
-                  <span className="font-bold">Thank you!</span>{" "}
-                  {successMessage.replace("Thank you! ", "")}
-                </div>
-              )}
-              {generalError && (
-                <div className="mt-4 p-4 rounded-lg bg-red-50 text-red-600 text-sm">
-                  <span className="font-bold">Something went wrong.</span>{" "}
-                  {generalError.replace("Something went wrong. ", "")}
-                </div>
-              )}
             </form>
           </div>
         }

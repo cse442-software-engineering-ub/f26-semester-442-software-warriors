@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { FieldErrorMessage } from "../components/InputField";
 import {
+  ACCOUNT_UPDATED_EVENT,
   changeAccountPassword,
   deleteAccount,
   getAccount,
@@ -93,6 +94,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
   const [savedName, setSavedName] = useState("");
+  const [isCaregiver, setIsCaregiver] = useState(false);
   const [modal, setModal] = useState<ModalName>(null);
   const [passwordErrors, setPasswordErrors] = useState<{ oldPassword?: string; newPassword?: string }>({});
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -114,6 +116,7 @@ const SettingsPage = () => {
           email: account.email,
         });
         setSavedName(account.name);
+        setIsCaregiver(account.isCaregiver);
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -197,6 +200,7 @@ const SettingsPage = () => {
         email: profile.email.trim(),
       });
       setSavedName(profile.name.trim());
+      window.dispatchEvent(new Event(ACCOUNT_UPDATED_EVENT));
       setModal("saved");
     } catch (error: unknown) {
       if (isUnauthorized(error)) {
@@ -280,7 +284,7 @@ const SettingsPage = () => {
       <div className="settings-content">
         <header className="settings-page-heading">
           <div>
-            <h1>Account Settings</h1>
+            <h1>{isCaregiver ? "Caregiver Settings" : "Account Settings"}</h1>
             <p className="settings-intro">View and modify your account information. Make sure you save all changes by pressing the "Save Changes" button at the bottom of the page.</p>
           </div>
         </header>
@@ -320,6 +324,18 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="settings-account-actions-column">
+                  {!isCaregiver && (
+                    <section className="settings-preference-row settings-security-row">
+                      <div>
+                        <h2>Caregivers</h2>
+                        <p>Add caregivers who can help you manage your health information.</p>
+                        <button className="settings-button settings-button-outline settings-change-password" type="button" onClick={() => navigate("/caregivers")}>
+                          Manage Caregivers
+                        </button>
+                      </div>
+                    </section>
+                  )}
+
                   <section className="settings-preference-row settings-security-row">
                     <div>
                       <h2>Password</h2>

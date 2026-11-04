@@ -1,0 +1,57 @@
+.registerFormBox {
+  width: 100%;
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.register-name-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.register-name-fields > div {
+  min-width: 0;
+}
+
+.register-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.register-actions > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.register-actions .outlineBtn {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.login-help-note {
+  font-size: 0.875rem;
+}
+
+.register-success-message {
+  margin-top: 1rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.5rem;
+  background: #f0fdf4;
+  padding: 0.75rem;
+  color: #15803d;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 480px) {
+  .register-name-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

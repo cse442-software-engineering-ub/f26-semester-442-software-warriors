@@ -1,3 +1,4 @@
 api/db_config.php
 .vscode/sftp.json
 .vscode/ssh.json
+api/mail_config.php
