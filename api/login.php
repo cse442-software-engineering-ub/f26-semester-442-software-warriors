@@ -53,6 +53,7 @@ if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
 //Re-enable cookies and start the session only after auth passes.
 ini_set('session.use_cookies', '1');
 require __DIR__ . '/session_setup.php';
+session_regenerate_id(true); // new session id after login, so a planted id is useless
 $_SESSION['user_id'] = (int) $user['id'];
 $_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to PHPSESS cookie for caregivers
 
