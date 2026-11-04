@@ -38,10 +38,11 @@ if ($user) {
     $name = $user['name'] ?? 'User';
 
     // Generate 6-digit OTP code
-    $otp = rand(100000, 999999);
+    $otp = random_int(100000, 999999); // random_int is safe for codes; rand() can be predicted
     $_SESSION['reset_otp'] = $otp;
     $_SESSION['reset_email'] = $email;
     $_SESSION['otp_time'] = time();
+    $_SESSION['otp_tries'] = 0; // a new code gets 5 new tries
 
     $mail = new PHPMailer(true);
 
