@@ -179,13 +179,11 @@ if($method === 'POST') {
     $stmt = $pdo->prepare(
         'SELECT cid
         FROM caregivers
-        WHERE uid = ?
-        AND phone_number = ?
+        WHERE phone_number = ?
         LIMIT 1'
     );
 
     $stmt->execute([
-        $userId,
         $phoneNumber
     ]);
 
@@ -223,20 +221,18 @@ if($method === 'POST') {
     $stmt = $pdo->prepare(
         'SELECT cid
          FROM caregivers
-         WHERE uid = ?
-         AND LOWER(email) = LOWER(?)
+         WHERE LOWER(email) = LOWER(?)
          LIMIT 1'
     );
 
     $stmt->execute([
-        $userId,
         $email
     ]);
 
     if($stmt->fetch()) {
         caregiverFail(
             409,
-            'This caregiver has already been added.'
+            'Email is already in use, please enter a different one.'
         );
     }
 
@@ -477,6 +473,49 @@ if($method === 'PUT') {
     //valid phone number only digits
     if(!preg_match('/^[0-9]{10}$/', $phoneNumber)) {
         caregiverFail(400, 'A valid phone number is required');
+    }
+
+    //Check if this email is already used by a different caregiver
+    $stmt = $pdo->prepare(
+        'SELECT cid
+        FROM caregivers
+        WHERE LOWER(email) = LOWER(?)
+        AND cid != ?
+        LIMIT 1'
+    );
+
+    $stmt->execute([
+        $email,
+        (int)$cid
+    ]);
+
+    if($stmt->fetch()) {
+        caregiverFail(
+            409,
+            'Email is already in use, please enter a different one.'
+        );
+    }
+
+
+    //Check if this phone number is already used by a different caregiver
+    $stmt = $pdo->prepare(
+        'SELECT cid
+        FROM caregivers
+        WHERE phone_number = ?
+        AND cid != ?
+        LIMIT 1'
+    );
+
+    $stmt->execute([
+        $phoneNumber,
+        (int)$cid
+    ]);
+
+    if($stmt->fetch()) {
+        caregiverFail(
+            409,
+            'Phone number is already in use, please enter a different one.'
+        );
     }
 
     //make sure the caregiver exists and is associated with the logged in user
