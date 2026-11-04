@@ -65,7 +65,7 @@ else {
                 $averages = [
                     "systolic" => round($totalSystolic / $readingCount),
                     "diastolic" => round($totalDiastolic / $readingCount),
-                    "pulse" => round($totalPulse / $readingCount)
+                    "pulse" => round($totalPulse / ($readingCount - $null_pulses))
                 ];
             }
             $avgStatus = bpStatus($averages['systolic'], $averages['diastolic']);
