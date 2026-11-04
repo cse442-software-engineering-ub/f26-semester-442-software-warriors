@@ -7,13 +7,7 @@ header('Content-Type: application/json');
 //Start session so caregiver invitation information can carry over
 ini_set('session.use_cookies', '1');
 
-session_set_cookie_params([
-    'secure' => true,
-    'httponly' => true,
-    'samesite' => 'None',
-]);
-
-session_start();
+require __DIR__ . '/session_setup.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   http_response_code(405);
