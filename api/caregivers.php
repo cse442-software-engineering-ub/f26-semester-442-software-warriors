@@ -175,6 +175,26 @@ if($method === 'POST') {
     if(!preg_match('/^[0-9]{10}$/', $phoneNumber)) {
         caregiverFail(400, 'A valid phone number is required');
     }
+    //Check if this phone number is already used by another caregiver
+    $stmt = $pdo->prepare(
+        'SELECT cid
+        FROM caregivers
+        WHERE uid = ?
+        AND phone_number = ?
+        LIMIT 1'
+    );
+
+    $stmt->execute([
+        $userId,
+        $phoneNumber
+    ]);
+
+    if($stmt->fetch()) {
+        caregiverFail(
+            409,
+            'Phone number is already in use, please enter a different one.'
+        );
+    }
 
     //Get the logged-in patient's information
     $stmt = $pdo->prepare(
