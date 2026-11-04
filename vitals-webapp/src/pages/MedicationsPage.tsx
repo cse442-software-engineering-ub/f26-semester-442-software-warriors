@@ -118,7 +118,7 @@ const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
 ];
 const maxDoseLength = 15;
 
-const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (mid: number) => void }) => (
+const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (medication: MedicationRecord) => void }) => (
   <article className="home-card home-medication-card medications-card">
     <div className="medications-main">
       <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
@@ -170,7 +170,7 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
             <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
           </svg>
         </button>
-        <button className="medications-remove-button" type="button" onClick={() => onRemove(medication.mid)}>Remove</button>
+        <button className="medications-remove-button" type="button" onClick={() => onRemove(medication)}>Remove</button>
       </div>
     </div>
   </article>
@@ -184,6 +184,8 @@ const MedicationsPage = () => {
   const [reloadCount, setReloadCount] = useState(0);
   const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [toRemove, setToRemove] = useState<MedicationRecord | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const [accountName, setAccountName] = useState("");
   const [isCaregiver, setIsCaregiver] = useState(false);
@@ -220,16 +222,28 @@ const MedicationsPage = () => {
       .finally(() => setIsLoading(false));
   }, [navigate, reloadCount]);
 
-  const removeMedication = (mid: number) => {
-    deleteMedication(mid)
-      .then(() => setReloadCount((count) => count + 1))
-      .catch((error: unknown) => {
-        if (isUnauthorized(error)) {
-          navigate("/login", { replace: true });
-          return;
-        }
-        setRequestError(getErrorMessage(error));
-      });
+  const askToRemove = (medication: MedicationRecord) => {
+    setRequestError("");
+    setToRemove(medication);
+  };
+
+  const confirmRemove = async () => {
+    if (!toRemove) return;
+    const medication = toRemove;
+    setToRemove(null);
+    setIsRemoving(true);
+    try {
+      await deleteMedication(medication.mid);
+      setReloadCount((count) => count + 1);
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setRequestError(getErrorMessage(error));
+    } finally {
+      setIsRemoving(false);
+    }
   };
 
   const [isAdding, setIsAdding] = useState(false);
@@ -408,7 +422,7 @@ const MedicationsPage = () => {
         </button>
       </div>
 
-      <section className="medications-list" aria-label="Your medications">
+      <section className="medications-list" aria-label="Your medications" aria-busy={isRemoving}>
         {isLoading && <p className="home-empty">Loading...</p>}
         {requestError && <p className="home-empty" role="alert">{requestError}</p>}
         {!isLoading && !requestError && medications.length === 0 && (
@@ -418,10 +432,38 @@ const MedicationsPage = () => {
           <p className="home-empty">No medications match the selected filter.</p>
         )}
         {visibleMedications.map((medication) => (
-          <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={removeMedication} />
+          <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={askToRemove} />
         ))}
       </section>
     </div>
+
+    {toRemove && (
+      <div
+        className="app-logout-dialog-backdrop"
+        onMouseDown={(event) =>
+          event.target === event.currentTarget && setToRemove(null)
+        }
+      >
+        <section
+          className="app-logout-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="medications-remove-title"
+        >
+          <h2 id="medications-remove-title">
+            Are you sure you want to remove this medication?
+          </h2>
+          <div className="app-logout-dialog-actions">
+            <button type="button" onClick={() => setToRemove(null)}>
+              Cancel
+            </button>
+            <button type="button" onClick={confirmRemove}>
+              Confirm
+            </button>
+          </div>
+        </section>
+      </div>
+    )}
 
     {isFiltering && (
       <div className="medications-modal-backdrop">
