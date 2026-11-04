@@ -1,18 +1,10 @@
 <?php
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path'     => '/CSE442/2026-Fall/cse-442ab/',
-        'domain'   => 'aptitude.cse.buffalo.edu',
-        'secure'   => true,
-        'httponly' => true,
-        'samesite' => 'None',
-    ]);
-    session_start();
+    require __DIR__ . '/session_setup.php';
 }
 
 header('Content-Type: application/json');
@@ -42,8 +34,17 @@ if (time() - $otp_time > 600) {
     exit();
 }
 
+// Only 5 guesses per code, so nobody can try all 900,000 codes
+$_SESSION['otp_tries'] = ($_SESSION['otp_tries'] ?? 0) + 1;
+if ($_SESSION['otp_tries'] > 5) {
+    unset($_SESSION['reset_otp'], $_SESSION['otp_time'], $_SESSION['otp_tries']);
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many wrong codes. Please request a new one.']);
+    exit();
+}
+
 // Compare entered OTP with stored OTP (cast to string to avoid type mismatches)
-if ((string)$entered_otp === (string)$stored_otp) {
+if (hash_equals((string)$stored_otp, (string)$entered_otp)) {
     $_SESSION['otp_verified'] = true;
     http_response_code(200);
     echo json_encode([

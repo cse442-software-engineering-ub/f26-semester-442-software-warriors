@@ -52,15 +52,26 @@ if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
 
 //Re-enable cookies and start the session only after auth passes.
 ini_set('session.use_cookies', '1');
-session_set_cookie_params([
-    'secure'   => true,
-    'httponly' => true,
-    'samesite' => 'None',
-]);
-
-session_start();
+require __DIR__ . '/session_setup.php';
+session_regenerate_id(true); // new session id after login, so a planted id is useless
 $_SESSION['user_id'] = (int) $user['id'];
 $_SESSION['isCaregiver'] = (bool) $user['isCaregiver']; //sets new variable to PHPSESS cookie for caregivers
+
+//An invite saved earlier in this browser must never block a normal login.
+//If it is gone, used, expired or for a different email, forget it and log in as usual.
+if (isset($_SESSION['caregiver_invite_iid'])) {
+    $stmt = $pdo->prepare('SELECT email, expires_at, used FROM caregiver_invitations WHERE iid = ? LIMIT 1');
+    $stmt->execute([(int) $_SESSION['caregiver_invite_iid']]);
+    $savedInvite = $stmt->fetch();
+    if (
+        !$savedInvite
+        || (int) $savedInvite['used'] === 1
+        || strtotime($savedInvite['expires_at']) <= time()
+        || strtolower($savedInvite['email']) !== strtolower($email)
+    ) {
+        unset($_SESSION['caregiver_invite_iid'], $_SESSION['caregiver_invite_email']);
+    }
+}
 
 //Check if this login came from a caregiver invitation
 if(isset($_SESSION['caregiver_invite_iid'])) {
