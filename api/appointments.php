@@ -128,14 +128,27 @@ try {
     );
     $stmt->execute([$uid]);
     $rows = $stmt->fetchAll();
+
+    // stmt for past appointments
+    $stmt = $pdo->prepare(
+      'SELECT ' . APPOINTMENT_COLUMNS . ' FROM appointments
+       WHERE uid = ? AND appointment_date < NOW()
+       ORDER BY appointment_date ASC, aid ASC'
+    );
+    $stmt->execute([$uid]);
+    $past_appointments = $stmt->fetchAll();
     foreach ($rows as &$row) {
       $row['aid'] = (int) $row['aid'];
     }
+    foreach ($past_appointments as &$appointment) {
+      $appointment['aid'] = (int) $appointment['aid'];
+    }
+
     if ($_SESSION['isCaregiver']) {
-      echo json_encode(['appointments' => $rows, 'caregiverInfo' => $caregiverInfo]);
+      echo json_encode(['appointments' => $rows, 'past_appointments' => $past_appointments, 'caregiverInfo' => $caregiverInfo]);
       exit();
     }
-    echo json_encode(['appointments' => $rows]);
+    echo json_encode(['appointments' => $rows, 'past_appointments' => $past_appointments]);
     exit;
   }
 
