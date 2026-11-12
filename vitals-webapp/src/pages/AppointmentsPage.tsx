@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddAppointmentModal from "../components/AddAppointmentModal";
 import WeekCalendar from "../components/WeekCalendar";
-import { getAccount, getAppointments, removeAppointment } from "../api";
+import { getAccount, getAllAppointments, removeAppointment } from "../api";
 import type { AppointmentRecord } from "../api";
 import {
   formatClock,
@@ -33,10 +33,12 @@ const AppointmentCard = ({
   appointment,
   onEdit,
   onRemove,
+  isPast,
 }: {
   appointment: AppointmentRecord;
   onEdit: (Appointment: AppointmentRecord) => void;
   onRemove: (appointment: AppointmentRecord) => void;
+  isPast: boolean;
 }) => {
   const date = parseAppointmentDate(appointment.appointment_date);
   return (
@@ -54,37 +56,39 @@ const AppointmentCard = ({
         <strong>{formatDayLabel(date)}</strong>
         <span>{formatClock(date)}</span>
       </div>
-      <div className="appointments-card-actions">
-        {/* Same pencil as the Medications page */}
-        <button
-          className="appointments-edit-button"
-          type="button"
-          title="Edit"
-          aria-label={`Edit appointment with ${appointment.doctors_name}`}
-          onClick={() => onEdit(appointment)}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
-            <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
-          </svg>
-        </button>
-        <button
-          className="appointments-remove-button"
-          type="button"
-          aria-label={`Remove appointment with ${appointment.doctors_name}`}
-          onClick={() => onRemove(appointment)}
-        >
-          Remove
-        </button>
-      </div>
+      { !isPast && (
+            // Same pencil as the Medications page
+            <div className="appointments-card-actions">
+              <button
+              className="appointments-edit-button"
+              type="button"
+              title="Edit"
+              aria-label={`Edit appointment with ${appointment.doctors_name}`}
+              onClick={() => onEdit(appointment)}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+                  <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                </svg>
+            </button>
+            <button
+              className="appointments-remove-button"
+              type="button"
+              aria-label={`Remove appointment with ${appointment.doctors_name}`}
+              onClick={() => onRemove(appointment)}
+            >
+              Remove
+            </button>
+          </div>
+        )}
     </article>
   );
 };
@@ -92,9 +96,11 @@ const AppointmentCard = ({
 const AppointmentsPage = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<AppointmentRecord[]>([]);
+  const [pastAppointments, setPastAppointments] = useState<AppointmentRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isUpcoming, setIsUpcoming] = useState(true);
   // The appointment being edited, or null when the Edit popup is closed
   const [editing, setEditing] = useState<AppointmentRecord | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
@@ -121,8 +127,11 @@ const AppointmentsPage = () => {
         }
       });
 
-    getAppointments()
-      .then((list) => setAppointments(list))
+    getAllAppointments()
+      .then(({ appointments, past_appointments }) => {
+        setAppointments(appointments);
+        setPastAppointments(past_appointments);
+      })
       .catch((error: unknown) => {
         if (isUnauthorized(error)) {
           navigate("/login", { replace: true });
@@ -132,7 +141,9 @@ const AppointmentsPage = () => {
           "Couldn't load your appointments. Please try again later.",
         );
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, [navigate]);
 
   // The status message disappears by itself after 4 seconds
@@ -212,11 +223,40 @@ const AppointmentsPage = () => {
         </header>
 
         <div className="appointments-toolbar">
-          <span className="appointments-tab" aria-current="page">
-            Upcoming
+          { isUpcoming && (
+            <span>
+              <button
+                className="appointments-add-button border-spacing-5"
+                type="button"
+                onClick={() => setIsUpcoming(false)}
+              >
+                Past
+              </button>
+              <span className="appointments-tab border-spacing-5" aria-current="page">
+                Upcoming
+              </span>
+            </span>
+          )}
+          { !isUpcoming && (
+            <span>
+              <span className="appointments-tab border-spacing-5" aria-current="page">
+                Past
+              </span>
+              <button
+                className="appointments-add-button border-spacing-5"
+                type="button"
+                onClick={() => setIsUpcoming(true)}
+              >
+                Upcoming
+              </button>
+            </span>
+          )}
+          <span/>
+          <span className="text-white">
+            |
           </span>
           <button
-            className="appointments-add-button"
+            className="appointments-add-button border-spacing-5"
             type="button"
             onClick={() => setIsAdding(true)}
           >
@@ -224,46 +264,84 @@ const AppointmentsPage = () => {
           </button>
         </div>
 
-        <section
+        { isUpcoming && (
+          <section
           className="appointments-list"
           aria-label="Upcoming appointments"
           aria-busy={isRemoving}
-        >
-          {statusMessage && (
-            <p className="appointments-status" role="status">
-              {statusMessage}
-            </p>
-          )}
-          {removeError && (
-            <p
-              className="home-request-error appointments-remove-error"
-              role="alert"
-            >
-              {removeError}
-            </p>
-          )}
-          {isLoading && <p className="home-empty">Loading...</p>}
-          {loadError && (
-            <p className="home-request-error" role="alert">
-              {loadError}
-            </p>
-          )}
-          {showList && appointments.length === 0 && (
-            <p className="home-empty">
-              You have no upcoming appointments. Click + Add Appointment to add
-              one.
-            </p>
-          )}
-          {showList &&
-            appointments.map((appointment) => (
-              <AppointmentCard
-                key={appointment.aid}
-                appointment={appointment}
-                onEdit={setEditing}
-                onRemove={askToRemove}
-              />
-            ))}
-        </section>
+          >
+            {statusMessage && (
+              <p className="appointments-status" role="status">
+                {statusMessage}
+              </p>
+            )}
+            {removeError && (
+              <p
+                className="home-request-error appointments-remove-error"
+                role="alert"
+              >
+                {removeError}
+              </p>
+            )}
+            {isLoading && <p className="home-empty">Loading...</p>}
+            {loadError && (
+              <p className="home-request-error" role="alert">
+                {loadError}
+              </p>
+            )}
+            {showList && appointments.length === 0 && (
+              <p className="home-empty">
+                You have no upcoming appointments. Click + Add Appointment to add
+                one.
+              </p>
+            )}
+            {showList &&
+              appointments.map((appointment) => (
+                <AppointmentCard
+                  key={appointment.aid}
+                  isPast={false}
+                  appointment={appointment}
+                  onEdit={setEditing}
+                  onRemove={askToRemove}
+                />
+              ))}
+          </section>
+        )}
+
+        { !isUpcoming && (
+          <section
+          className="appointments-list"
+          aria-label="Past appointments"
+          >
+            {statusMessage && (
+              <p className="appointments-status" role="status">
+                {statusMessage}
+              </p>
+            )}
+            {isLoading && <p className="home-empty">Loading...</p>}
+            {loadError && (
+              <p className="home-request-error" role="alert">
+                {loadError}
+              </p>
+            )}
+            {showList && pastAppointments.length === 0 && (
+              <p className="home-empty">
+                There are currently no past appointments. 
+                Please add new upcoming appointments and make your visit to have them appear on this page.
+              </p>
+            )}
+            {showList &&
+              pastAppointments.map((appointment) => (
+                <AppointmentCard
+                  key={appointment.aid}
+                  isPast={true}
+                  appointment={appointment}
+                  onEdit={setEditing}
+                  onRemove={askToRemove}
+                />
+              ))}
+          </section>
+        )}
 
         <WeekCalendar appointments={appointments} />
       </div>

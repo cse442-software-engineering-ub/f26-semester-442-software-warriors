@@ -619,12 +619,20 @@ export interface AppointmentInput {
   address: string;
 }
 
-// GET appointments.php -> 200 { appointments: [...] }, soonest first (401 when not logged in)
-export async function getAppointments(): Promise<AppointmentRecord[]> {
-  const data = await settingsRequest<{ appointments?: AppointmentRecord[] }>(
-    "appointments.php",
-  );
-  return data.appointments ?? [];
+export interface AllAppointmentsResponse {
+  appointments: AppointmentRecord[];
+  past_appointments: AppointmentRecord[];
+}
+
+export async function getAllAppointments(): Promise<AllAppointmentsResponse> {
+  const data = await settingsRequest<{
+    appointments?: AppointmentRecord[];
+    past_appointments?: AppointmentRecord[];
+  }>("appointments.php");
+  return {
+    appointments: data.appointments ?? [],
+    past_appointments: data.past_appointments ?? [],
+  };
 }
 
 // POST appointments.php (form fields)
