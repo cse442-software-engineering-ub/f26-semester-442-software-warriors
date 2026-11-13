@@ -1,14 +1,23 @@
 // src/components/AddReadingModal.tsx
 // "Log Reading" popup (Figma: vitals-reading-add-mobile / blood pressure tracking - add - desktop).
-// Opened from the homepage. The server checks the numbers and decides the status.
+// Opened from the homepage and the Journal. The server checks the numbers and decides the status.
+// Given a `reading`, the same popup edits it instead (#103): "Edit Reading", boxes filled, "Save Changes".
 import React, { useEffect, useRef, useState } from "react";
-import { addReading } from "../api";
+import { addReading, updateReading } from "../api";
 import type { ReadingInput, SavedReading } from "../api";
 import "./AddReadingModal.css";
+
+export interface EditableReading {
+  rid: number;
+  systolic: number;
+  diastolic: number;
+  pulse?: number | null;
+}
 
 interface AddReadingModalProps {
   onClose: () => void;
   onSaved: (reading: SavedReading) => void;
+  reading?: EditableReading;
 }
 
 type FieldErrors = Partial<Record<keyof ReadingInput, string>>;
@@ -49,11 +58,14 @@ const validate = (values: ReadingInput): FieldErrors => {
 const AddReadingModal: React.FC<AddReadingModalProps> = ({
   onClose,
   onSaved,
+  reading,
 }) => {
+  const isEditing = reading !== undefined;
   const [values, setValues] = useState<ReadingInput>({
-    systolic: "",
-    diastolic: "",
-    pulse: "",
+    systolic: reading ? String(reading.systolic) : "",
+    diastolic: reading ? String(reading.diastolic) : "",
+    // Old readings can have no pulse; the box stays empty and must be filled, like in Add.
+    pulse: reading?.pulse != null ? String(reading.pulse) : "",
   });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState("");
@@ -83,15 +95,20 @@ const AddReadingModal: React.FC<AddReadingModalProps> = ({
 
     setIsSaving(true);
     try {
-      const reading = await addReading(values);
-      onSaved(reading);
+      const saved = reading
+        ? await updateReading(reading.rid, values)
+        : await addReading(values);
+      onSaved(saved);
     } catch (err: any) {
       if (err?.errors) setErrors(err.errors);
       else
         setFormError(
           err?.status === 401
             ? "Your session has ended. Please log in again."
-            : err?.error || "Could not save your reading. Please try again.",
+            : err?.error ||
+                (isEditing
+                  ? "Could not update your reading. Please try again."
+                  : "Could not save your reading. Please try again."),
         );
     } finally {
       setIsSaving(false);
@@ -149,7 +166,7 @@ const AddReadingModal: React.FC<AddReadingModalProps> = ({
             <path d="m6 6 12 12M18 6 6 18" />
           </svg>
         </button>
-        <h2 id="reading-title">Log Reading</h2>
+        <h2 id="reading-title">{isEditing ? "Edit Reading" : "Log Reading"}</h2>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="reading-row">
@@ -172,6 +189,8 @@ const AddReadingModal: React.FC<AddReadingModalProps> = ({
           <button className="reading-submit" type="submit" disabled={isSaving}>
             {isSaving ? (
               "Saving..."
+            ) : isEditing ? (
+              "Save Changes"
             ) : (
               <>
                 <span aria-hidden="true">+</span> Add Reading
