@@ -31,6 +31,30 @@ const formatDays = (days: string) =>
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// Read the backend's optional taken_at without changing the shared type; absence is not null.
+type MedicationWithTakenAt = MedicationRecord & { taken_at?: string | null };
+
+// Check today's schedule and taken_at without storing a separate missed status.
+const isMedicationMissed = (medication: MedicationWithTakenAt, now: Date) => {
+  if (medication.status !== "active" || medication.as_needed || medication.taken_at !== null) {
+    return false;
+  }
+
+  const today = weekDays[(now.getDay() + 6) % 7]; 
+  const scheduledDays = medication.days.split(",").map((day) => day.trim());
+  if (!scheduledDays.includes(today)) return false;
+
+  const timeParts = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(medication.time);
+  if (!timeParts) return false;
+
+  const hours = Number(timeParts[1]);
+  const minutes = Number(timeParts[2]);
+  const seconds = Number(timeParts[3] ?? 0);
+  const scheduledTime = new Date(now);
+  scheduledTime.setHours(hours, minutes, seconds, 0);
+  return now.getTime() > scheduledTime.getTime();
+};
+
 type DayOption = "all" | "weekdays" | "custom";
 
 const dayOptions: { value: DayOption; label: string }[] = [
@@ -118,7 +142,8 @@ const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
 ];
 const maxDoseLength = 15;
 
-const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (medication: MedicationRecord) => void }) => (
+// Receive the derived missed flag separately so it does not change the medication record.
+const MedicationCard = ({ medication, missed, onEdit, onRemove }: { medication: MedicationRecord; missed: boolean; onEdit: (medication: MedicationRecord) => void; onRemove: (medication: MedicationRecord) => void }) => (
   <article className="home-card home-medication-card medications-card">
     <div className="medications-main">
       <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
@@ -134,7 +159,7 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
     </div>
 
     {!medication.as_needed && (
-      <div className="medications-schedule">
+      <div className={`medications-schedule${missed ? " medications-schedule-missed" : ""}`}>
         {!(medication.time) && (
           <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
             <span>TIME: <strong>Unspecified</strong></span>
@@ -155,6 +180,7 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
             <span>DAYS: <strong>{formatDays(medication.days)}</strong></span>
           </div>
         )}
+        {missed && <span className="home-status-badge medications-status medications-status-missed">**MISSED TODAY**</span>}
       </div>
     )}
 
@@ -178,7 +204,9 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
 
 const MedicationsPage = () => {
   const navigate = useNavigate();
-  const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  // Keep taken_at for the missed check and freeze the comparison time until the next medication load.
+  const [medications, setMedications] = useState<MedicationWithTakenAt[]>([]);
+  const [now, setNow] = useState(() => new Date());
   const [isLoading, setIsLoading] = useState(true);
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
@@ -209,7 +237,12 @@ const MedicationsPage = () => {
   useEffect(() => {
     getMedications()
       .then((list) => {
+        // Report missing taken_at rather than guessing, and compare the response against its load time.
+        if (list.some((medication: MedicationWithTakenAt) => medication.taken_at === undefined)) {
+          console.error("Missed medication tags require taken_at from the server.");
+        }
         setMedications(list);
+        setNow(new Date());
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -431,8 +464,9 @@ const MedicationsPage = () => {
         {!isLoading && !requestError && medications.length > 0 && visibleMedications.length === 0 && (
           <p className="home-empty">No medications match the selected filter.</p>
         )}
+        {/* Calculate each badge from the loaded data and shared comparison time. */}
         {visibleMedications.map((medication) => (
-          <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={askToRemove} />
+          <MedicationCard key={medication.mid} medication={medication} missed={isMedicationMissed(medication, now)} onEdit={openEditModal} onRemove={askToRemove} />
         ))}
       </section>
     </div>
