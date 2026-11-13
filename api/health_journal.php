@@ -33,7 +33,7 @@ else {
             $caregiverInfo = $stmt->fetch();
             $uid = $_SESSION['patientID'];
         }
-        $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC");
+        $stmt = $pdo->prepare("SELECT rid, systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC, rid DESC");
         $stmt->execute([':uid' => $uid]);
         $bp_readings = $stmt->fetchAll();
         $totalPulse = 0;
