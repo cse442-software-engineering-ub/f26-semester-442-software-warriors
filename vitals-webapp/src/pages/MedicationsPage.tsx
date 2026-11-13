@@ -180,12 +180,11 @@ const MedicationCard = ({ medication, missed, onEdit, onRemove }: { medication: 
             <span>DAYS: <strong>{formatDays(medication.days)}</strong></span>
           </div>
         )}
+        {missed && <span className="home-status-badge medications-status medications-status-missed">MISSED TODAY!</span>}
       </div>
     )}
 
     <div className="medications-controls">
-        {/* Show the missed badge immediately before edit. */}
-        {missed && <span className="home-status-badge medications-status medications-status-missed">MISSED TODAY</span>}
       <span className={`home-status-badge medications-status medications-status-${medication.status.replace(" ", "-")}`}>
         {medication.status}
       </span>
