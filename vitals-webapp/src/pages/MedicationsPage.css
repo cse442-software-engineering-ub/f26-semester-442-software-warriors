@@ -83,6 +83,7 @@
   padding: 0 14px;
   box-sizing: border-box;
 }
+.medications-schedule-missed .home-pill-box { box-sizing: border-box; border: 2px solid #d32f2f; }
 .medications-schedule .home-pill-box span,
 .medications-schedule .home-pill-box strong { font-size: 13px; line-height: 1; }
 .medications-controls { display: flex; grid-column: 3; align-items: center; justify-content: flex-end; gap: 14px; }
@@ -97,6 +98,7 @@
 .medications-status { flex: 0 0 auto; font-size: 14px; }
 .medications-status-inactive { background: #fce4e4; color: #b93a2e; }
 .medications-status-as-needed { background: #fff1d6; color: #8a5a00; }
+.medications-status-missed { text-align: center; box-sizing: border-box; border: 2px solid #d32f2f; background: #fff; font-size: 13px; color: #d32f2f;}
 .medications-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
 .medications-taken {
   display: inline-flex;
