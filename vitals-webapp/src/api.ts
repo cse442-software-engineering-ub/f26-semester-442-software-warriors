@@ -376,7 +376,63 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
   return reading as SavedReading;
 }
 
+// Edit a reading (PUT readings.php?rid=N, same fields as Add)
+// 200 {"reading": {...}}            -> saved; the server recalculates the status
+// 400 {"errors": {field: message}}  -> show each message under its box
+// 403 caregiver, 404 not this patient's reading
+export async function updateReading(
+  rid: number,
+  input: ReadingInput,
+): Promise<SavedReading> {
+  const params = new URLSearchParams();
+  params.append("systolic", input.systolic.trim());
+  params.append("diastolic", input.diastolic.trim());
+  params.append("pulse", input.pulse.trim());
+
+  const response = await fetch(`${API_BASE}/readings.php?rid=${rid}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    credentials: "include",
+    body: params.toString(),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.reading) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not update your reading. Please try again.",
+      errors: data?.errors,
+    };
+  }
+  return data.reading as SavedReading;
+}
+
+// Delete a reading (DELETE readings.php?rid=N) -> 200 {"deleted": true}
+export async function deleteReading(rid: number): Promise<void> {
+  const response = await fetch(`${API_BASE}/readings.php?rid=${rid}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.deleted !== true) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not remove your reading. Please try again.",
+    };
+  }
+}
+
 export interface JournalReading {
+  rid?: number;
   systolic: number;
   diastolic: number;
   pulse?: number;
@@ -446,9 +502,13 @@ export async function getJournal(): Promise<JournalData> {
 
   const readings: JournalReading[] = (rawReadings ?? []).map(
     (reading: Record<string, unknown>) => ({
+      ...(reading.rid !== undefined ? { rid: Number(reading.rid) } : {}),
       systolic: Number(reading.systolic),
       diastolic: Number(reading.diastolic),
-      ...(reading.pulse !== undefined ? { pulse: Number(reading.pulse) } : {}),
+      // A reading saved without a pulse comes back as null; keep it empty instead of showing 0.
+      ...(reading.pulse !== undefined && reading.pulse !== null
+        ? { pulse: Number(reading.pulse) }
+        : {}),
       status: String(reading.status ?? ""),
       date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
     }),
