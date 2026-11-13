@@ -133,7 +133,7 @@ try {
     $stmt = $pdo->prepare(
       'SELECT ' . APPOINTMENT_COLUMNS . ' FROM appointments
        WHERE uid = ? AND appointment_date < NOW()
-       ORDER BY appointment_date ASC, aid ASC'
+       ORDER BY appointment_date DESC, aid ASC'
     );
     $stmt->execute([$uid]);
     $past_appointments = $stmt->fetchAll();
