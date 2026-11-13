@@ -86,10 +86,64 @@
 .medications-schedule .home-pill-box span,
 .medications-schedule .home-pill-box strong { font-size: 13px; line-height: 1; }
 .medications-controls { display: flex; grid-column: 3; align-items: center; justify-content: flex-end; gap: 14px; }
+.medications-badges { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
+.medications-take-area {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .medications-status { flex: 0 0 auto; font-size: 14px; }
 .medications-status-inactive { background: #fce4e4; color: #b93a2e; }
 .medications-status-as-needed { background: #fff1d6; color: #8a5a00; }
 .medications-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.medications-taken {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  color: var(--app-blue-dark);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.medications-taken-count {
+  color: var(--app-blue-dark);
+}
+.medications-checkmark {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  background: #1b6b32;
+  color: #fff;
+  font-size: 17px;
+  line-height: 1;
+}
+.medications-take-button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 2px solid var(--app-blue);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--app-blue-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.medications-take-button:hover,
+.medications-take-button:focus-visible { background: #eaf3fb; }
+.medications-take-button:disabled { opacity: 0.65; cursor: default; }
+.medications-taken-error {
+  margin: 14px 0 0;
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 700;
+}
 .medications-edit-button {
   display: grid;
   width: 32px;
@@ -122,7 +176,8 @@
 .medications-remove-button:hover,
 .medications-remove-button:focus-visible { background: #fce4e4; }
 .medications-edit-button:focus-visible,
-.medications-remove-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
+.medications-remove-button:focus-visible,
+.medications-take-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
 /* Medium screens: name and controls share the top row, days/time wrap onto their own row below */
 @media (max-width: 1150px) {
@@ -138,11 +193,25 @@
   .medications-page-heading { margin-bottom: 20px; }
   .medications-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
 
-  /* Mobile: one column. Name, then days/time stacked, then status and buttons at the bottom */
+  /* Mobile: one column. Name, schedule, then status/actions and taken state. */
   .medications-card { grid-template-columns: 1fr; }
   .medications-schedule { grid-column: 1; grid-row: 2; flex-direction: column; }
   .medications-schedule .home-pill-box { width: 100%; }
-  .medications-controls { grid-column: 1; grid-row: 3; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+  .medications-controls {
+    grid-column: 1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    justify-content: initial;
+  }
+  .medications-badges { grid-column: 1; grid-row: 1; min-width: 0; }
+  .medications-actions { grid-column: 2; grid-row: 1; }
+  .medications-take-area {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 32px;
+  }
 }
 
 /* Add Medication modal, styled after the settings page's Change Password modal */

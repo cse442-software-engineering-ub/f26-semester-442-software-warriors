@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedications, updateMedication } from "../api";
+import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedications, markMedicationTaken, updateMedication } from "../api";
 import type { MedicationRecord } from "../api";
 import "./MedicationsPage.css";
 
@@ -20,6 +20,11 @@ const formatTime = (time: string) => {
   const hour = Number(hours);
   const period = hour >= 12 ? "PM" : "AM";
   return `${hour % 12 || 12}:${minutes} ${period}`;
+};
+
+const formatTakenAt = (takenAt: string) => {
+  const time = takenAt.includes(" ") ? takenAt.split(" ")[1] : takenAt;
+  return formatTime(time);
 };
 
 // "Monday,Tuesday" -> "Mon, Tue"
@@ -118,7 +123,19 @@ const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
 ];
 const maxDoseLength = 15;
 
-const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (medication: MedicationRecord) => void }) => (
+const MedicationCard = ({
+  medication,
+  isTaking,
+  onEdit,
+  onRemove,
+  onTake,
+}: {
+  medication: MedicationRecord;
+  isTaking: boolean;
+  onEdit: (medication: MedicationRecord) => void;
+  onRemove: (medication: MedicationRecord) => void;
+  onTake: (medication: MedicationRecord) => void;
+}) => (
   <article className="home-card home-medication-card medications-card">
     <div className="medications-main">
       <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
@@ -159,10 +176,35 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
     )}
 
     <div className="medications-controls">
-      <span className={`home-status-badge medications-status medications-status-${medication.status.replace(" ", "-")}`}>
-        {medication.status}
-      </span>
-      {medication.as_needed && <span className="home-status-badge medications-status medications-status-as-needed">as needed</span>}
+      <div className="medications-badges">
+        <span className={`home-status-badge medications-status medications-status-${medication.status.replace(" ", "-")}`}>
+          {medication.status}
+        </span>
+        {medication.as_needed && <span className="home-status-badge medications-status medications-status-as-needed">as needed</span>}
+      </div>
+      <div className="medications-take-area">
+        {medication.status === "active" && medication.as_needed && Boolean(medication.taken_count) && (
+          <div className="medications-taken medications-taken-count" aria-label={`Taken ${medication.taken_count} ${medication.taken_count === 1 ? "time" : "times"} today`}>
+            Taken {medication.taken_count} {medication.taken_count === 1 ? "time" : "times"} today
+          </div>
+        )}
+        {medication.status === "active" && !medication.as_needed && medication.taken_at && (
+          <div className="medications-taken" aria-label={`Taken at ${formatTakenAt(medication.taken_at)}`}>
+            <span className="medications-checkmark" aria-hidden="true">✓</span>
+            <span>Taken at {formatTakenAt(medication.taken_at)}</span>
+          </div>
+        )}
+        {medication.status === "active" && (medication.as_needed || !medication.taken_at) && (
+          <button
+            className="medications-take-button"
+            type="button"
+            disabled={isTaking}
+            onClick={() => onTake(medication)}
+          >
+            {isTaking ? "Saving..." : "Mark as taken"}
+          </button>
+        )}
+      </div>
       <div className="medications-actions">
         <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`} onClick={() => onEdit(medication)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -183,6 +225,9 @@ const MedicationsPage = () => {
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const [takenError, setTakenError] = useState("");
+  const [takingMid, setTakingMid] = useState<number | null>(null);
+  const takingMids = useRef(new Set<number>());
   const [isSaving, setIsSaving] = useState(false);
   const [toRemove, setToRemove] = useState<MedicationRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -243,6 +288,41 @@ const MedicationsPage = () => {
       setRequestError(getErrorMessage(error));
     } finally {
       setIsRemoving(false);
+    }
+  };
+
+  const takeMedication = async (medication: MedicationRecord) => {
+    if (
+      medication.status !== "active" ||
+      (!medication.as_needed && medication.taken_at) ||
+      takingMids.current.has(medication.mid)
+    ) return;
+
+    takingMids.current.add(medication.mid);
+    setTakingMid(medication.mid);
+    setTakenError("");
+    try {
+      const { taken_at, taken_count } = await markMedicationTaken(medication.mid);
+      setMedications((current) =>
+        current.map((item) => item.mid === medication.mid
+          ? {
+              ...item,
+              taken_at: item.as_needed ? item.taken_at : taken_at,
+              taken_count: item.as_needed
+                ? (taken_count ?? (item.taken_count ?? 0) + 1)
+                : item.taken_count,
+            }
+          : item),
+      );
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setTakenError("Something went wrong. Please try again.");
+    } finally {
+      takingMids.current.delete(medication.mid);
+      setTakingMid(null);
     }
   };
 
@@ -421,6 +501,7 @@ const MedicationsPage = () => {
           <span aria-hidden="true">+</span> Add Medication
         </button>
       </div>
+      {takenError && <p className="medications-taken-error" role="alert">{takenError}</p>}
 
       <section className="medications-list" aria-label="Your medications" aria-busy={isRemoving}>
         {isLoading && <p className="home-empty">Loading...</p>}
@@ -432,7 +513,14 @@ const MedicationsPage = () => {
           <p className="home-empty">No medications match the selected filter.</p>
         )}
         {visibleMedications.map((medication) => (
-          <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={askToRemove} />
+          <MedicationCard
+            key={medication.mid}
+            medication={medication}
+            isTaking={takingMid === medication.mid}
+            onEdit={openEditModal}
+            onRemove={askToRemove}
+            onTake={takeMedication}
+          />
         ))}
       </section>
     </div>
