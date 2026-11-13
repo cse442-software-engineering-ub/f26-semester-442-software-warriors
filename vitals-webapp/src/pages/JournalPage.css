@@ -204,6 +204,67 @@
   font-weight: 700;
 }
 
+.journal-reading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.journal-edit-button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-blue);
+  cursor: pointer;
+}
+
+.journal-edit-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.journal-remove-button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 2px solid #d32f2f;
+  border-radius: 8px;
+  background: #fff;
+  color: #b93a2e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.journal-edit-button:hover,
+.journal-edit-button:focus-visible {
+  background: #f5f5f5;
+}
+
+.journal-remove-button:hover,
+.journal-remove-button:focus-visible {
+  background: #fce4e4;
+}
+
+.journal-edit-button:focus-visible,
+.journal-remove-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+
+.journal-action-error {
+  margin: 10px 0 0;
+  color: #b93a2e;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 @media (max-width: 900px) {
   .journal-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -311,5 +372,10 @@
     justify-self: end;
     padding: 4px 6px;
     font-size: 8px;
+  }
+
+  /* Pencil + Remove get their own row under the reading */
+  .journal-mobile-reading .journal-reading-actions {
+    grid-column: 1 / -1;
   }
 }
