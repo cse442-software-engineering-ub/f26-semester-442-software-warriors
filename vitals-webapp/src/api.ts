@@ -481,14 +481,18 @@ export interface MedicationRecord {
   mid: number;
   medication_name: string;
   dosage: string;
-  time: string; // raw TIME value, e.g. "08:00:00"
+  time: string | null; // raw TIME value, e.g. "08:00:00"
   days: string; // comma separated weekdays, empty for as-needed medications
   status: "active" | "inactive";
   as_needed: boolean;
+  taken_at: string | null; // today's taken timestamp, when the medication was taken
+  taken_count?: number; // number of doses taken today, for as-needed medications
 }
 
 // Fields sent when adding or editing a medication
-export type MedicationInput = Omit<MedicationRecord, "mid">;
+export type MedicationInput = Omit<MedicationRecord, "mid" | "taken_at" | "taken_count" | "time"> & {
+  time: string;
+};
 
 // GET medications.php -> { success: true, medications: [...] } (401 when not logged in)
 export async function getMedications(): Promise<MedicationRecord[]> {
@@ -517,7 +521,7 @@ export async function addMedication(input: MedicationInput): Promise<number> {
 
 // PUT medications.php (raw JSON) -> { success: true }
 export async function updateMedication(
-  medication: MedicationRecord,
+  medication: Omit<MedicationRecord, "taken_at">,
 ): Promise<void> {
   await settingsRequest("medications.php", {
     method: "PUT",
@@ -533,6 +537,31 @@ export async function deleteMedication(mid: number): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mid }),
   });
+}
+
+// POST medication_taken.php (form-data) -> { success: true, taken_at }
+export async function markMedicationTaken(
+  mid: number,
+): Promise<{ taken_at: string; taken_count?: number }> {
+  const form = new FormData();
+  form.append("mid", String(mid));
+
+  const data = await settingsRequest<{ taken_at?: string; taken_count?: number }>("medication_taken.php", {
+    method: "POST",
+    body: form,
+  });
+
+  if (typeof data.taken_at !== "string" || !data.taken_at) {
+    throw {
+      status: 500,
+      error: "Something went wrong. Please try again later.",
+    };
+  }
+
+  return {
+    taken_at: data.taken_at,
+    taken_count: typeof data.taken_count === "number" ? data.taken_count : undefined,
+  };
 }
 
 // ---------- Caregivers ----------
