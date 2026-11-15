@@ -183,6 +183,10 @@ if($method === 'DELETE') {
             PDO::FETCH_COLUMN
         );
 
+        $stmt = $pdo->prepare('SELECT mid FROM medications WHERE uid = ? FOR UPDATE');
+        $stmt->execute([$userId]);
+        $medicationIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
         //Delete all medications belonging to the user
         $stmt = $pdo->prepare(
             'DELETE FROM medications
@@ -190,6 +194,12 @@ if($method === 'DELETE') {
         );
 
         $stmt->execute([$userId]);
+
+        //Delete all medication doses belonging to the user
+        $stmt = $pdo->prepare('DELETE FROM medication_doses WHERE mid = ?');
+        foreach ($medicationIds as $medicationId) {
+            $stmt->execute([$medicationId]);
+        }
 
         //Delete all appointments belonging to the user
         $stmt = $pdo->prepare(

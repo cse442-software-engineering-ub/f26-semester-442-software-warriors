@@ -320,7 +320,7 @@
     min-height: calc(100svh - 86px);
     flex-direction: column;
     margin: 0;
-    padding: 30px 18px calc(86px + 26px);
+    padding: 30px 18px calc(150px + 26px);
   }
 
   .home-content,

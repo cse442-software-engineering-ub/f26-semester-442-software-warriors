@@ -80,7 +80,7 @@
   color: #333;
   font-size: 14px;
   font-weight: 500;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .journal-average-card p {
@@ -114,6 +114,7 @@
 }
 
 .journal-table-wrapper {
+  position: relative;
   width: 100%;
   overflow-x: auto;
 }
@@ -266,12 +267,9 @@
 }
 
 @media (max-width: 900px) {
-  .journal-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+  .journal-summary-grid,
   .journal-summary-grid:has(.journal-average-card:nth-child(3):last-child) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .journal-summary-grid .journal-last-reading {
@@ -285,7 +283,8 @@
     font-size: 13px;
   }
 
-  .journal-summary-grid {
+  .journal-summary-grid,
+  .journal-summary-grid:has(.journal-average-card:nth-child(3):last-child) {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
   }
@@ -329,14 +328,28 @@
   }
 
   .journal-mobile-reading {
-    grid-template-columns: minmax(82px, 1.25fr) auto auto auto;
-    gap: 5px;
-    padding: 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 12px;
+    padding: 14px;
     background: #eaf3fb;
   }
 
-  .journal-mobile-reading:not(:has(.journal-mobile-pulse)) {
-    grid-template-columns: minmax(82px, 1fr) auto auto;
+  .journal-mobile-reading .journal-reading-date {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .journal-mobile-reading .journal-mobile-pressure {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .journal-mobile-reading .journal-mobile-pulse {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
   }
 
   .journal-log:has(.journal-mobile-readings) {
@@ -344,10 +357,6 @@
     overflow: visible;
     background: transparent;
     box-shadow: none;
-  }
-
-  .journal-mobile-reading .journal-reading-date {
-    min-width: 0;
   }
 
   .journal-mobile-reading .journal-reading-date strong {
@@ -369,13 +378,18 @@
   }
 
   .journal-mobile-reading .home-status-badge {
+    grid-column: 2;
+    grid-row: 1;
     justify-self: end;
+    max-width: 100%;
     padding: 4px 6px;
-    font-size: 8px;
+    font-size: 10px;
+    overflow-wrap: anywhere;
   }
 
   /* Pencil + Remove get their own row under the reading */
   .journal-mobile-reading .journal-reading-actions {
     grid-column: 1 / -1;
+    grid-row: 3;
   }
 }

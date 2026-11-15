@@ -178,7 +178,7 @@ const MedicationCard = ({
     </div>
 
     {!medication.as_needed && (
-      <div className={`medications-schedule${missed ? " medications-schedule-missed" : ""}`}>
+      <div className="medications-schedule">
         {!(medication.time) && (
           <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
             <span>TIME: <strong>Unspecified</strong></span>
@@ -199,7 +199,7 @@ const MedicationCard = ({
             <span>DAYS: <strong>{formatDays(medication.days)}</strong></span>
           </div>
         )}
-        {missed && <span className="home-status-badge medications-status medications-status-missed">**MISSED TODAY**</span>}
+        {missed && <span className="home-status-badge medications-status medications-status-missed">MISSED TODAY</span>}
       </div>
     )}
 

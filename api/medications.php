@@ -311,17 +311,28 @@ if($method === 'DELETE') {
     }
 
     //Delete only a medication belonging to the logged-in user
-    $stmt = $pdo->prepare(
-        'DELETE FROM medications
-         WHERE mid = ? AND uid = ?'
-    );
+        $stmt = $pdo->prepare(
+            'SELECT mid FROM medications WHERE mid = ? AND uid = ? FOR UPDATE'
+        );
+        $stmt->execute([(int) $mid, $userId]);
 
-    $stmt->execute([
-        (int) $mid, $userId
-    ]);
+        if (!$stmt->fetch()) {
+            $pdo->rollBack();
+            medicationFail(404, 'Medication not found.');
+        }
 
-    if($stmt->rowCount() === 0) {
-        medicationFail(404, 'Medication not found.');
+        $stmt = $pdo->prepare('DELETE FROM medication_doses WHERE mid = ?');
+        $stmt->execute([(int) $mid]);
+
+        $stmt = $pdo->prepare('DELETE FROM medications WHERE mid = ? AND uid = ?');
+        $stmt->execute([(int) $mid, $userId]);
+        $pdo->commit();
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Failed to delete medication: ' . $e->getMessage());
+        medicationFail(500, 'Medication could not be deleted.');
     }
 
     echo json_encode([
