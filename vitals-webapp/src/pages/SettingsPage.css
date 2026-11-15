@@ -19,7 +19,7 @@
 }
 .settings-intro { max-width: 680px; margin: 10px 0 0; color: #666; font-size: 14px; line-height: 1.5; }
 .settings-panel {
-  padding: 23px 25px 0;
+  padding: 23px 25px;
   border-radius: 15px;
   background: #eaf3fb;
   box-shadow: 0 2px 5px rgb(22 59 162 / 8%);
@@ -178,11 +178,10 @@
 .settings-delete-confirm { min-height: 52px; min-width: 180px; border-color: #fff; background: #fef2f2; color: #991b1b; font-size: 18px; font-weight: 700; }
 .settings-delete-confirm:hover { background: #fee2e2; }
 @media (max-width: 680px) {
-  .settings-content { padding-bottom: 110px; }
   .settings-page-heading { margin-bottom: 20px; }
   .settings-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
   .settings-intro { font-size: 14px; }
-  .settings-panel { padding: 20px 16px 1px; }
+  .settings-panel { padding: 20px 16px; }
   .settings-card { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .settings-profile-column { grid-column: 1; grid-row: 1; }
   .settings-account-actions-column { grid-column: 1; grid-row: 2; gap: 14px; }
@@ -201,7 +200,7 @@
   .settings-security-row .settings-change-password { width: 100%; margin-top: 0; }
   .settings-change-password { margin-top: 0; }
   .settings-card-footer { align-items: stretch; flex-direction: column; gap: 9px; margin: 25px 0 16px; padding: 0; }
-  .settings-danger-card { align-items: stretch; gap: 8px; margin: 0 0 18px; }
+  .settings-danger-card { align-items: stretch; gap: 8px; margin: 0; }
   .settings-modal { max-height: calc(100vh - 86px - 32px); padding: 56px 20px 22px; }
   .settings-modal h2 { font-size: 22px; line-height: 1.3; }
   .settings-modal-description { margin-bottom: 16px; font-size: 16px; }
