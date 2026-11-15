@@ -225,38 +225,41 @@ const AppointmentsPage = () => {
         <div className="appointments-toolbar">
           { isUpcoming && (
             <span>
+              <span className="appointments-tab border-spacing-5 p-5 gap-15" aria-current="page">
+                Upcoming
+              </span>
+              <span className="gap-1 p-1"/>
               <button
-                className="appointments-add-button border-spacing-5"
+                className="appointments-add-button border-spacing-5 p-5 gap-15"
                 type="button"
                 onClick={() => setIsUpcoming(false)}
               >
                 Past
               </button>
-              <span className="appointments-tab border-spacing-5" aria-current="page">
-                Upcoming
-              </span>
             </span>
           )}
           { !isUpcoming && (
             <span>
-              <span className="appointments-tab border-spacing-5" aria-current="page">
-                Past
-              </span>
               <button
-                className="appointments-add-button border-spacing-5"
+                className="appointments-add-button border-spacing-5 p-5 gap-15"
                 type="button"
                 onClick={() => setIsUpcoming(true)}
               >
                 Upcoming
               </button>
+              <span className="gap-1 p-1"/>
+              <span className="appointments-tab border-spacing-5 p-5 gap-15" aria-current="page">
+                Past
+              </span>
             </span>
           )}
           <span/>
-          <span className="text-white">
+          <span className="text-white border-spacing-5">
             |
           </span>
+          <span/>
           <button
-            className="appointments-add-button border-spacing-5"
+            className="appointments-add-button border-spacing-5 gap-8"
             type="button"
             onClick={() => setIsAdding(true)}
           >
