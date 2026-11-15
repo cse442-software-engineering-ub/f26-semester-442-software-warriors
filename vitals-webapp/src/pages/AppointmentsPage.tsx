@@ -224,7 +224,7 @@ const AppointmentsPage = () => {
 
         <div className="appointments-toolbar">
           { isUpcoming && (
-            <span>
+            <span className="appointments-tabs">
               <button
                 className="appointments-add-button border-spacing-5"
                 type="button"
@@ -238,7 +238,7 @@ const AppointmentsPage = () => {
             </span>
           )}
           { !isUpcoming && (
-            <span>
+            <span className="appointments-tabs">
               <span className="appointments-tab border-spacing-5" aria-current="page">
                 Past
               </span>
@@ -251,8 +251,7 @@ const AppointmentsPage = () => {
               </button>
             </span>
           )}
-          <span/>
-          <span className="text-white">
+          <span className="appointments-toolbar-separator" aria-hidden="true">
             |
           </span>
           <button

@@ -63,30 +63,30 @@
 .medications-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
 .medications-list { display: grid; gap: 12px; margin-top: 20px; }
-/* Desktop: details on the left, days/time centered, status and buttons on the right */
+/* Keep the schedule separate from the name and controls so it can wrap. */
 .medications-card {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
 }
-.medications-main { display: flex; grid-column: 1; align-items: center; gap: 14px; min-width: 0; }
-.medications-schedule { display: flex; flex-wrap: wrap; grid-column: 2; gap: 10px; min-width: 0; }
-/* Days/time boxes match the Remove button height, with the label and value on one line */
+.medications-main { display: flex; grid-column: 1; grid-row: 1; align-items: center; gap: 14px; min-width: 0; }
+.medications-main .home-medication-details p { overflow-wrap: anywhere; }
+.medications-schedule { display: flex; flex-wrap: wrap; grid-column: 1 / -1; grid-row: 2; gap: 10px; min-width: 0; }
 .medications-schedule .home-pill-box {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 32px;
-  padding: 0 14px;
+  max-width: 100%;
+  min-height: 32px;
+  padding: 6px 14px;
   box-sizing: border-box;
 }
-.medications-schedule-missed .home-pill-box { box-sizing: border-box; border: 2px solid #d32f2f; }
 .medications-schedule .home-pill-box span,
-.medications-schedule .home-pill-box strong { font-size: 13px; line-height: 1; }
-.medications-controls { display: flex; grid-column: 3; align-items: center; justify-content: flex-end; gap: 14px; }
+.medications-schedule .home-pill-box strong { font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+.medications-controls { display: flex; grid-column: 2; grid-row: 1; align-items: center; justify-content: flex-end; gap: 14px; }
 .medications-badges { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
 .medications-take-area {
   display: flex;
@@ -181,17 +181,17 @@
 .medications-remove-button:focus-visible,
 .medications-take-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
-/* Medium screens: name and controls share the top row, days/time wrap onto their own row below */
+/* Medium screens: keep the schedule and controls on separate rows. */
 @media (max-width: 1150px) {
-  .medications-card { grid-template-columns: minmax(0, 1fr) auto; }
+  .medications-card { grid-template-columns: minmax(0, 1fr); }
   .medications-main { grid-column: 1; grid-row: 1; }
-  .medications-controls { grid-column: 2; grid-row: 1; }
-  .medications-schedule { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
+  .medications-schedule { grid-column: 1; grid-row: 2; }
+  .medications-controls { grid-column: 1; grid-row: 3; justify-content: flex-start; flex-wrap: wrap; }
+  .medications-card:not(:has(.medications-schedule)) .medications-controls { grid-row: 2; }
 }
 
 
 @media (max-width: 760px) {
-  .medications-content { padding-bottom: 110px; }
   .medications-page-heading { margin-bottom: 20px; }
   .medications-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
 
@@ -207,13 +207,22 @@
     gap: 8px;
     justify-content: initial;
   }
-  .medications-badges { grid-column: 1; grid-row: 1; min-width: 0; }
+  .medications-badges { grid-column: 1; grid-row: 1; min-width: 0; flex-wrap: wrap; }
   .medications-actions { grid-column: 2; grid-row: 1; }
   .medications-take-area {
     grid-column: 1 / -1;
     grid-row: 2;
     min-height: 32px;
   }
+}
+
+@media (max-width: 360px) {
+  .medications-toolbar { display: flex; width: 100%; }
+  .medications-filter-button,
+  .medications-add-button { min-width: 0; padding: 0 10px; }
+  .medications-filter-button { flex: 1; }
+  .medications-add-button { flex: 2; }
+  .medications-badges .medications-status { padding-inline: 8px; }
 }
 
 /* Add Medication modal, styled after the settings page's Change Password modal */
