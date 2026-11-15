@@ -60,10 +60,19 @@ if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info fr
 //Handle GET requests
 if($method === 'GET') {
 
+    $today = new DateTimeImmutable('today', new DateTimeZone('America/New_York'));
+
     //Get only medications belonging to the logged-in user
     $stmt = $pdo->prepare(
-        "SELECT mid, medication_name, dosage, time, days, status, as_needed
-         FROM medications
+        "SELECT m.mid, medication_name, dosage, time, days, status, as_needed,
+                doses.taken_at, COALESCE(doses.taken_count, 0) AS taken_count
+         FROM medications m
+         LEFT JOIN (
+             SELECT mid, MAX(taken_at) AS taken_at, COUNT(*) AS taken_count
+             FROM medication_doses
+             WHERE taken_at >= ? AND taken_at < ?
+             GROUP BY mid
+         ) doses ON doses.mid = m.mid
          WHERE uid = ?
          ORDER BY
          CASE
@@ -75,13 +84,18 @@ if($method === 'GET') {
          time ASC"
     );
 
-    $stmt->execute([$userId]);
+    $stmt->execute([
+        $today->format('Y-m-d H:i:s'),
+        $today->modify('+1 day')->format('Y-m-d H:i:s'),
+        $userId
+    ]);
 
     $medications = $stmt->fetchAll();
 
     //Makes it so GET returns 'true' or 'false' for the as_needed field instead of 1 or 0
     foreach($medications as &$medication) {
     $medication['as_needed'] = (bool) $medication['as_needed'];
+    $medication['taken_count'] = (int) $medication['taken_count'];
     }
 
     unset($medication);
