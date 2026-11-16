@@ -376,6 +376,32 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
   return reading as SavedReading;
 }
 
+// Send a newly created blood pressure reading to the patient's accepted caregivers
+export async function sendReading(readingId: number): Promise<void> {
+  const response = await fetch(`${API_BASE}/send_reading.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      reading_id: readingId,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.success !== true) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Reading could not be sent.",
+    };
+  }
+}
+
 // Edit a reading (PUT readings.php?rid=N, same fields as Add)
 // 200 {"reading": {...}}            -> saved; the server recalculates the status
 // 400 {"errors": {field: message}}  -> show each message under its box
