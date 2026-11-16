@@ -183,6 +183,7 @@ const JournalPage = () => {
     let isCurrent = true;
 
     const loadJournal = async () => {
+      //can be replaced with if (reloadCount === 0) { setIsLoading(true);} if loading times take too long after adding a reading.
       setIsLoading(true);
       setRequestError("");
       try {
@@ -478,29 +479,44 @@ const JournalPage = () => {
       {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
-          onSaved={async (savedReading) => {
+          onSaved={(savedReading) => {
             setIsAddingReading(false);
+            setData((current) => {
+              if (!current) return current;
+              return {
+                ...current,
+                last_reading: {
+                  rid: savedReading.rid,
+                  systolic: savedReading.systolic,
+                  diastolic: savedReading.diastolic,
+                  pulse: savedReading.pulse,
+                  status: savedReading.status,
+                  date_time: savedReading.recorded_at,
+                },
+              };
+            });
             setReloadCount((count) => count + 1);
 
-            try {
-              await sendReading(savedReading.rid);
-              setStatusMessage("Reading saved and sent to your caregiver.");
+            void sendReading(savedReading.rid)
+              .then(() => {
+                setStatusMessage("Reading saved and sent to your caregiver.");
 
-              window.setTimeout(() => {
-                setStatusMessage((current) =>
-                  current === "Reading saved and sent to your caregiver." ? "" : current,
+                window.setTimeout(() => {
+                  setStatusMessage((current) =>
+                    current === "Reading saved and sent to your caregiver." ? "" : current,
+                  );
+                }, 3000);
+              })
+              .catch((error: unknown) => {
+                if (isUnauthorized(error)) {
+                  navigate("/login", { replace: true });
+                  return;
+                }
+
+                setStatusMessage(
+                  "Reading saved, but it could not be sent to your caregiver.",
                 );
-              }, 3000);
-            } catch (error: unknown) {
-              if (isUnauthorized(error)) {
-                navigate("/login", { replace: true });
-                return;
-              }
-
-              setStatusMessage(
-                "Reading saved, but it could not be sent to your caregiver.",
-              );
-            }
+              });
           }}
         />
       )}
