@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
 import { Link, useNavigate } from "react-router-dom";
-import { getAccount, getHomepage } from "../api";
+import { getAccount, getHomepage, sendReading } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
 import HealthCard from "../components/HealthCard";
 
@@ -179,15 +179,30 @@ const HomePage = () => {
         </section>
         </div>
       </div>
+
       {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
-          onSaved={(reading) => {
+          onSaved={async (reading) => {
             setIsAddingReading(false);
-            setSavedMessage(
-              `Reading saved: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
-            );
-            setReloadCount((count) => count + 1); // reload so "Last Reading" shows the new one
+            setReloadCount((count) => count + 1);
+
+            try {
+              await sendReading(reading.rid);
+
+              setSavedMessage(
+                `Reading saved and sent to your caregiver: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
+              );
+            } catch (error: unknown) {
+              if (isUnauthorized(error)) {
+                navigate("/login", { replace: true });
+                return;
+              }
+
+              setSavedMessage(
+                `Reading saved, but it could not be sent to your caregiver: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
+              );
+            }
           }}
         />
       )}
