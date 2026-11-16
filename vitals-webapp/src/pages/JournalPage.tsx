@@ -485,6 +485,12 @@ const JournalPage = () => {
             try {
               await sendReading(savedReading.rid);
               setStatusMessage("Reading saved and sent to your caregiver.");
+
+              window.setTimeout(() => {
+                setStatusMessage((current) =>
+                  current === "Reading saved and sent to your caregiver." ? "" : current,
+                );
+              }, 3000);
             } catch (error: unknown) {
               if (isUnauthorized(error)) {
                 navigate("/login", { replace: true });
