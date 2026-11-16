@@ -376,7 +376,63 @@ export async function addReading(input: ReadingInput): Promise<SavedReading> {
   return reading as SavedReading;
 }
 
+// Edit a reading (PUT readings.php?rid=N, same fields as Add)
+// 200 {"reading": {...}}            -> saved; the server recalculates the status
+// 400 {"errors": {field: message}}  -> show each message under its box
+// 403 caregiver, 404 not this patient's reading
+export async function updateReading(
+  rid: number,
+  input: ReadingInput,
+): Promise<SavedReading> {
+  const params = new URLSearchParams();
+  params.append("systolic", input.systolic.trim());
+  params.append("diastolic", input.diastolic.trim());
+  params.append("pulse", input.pulse.trim());
+
+  const response = await fetch(`${API_BASE}/readings.php?rid=${rid}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    credentials: "include",
+    body: params.toString(),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.reading) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not update your reading. Please try again.",
+      errors: data?.errors,
+    };
+  }
+  return data.reading as SavedReading;
+}
+
+// Delete a reading (DELETE readings.php?rid=N) -> 200 {"deleted": true}
+export async function deleteReading(rid: number): Promise<void> {
+  const response = await fetch(`${API_BASE}/readings.php?rid=${rid}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data?.deleted !== true) {
+    throw {
+      status: response.status,
+      error:
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not remove your reading. Please try again.",
+    };
+  }
+}
+
 export interface JournalReading {
+  rid?: number;
   systolic: number;
   diastolic: number;
   pulse?: number;
@@ -446,9 +502,13 @@ export async function getJournal(): Promise<JournalData> {
 
   const readings: JournalReading[] = (rawReadings ?? []).map(
     (reading: Record<string, unknown>) => ({
+      ...(reading.rid !== undefined ? { rid: Number(reading.rid) } : {}),
       systolic: Number(reading.systolic),
       diastolic: Number(reading.diastolic),
-      ...(reading.pulse !== undefined ? { pulse: Number(reading.pulse) } : {}),
+      // A reading saved without a pulse comes back as null; keep it empty instead of showing 0.
+      ...(reading.pulse !== undefined && reading.pulse !== null
+        ? { pulse: Number(reading.pulse) }
+        : {}),
       status: String(reading.status ?? ""),
       date_time: String(reading.date_time ?? reading.recorded_at ?? ""),
     }),
@@ -481,14 +541,18 @@ export interface MedicationRecord {
   mid: number;
   medication_name: string;
   dosage: string;
-  time: string; // raw TIME value, e.g. "08:00:00"
+  time: string | null; // raw TIME value, e.g. "08:00:00"
   days: string; // comma separated weekdays, empty for as-needed medications
   status: "active" | "inactive";
   as_needed: boolean;
+  taken_at: string | null; // today's taken timestamp, when the medication was taken
+  taken_count?: number; // number of doses taken today, for as-needed medications
 }
 
 // Fields sent when adding or editing a medication
-export type MedicationInput = Omit<MedicationRecord, "mid">;
+export type MedicationInput = Omit<MedicationRecord, "mid" | "taken_at" | "taken_count" | "time"> & {
+  time: string;
+};
 
 // GET medications.php -> { success: true, medications: [...] } (401 when not logged in)
 export async function getMedications(): Promise<MedicationRecord[]> {
@@ -517,7 +581,7 @@ export async function addMedication(input: MedicationInput): Promise<number> {
 
 // PUT medications.php (raw JSON) -> { success: true }
 export async function updateMedication(
-  medication: MedicationRecord,
+  medication: Omit<MedicationRecord, "taken_at">,
 ): Promise<void> {
   await settingsRequest("medications.php", {
     method: "PUT",
@@ -533,6 +597,31 @@ export async function deleteMedication(mid: number): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mid }),
   });
+}
+
+// POST medication_taken.php (form-data) -> { success: true, taken_at }
+export async function markMedicationTaken(
+  mid: number,
+): Promise<{ taken_at: string; taken_count?: number }> {
+  const form = new FormData();
+  form.append("mid", String(mid));
+
+  const data = await settingsRequest<{ taken_at?: string; taken_count?: number }>("medication_taken.php", {
+    method: "POST",
+    body: form,
+  });
+
+  if (typeof data.taken_at !== "string" || !data.taken_at) {
+    throw {
+      status: 500,
+      error: "Something went wrong. Please try again later.",
+    };
+  }
+
+  return {
+    taken_at: data.taken_at,
+    taken_count: typeof data.taken_count === "number" ? data.taken_count : undefined,
+  };
 }
 
 // ---------- Caregivers ----------
@@ -619,12 +708,20 @@ export interface AppointmentInput {
   address: string;
 }
 
-// GET appointments.php -> 200 { appointments: [...] }, soonest first (401 when not logged in)
-export async function getAppointments(): Promise<AppointmentRecord[]> {
-  const data = await settingsRequest<{ appointments?: AppointmentRecord[] }>(
-    "appointments.php",
-  );
-  return data.appointments ?? [];
+export interface AllAppointmentsResponse {
+  appointments: AppointmentRecord[];
+  past_appointments: AppointmentRecord[];
+}
+
+export async function getAllAppointments(): Promise<AllAppointmentsResponse> {
+  const data = await settingsRequest<{
+    appointments?: AppointmentRecord[];
+    past_appointments?: AppointmentRecord[];
+  }>("appointments.php");
+  return {
+    appointments: data.appointments ?? [],
+    past_appointments: data.past_appointments ?? [],
+  };
 }
 
 // POST appointments.php (form fields)

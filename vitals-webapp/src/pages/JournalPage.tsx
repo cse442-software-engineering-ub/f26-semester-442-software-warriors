@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
-import { getAccount, getJournal } from "../api";
+import { deleteReading, getAccount, getJournal } from "../api";
 import type { AccountInfo, JournalData, JournalReading } from "../api";
 import "./JournalPage.css";
 
@@ -98,7 +98,49 @@ const ReadingDate = ({
   </span>
 );
 
-const ReadingCard = ({ reading }: { reading: JournalReading }) => (
+// Pencil + Remove for one reading (#103). Only shown to the patient, never to a caregiver.
+const ReadingActions = ({
+  reading,
+  onEdit,
+  onRemove,
+}: {
+  reading: JournalReading;
+  onEdit: (reading: JournalReading) => void;
+  onRemove: (reading: JournalReading) => void;
+}) => {
+  const when = `${formatReadingDate(reading.date_time, "long")}, ${formatReadingTime(reading.date_time)}`;
+  return (
+    <div className="journal-reading-actions">
+      <button
+        className="journal-edit-button"
+        type="button"
+        aria-label={`Edit reading ${reading.systolic}/${reading.diastolic} from ${when}`}
+        onClick={() => onEdit(reading)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+          <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+        </svg>
+      </button>
+      <button
+        className="journal-remove-button"
+        type="button"
+        aria-label={`Remove reading ${reading.systolic}/${reading.diastolic} from ${when}`}
+        onClick={() => onRemove(reading)}
+      >
+        Remove
+      </button>
+    </div>
+  );
+};
+
+const ReadingCard = ({
+  reading,
+  actions,
+}: {
+  reading: JournalReading;
+  actions?: React.ReactNode;
+}) => (
   <article className="journal-mobile-reading">
     <ReadingDate dateTime={reading.date_time} month="short" />
     {reading.pulse !== undefined && (
@@ -110,6 +152,7 @@ const ReadingCard = ({ reading }: { reading: JournalReading }) => (
       {reading.systolic}/{reading.diastolic} <small>mmHg</small>
     </strong>
     <StatusBadge status={reading.status} />
+    {actions}
   </article>
 );
 
@@ -121,6 +164,20 @@ const JournalPage = () => {
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
   const [isAddingReading, setIsAddingReading] = useState(false);
+  const [readingToEdit, setReadingToEdit] = useState<JournalReading | null>(null);
+  const [readingToRemove, setReadingToRemove] = useState<JournalReading | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  // Escape closes the remove popup, like the other popups
+  useEffect(() => {
+    if (!readingToRemove) return;
+    const onKey = (event: KeyboardEvent) =>
+      event.key === "Escape" && !isRemoving && setReadingToRemove(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [readingToRemove, isRemoving]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -165,6 +222,49 @@ const JournalPage = () => {
     ? EMPTY_MESSAGE
     : PATIENT_EMPTY_MESSAGE;
   const canAddReading = !isLoading && data !== null && !isCaregiver;
+  // Edit/Remove need the reading's id from health_journal.php (#102); caregivers never get them.
+  const canChangeReadings =
+    canAddReading && readings.some((reading) => reading.rid !== undefined);
+
+  const startEdit = (reading: JournalReading) => {
+    setStatusMessage("");
+    setActionError("");
+    setReadingToEdit(reading);
+  };
+
+  const startRemove = (reading: JournalReading) => {
+    setStatusMessage("");
+    setActionError("");
+    setReadingToRemove(reading);
+  };
+
+  const confirmRemove = async () => {
+    if (readingToRemove?.rid === undefined) return;
+    setIsRemoving(true);
+    try {
+      await deleteReading(readingToRemove.rid);
+      setStatusMessage("Reading removed.");
+      setReloadCount((count) => count + 1);
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setActionError(
+        typeof error === "object" && error !== null && "error" in error && typeof error.error === "string"
+          ? error.error
+          : "Could not remove your reading. Please try again.",
+      );
+    } finally {
+      setIsRemoving(false);
+      setReadingToRemove(null);
+    }
+  };
+
+  const actionsFor = (reading: JournalReading) =>
+    canChangeReadings && reading.rid !== undefined ? (
+      <ReadingActions reading={reading} onEdit={startEdit} onRemove={startRemove} />
+    ) : undefined;
 
   return (
     <AppLayout activeItem="Journal">
@@ -239,10 +339,24 @@ const JournalPage = () => {
             <button
               className="home-add-reading"
               type="button"
-              onClick={() => setIsAddingReading(true)}
+              onClick={() => {
+                setStatusMessage("");
+                setActionError("");
+                setIsAddingReading(true);
+              }}
             >
               <span aria-hidden="true">+</span> Add Blood Pressure Reading
             </button>
+          )}
+          {statusMessage && (
+            <p className="home-reading-saved" role="status">
+              {statusMessage}
+            </p>
+          )}
+          {actionError && (
+            <p className="journal-action-error" role="alert">
+              {actionError}
+            </p>
           )}
         </section>
 
@@ -276,11 +390,16 @@ const JournalPage = () => {
                         <th scope="col">Diastolic</th>
                         <th scope="col">Pulse Rate</th>
                         <th scope="col">Status</th>
+                        {canChangeReadings && (
+                          <th scope="col">
+                            <span className="sr-only">Actions</span>
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody>
                       {readings.map((reading, index) => (
-                        <tr key={`${reading.date_time}-${index}`}>
+                        <tr key={reading.rid ?? `${reading.date_time}-${index}`}>
                           <td>
                             <ReadingDate dateTime={reading.date_time} />
                           </td>
@@ -290,6 +409,7 @@ const JournalPage = () => {
                           <td>
                             <StatusBadge status={reading.status} />
                           </td>
+                          {canChangeReadings && <td>{actionsFor(reading)}</td>}
                         </tr>
                       ))}
                     </tbody>
@@ -298,8 +418,9 @@ const JournalPage = () => {
                 <div className="journal-mobile-readings">
                   {readings.map((reading, index) => (
                     <ReadingCard
-                      key={`${reading.date_time}-${index}`}
+                      key={reading.rid ?? `${reading.date_time}-${index}`}
                       reading={reading}
+                      actions={actionsFor(reading)}
                     />
                   ))}
                 </div>
@@ -308,6 +429,51 @@ const JournalPage = () => {
           </div>
         </section>
       </div>
+
+      {canAddReading && readingToEdit?.rid !== undefined && (
+        <AddReadingModal
+          reading={{
+            rid: readingToEdit.rid,
+            systolic: readingToEdit.systolic,
+            diastolic: readingToEdit.diastolic,
+            pulse: readingToEdit.pulse,
+          }}
+          onClose={() => setReadingToEdit(null)}
+          onSaved={() => {
+            setReadingToEdit(null);
+            setStatusMessage("Reading updated.");
+            setReloadCount((count) => count + 1);
+          }}
+        />
+      )}
+
+      {readingToRemove && (
+        <div
+          className="app-logout-dialog-backdrop"
+          onMouseDown={(event) =>
+            event.target === event.currentTarget && !isRemoving && setReadingToRemove(null)
+          }
+        >
+          <section
+            className="app-logout-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="journal-remove-title"
+          >
+            <h2 id="journal-remove-title">
+              Are you sure you want to remove this reading?
+            </h2>
+            <div className="app-logout-dialog-actions">
+              <button type="button" onClick={() => setReadingToRemove(null)} disabled={isRemoving}>
+                Cancel
+              </button>
+              <button type="button" onClick={() => void confirmRemove()} disabled={isRemoving}>
+                {isRemoving ? "Removing..." : "Confirm"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {canAddReading && isAddingReading && (
         <AddReadingModal

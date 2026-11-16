@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedications, updateMedication } from "../api";
+import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedications, markMedicationTaken, updateMedication } from "../api";
 import type { MedicationRecord } from "../api";
 import "./MedicationsPage.css";
 
@@ -22,6 +22,11 @@ const formatTime = (time: string) => {
   return `${hour % 12 || 12}:${minutes} ${period}`;
 };
 
+const formatTakenAt = (takenAt: string) => {
+  const time = takenAt.includes(" ") ? takenAt.split(" ")[1] : takenAt;
+  return formatTime(time);
+};
+
 // "Monday,Tuesday" -> "Mon, Tue"
 const formatDays = (days: string) =>
   days
@@ -30,6 +35,31 @@ const formatDays = (days: string) =>
     .join(", ");
 
 const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// Read the backend's optional taken_at without changing the shared type; absence is not null.
+type MedicationWithTakenAt = MedicationRecord & { taken_at?: string | null };
+
+// Check today's schedule and taken_at without storing a separate missed status.
+const isMedicationMissed = (medication: MedicationWithTakenAt, now: Date) => {
+  if (medication.status !== "active" || medication.as_needed || medication.taken_at !== null) {
+    return false;
+  }
+
+  const today = weekDays[(now.getDay() + 6) % 7]; 
+  const scheduledDays = medication.days.split(",").map((day) => day.trim());
+  if (!scheduledDays.includes(today)) return false;
+
+  if (!medication.time) return false;
+  const timeParts = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(medication.time);
+  if (!timeParts) return false;
+
+  const hours = Number(timeParts[1]);
+  const minutes = Number(timeParts[2]);
+  const seconds = Number(timeParts[3] ?? 0);
+  const scheduledTime = new Date(now);
+  scheduledTime.setHours(hours, minutes, seconds, 0);
+  return now.getTime() > scheduledTime.getTime();
+};
 
 type DayOption = "all" | "weekdays" | "custom";
 
@@ -118,7 +148,21 @@ const statusOptions: { value: MedicationRecord["status"]; label: string }[] = [
 ];
 const maxDoseLength = 15;
 
-const MedicationCard = ({ medication, onEdit, onRemove }: { medication: MedicationRecord; onEdit: (medication: MedicationRecord) => void; onRemove: (medication: MedicationRecord) => void }) => (
+const MedicationCard = ({
+  medication,
+  missed,
+  isTaking,
+  onEdit,
+  onRemove,
+  onTake,
+}: {
+  medication: MedicationRecord;
+  missed: boolean;
+  isTaking: boolean;
+  onEdit: (medication: MedicationRecord) => void;
+  onRemove: (medication: MedicationRecord) => void;
+  onTake: (medication: MedicationRecord) => void;
+}) => (
   <article className="home-card home-medication-card medications-card">
     <div className="medications-main">
       <span className="home-medication-icon grid place-items-center rounded-lg bg-blue-800 text-white" aria-hidden="true">
@@ -155,14 +199,40 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
             <span>DAYS: <strong>{formatDays(medication.days)}</strong></span>
           </div>
         )}
+        {missed && <span className="home-status-badge medications-status medications-status-missed">MISSED TODAY</span>}
       </div>
     )}
 
     <div className="medications-controls">
-      <span className={`home-status-badge medications-status medications-status-${medication.status.replace(" ", "-")}`}>
-        {medication.status}
-      </span>
-      {medication.as_needed && <span className="home-status-badge medications-status medications-status-as-needed">as needed</span>}
+      <div className="medications-badges">
+        <span className={`home-status-badge medications-status medications-status-${medication.status.replace(" ", "-")}`}>
+          {medication.status}
+        </span>
+        {medication.as_needed && <span className="home-status-badge medications-status medications-status-as-needed">as needed</span>}
+      </div>
+      <div className="medications-take-area">
+        {medication.status === "active" && medication.as_needed && Boolean(medication.taken_count) && (
+          <div className="medications-taken medications-taken-count" aria-label={`Taken ${medication.taken_count} ${medication.taken_count === 1 ? "time" : "times"} today`}>
+            Taken {medication.taken_count} {medication.taken_count === 1 ? "time" : "times"} today
+          </div>
+        )}
+        {medication.status === "active" && !medication.as_needed && medication.taken_at && (
+          <div className="medications-taken" aria-label={`Taken at ${formatTakenAt(medication.taken_at)}`}>
+            <span className="medications-checkmark" aria-hidden="true">✓</span>
+            <span>Taken at {formatTakenAt(medication.taken_at)}</span>
+          </div>
+        )}
+        {medication.status === "active" && (medication.as_needed || !medication.taken_at) && (
+          <button
+            className="medications-take-button"
+            type="button"
+            disabled={isTaking}
+            onClick={() => onTake(medication)}
+          >
+            {isTaking ? "Saving..." : "Mark as taken"}
+          </button>
+        )}
+      </div>
       <div className="medications-actions">
         <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`} onClick={() => onEdit(medication)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -178,11 +248,16 @@ const MedicationCard = ({ medication, onEdit, onRemove }: { medication: Medicati
 
 const MedicationsPage = () => {
   const navigate = useNavigate();
-  const [medications, setMedications] = useState<MedicationRecord[]>([]);
+  // Keep taken_at for the missed check and freeze the comparison time until the next medication load.
+  const [medications, setMedications] = useState<MedicationWithTakenAt[]>([]);
+  const [now, setNow] = useState(() => new Date());
   const [isLoading, setIsLoading] = useState(true);
   const [requestError, setRequestError] = useState("");
   const [reloadCount, setReloadCount] = useState(0);
   const [saveError, setSaveError] = useState("");
+  const [takenError, setTakenError] = useState("");
+  const [takingMid, setTakingMid] = useState<number | null>(null);
+  const takingMids = useRef(new Set<number>());
   const [isSaving, setIsSaving] = useState(false);
   const [toRemove, setToRemove] = useState<MedicationRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -209,7 +284,12 @@ const MedicationsPage = () => {
   useEffect(() => {
     getMedications()
       .then((list) => {
+        // Report missing taken_at rather than guessing, and compare the response against its load time.
+        if (list.some((medication: MedicationWithTakenAt) => medication.taken_at === undefined)) {
+          console.error("Missed medication tags require taken_at from the server.");
+        }
         setMedications(list);
+        setNow(new Date());
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -243,6 +323,41 @@ const MedicationsPage = () => {
       setRequestError(getErrorMessage(error));
     } finally {
       setIsRemoving(false);
+    }
+  };
+
+  const takeMedication = async (medication: MedicationRecord) => {
+    if (
+      medication.status !== "active" ||
+      (!medication.as_needed && medication.taken_at) ||
+      takingMids.current.has(medication.mid)
+    ) return;
+
+    takingMids.current.add(medication.mid);
+    setTakingMid(medication.mid);
+    setTakenError("");
+    try {
+      const { taken_at, taken_count } = await markMedicationTaken(medication.mid);
+      setMedications((current) =>
+        current.map((item) => item.mid === medication.mid
+          ? {
+              ...item,
+              taken_at: item.as_needed ? item.taken_at : taken_at,
+              taken_count: item.as_needed
+                ? (taken_count ?? (item.taken_count ?? 0) + 1)
+                : item.taken_count,
+            }
+          : item),
+      );
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setTakenError("Something went wrong. Please try again.");
+    } finally {
+      takingMids.current.delete(medication.mid);
+      setTakingMid(null);
     }
   };
 
@@ -421,6 +536,7 @@ const MedicationsPage = () => {
           <span aria-hidden="true">+</span> Add Medication
         </button>
       </div>
+      {takenError && <p className="medications-taken-error" role="alert">{takenError}</p>}
 
       <section className="medications-list" aria-label="Your medications" aria-busy={isRemoving}>
         {isLoading && <p className="home-empty">Loading...</p>}
@@ -431,8 +547,17 @@ const MedicationsPage = () => {
         {!isLoading && !requestError && medications.length > 0 && visibleMedications.length === 0 && (
           <p className="home-empty">No medications match the selected filter.</p>
         )}
+        {/* Calculate each badge from the loaded data and shared comparison time. */}
         {visibleMedications.map((medication) => (
-          <MedicationCard key={medication.mid} medication={medication} onEdit={openEditModal} onRemove={askToRemove} />
+          <MedicationCard
+            key={medication.mid}
+            medication={medication}
+            missed={isMedicationMissed(medication, now)}
+            isTaking={takingMid === medication.mid}
+            onEdit={openEditModal}
+            onRemove={askToRemove}
+            onTake={takeMedication}
+          />
         ))}
       </section>
     </div>
