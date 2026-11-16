@@ -55,25 +55,18 @@ else {
     }
 }
 
-//Get the reading and caregiver IDs
+//Get the reading ID
 $readingId = $data['reading_id'] ?? null;
-$cid = $data['cid'] ?? null;
 
 //Make sure a valid reading ID was provided
 if($readingId === null || filter_var($readingId, FILTER_VALIDATE_INT) === false || (int)$readingId <= 0) {
     notifyFail(400, 'Reading ID is required.');
 }
 
-//Make sure a valid caregiver ID was provided
-if($cid === null || filter_var($cid, FILTER_VALIDATE_INT) === false || (int)$cid <= 0) {
-    notifyFail(400, 'Caregiver ID is required.');
-}
-
-//Convert IDs to integers
+//Convert the reading ID to an integer
 $readingId = (int)$readingId;
-$cid = (int)$cid;
 
-//Get the selected blood pressure reading
+//Get the blood pressure reading
 //The uid check makes sure the reading belongs
 //to the currently logged-in patient
 $stmt = $pdo->prepare(
@@ -98,24 +91,21 @@ if(!$reading) {
     notifyFail(404, 'Reading not found.');
 }
 
-//Get the selected accepted caregiver
+//Get all accepted caregivers belonging to the patient
 //Only accepted caregivers exist in this table
 $stmt = $pdo->prepare(
     'SELECT cid,
             name,
             email
      FROM caregivers
-     WHERE cid = ?
-     AND uid = ?
-     LIMIT 1'
+     WHERE uid = ?'
 );
 
-$stmt->execute([$cid, $userId]);
-$caregiver = $stmt->fetch();
+$stmt->execute([$userId]);
+$caregivers = $stmt->fetchAll();
 
-//This covers both a nonexistent caregiver
-//and a caregiver belonging to another patient
-if(!$caregiver) {
+//Stop if the patient does not have an accepted caregiver
+if(!$caregivers) {
     notifyFail(404, 'Caregiver not found.');
 }
 
@@ -138,10 +128,6 @@ if(!$patient) {
 
 //Patient information
 $patientName = $patient['name'];
-
-//Caregiver information
-$caregiverName = $caregiver['name'];
-$caregiverEmail = $caregiver['email'];
 
 //Reading information
 $systolic = (int)$reading['systolic'];
@@ -167,77 +153,84 @@ else {
     $displayTime = '';
 }
 
-//Escape text before placing it inside HTML
+//Escape patient and reading text before placing it inside HTML
 $safePatientName = htmlspecialchars($patientName, ENT_QUOTES, 'UTF-8');
-$safeCaregiverName = htmlspecialchars($caregiverName, ENT_QUOTES, 'UTF-8');
 $safeStatus = htmlspecialchars($status, ENT_QUOTES, 'UTF-8');
 $safeDate = htmlspecialchars($displayDate, ENT_QUOTES, 'UTF-8');
 $safeTime = htmlspecialchars($displayTime, ENT_QUOTES, 'UTF-8');
 $safePulseText = htmlspecialchars($pulseText, ENT_QUOTES, 'UTF-8');
 
-
-//Create and send the caregiver email
+//Create and send the email to every accepted caregiver
 try {
-    $mail = new PHPMailer(true);
-    $mail->isSMTP();
-    $mail->SMTPAuth = true;
+    foreach($caregivers as $caregiver) {
+        //Caregiver information
+        $caregiverName = $caregiver['name'];
+        $caregiverEmail = $caregiver['email'];
 
-    //Load the existing email configuration
-    $mail->Host = $config['host'];
-    $mail->Username = $config['username'];
-    $mail->Password = $config['password'];
+        //Escape caregiver name before placing it inside HTML
+        $safeCaregiverName = htmlspecialchars($caregiverName, ENT_QUOTES, 'UTF-8');
 
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    $mail->Port = 465;
+        $mail = new PHPMailer(true);
+        $mail->isSMTP();
+        $mail->SMTPAuth = true;
 
-    //Set the sender
-    $mail->setFrom($config['username'], 'VITALS, 442 Warriors');
+        //Load the existing email configuration
+        $mail->Host = $config['host'];
+        $mail->Username = $config['username'];
+        $mail->Password = $config['password'];
 
-    //Send only to the caregiver chosen by the patient
-    $mail->addAddress($caregiverEmail, $caregiverName);
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        $mail->Port = 465;
 
-    //Email subject
-    $mail->Subject = 'VITALS Blood Pressure Reading';
+        //Set the sender
+        $mail->setFrom($config['username'], 'VITALS, 442 Warriors');
 
-    //HTML email
-    $mail->isHTML(true);
+        //Send to the accepted caregiver
+        $mail->addAddress($caregiverEmail, $caregiverName);
 
-    $mail->Body =
-        "Hello $safeCaregiverName,<br><br>" .
+        //Email subject
+        $mail->Subject = 'VITALS Blood Pressure Reading';
 
-        "$safePatientName shared a blood pressure reading with you on VITALS.<br><br>" .
+        //HTML email
+        $mail->isHTML(true);
 
-        "<strong>Systolic:</strong> $systolic mmHg<br>" .
-        "<strong>Diastolic:</strong> $diastolic mmHg<br>" .
-        "<strong>Pulse Rate:</strong> $safePulseText<br>" .
-        "<strong>Status:</strong> $safeStatus<br>" .
-        "<strong>Date:</strong> $safeDate<br>" .
-        "<strong>Time:</strong> $safeTime<br><br>" .
-        "This message was sent through VITALS.";
+        $mail->Body =
+            "Hello $safeCaregiverName,<br><br>" .
 
-    //Plain-text version of the same email
-    $mail->AltBody =
-        "Hello $caregiverName,\n\n" .
+            "$safePatientName added a new blood pressure reading on VITALS.<br><br>" .
 
-        "$patientName shared a blood pressure reading with you on VITALS.\n\n" .
+            "<strong>Systolic:</strong> $systolic mmHg<br>" .
+            "<strong>Diastolic:</strong> $diastolic mmHg<br>" .
+            "<strong>Pulse Rate:</strong> $safePulseText<br>" .
+            "<strong>Status:</strong> $safeStatus<br>" .
+            "<strong>Date:</strong> $safeDate<br>" .
+            "<strong>Time:</strong> $safeTime<br><br>" .
+            "This message was sent automatically through VITALS.";
 
-        "Systolic: $systolic mmHg\n" .
-        "Diastolic: $diastolic mmHg\n" .
-        "Pulse Rate: $pulseText\n" .
-        "Status: $status\n" .
-        "Date: $displayDate\n" .
-        "Time: $displayTime\n\n" .
-        "This message was sent through VITALS.";
+        //Plain-text version of the same email
+        $mail->AltBody =
+            "Hello $caregiverName,\n\n" .
 
-    //Actually send the email
-    $mail->send();
+            "$patientName added a new blood pressure reading on VITALS.\n\n" .
+
+            "Systolic: $systolic mmHg\n" .
+            "Diastolic: $diastolic mmHg\n" .
+            "Pulse Rate: $pulseText\n" .
+            "Status: $status\n" .
+            "Date: $displayDate\n" .
+            "Time: $displayTime\n\n" .
+            "This message was sent automatically through VITALS.";
+
+        //Actually send the email
+        $mail->send();
+    }
 }
 catch(Throwable $e) {
     //Do not report success if PHPMailer fails
     notifyFail(500, 'Reading could not be sent.');
 }
 
-//Only return success after the email has been sent
+//Only return success after the reading has been sent
 http_response_code(200);
 echo json_encode([
     'success' => true,
