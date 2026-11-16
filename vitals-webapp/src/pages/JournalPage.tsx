@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
-import { deleteReading, getAccount, getJournal } from "../api";
+import { deleteReading, getAccount, getJournal, sendReading } from "../api";
 import type { AccountInfo, JournalData, JournalReading } from "../api";
 import "./JournalPage.css";
 
@@ -478,9 +478,23 @@ const JournalPage = () => {
       {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
-          onSaved={() => {
+          onSaved={async (savedReading) => {
             setIsAddingReading(false);
             setReloadCount((count) => count + 1);
+
+            try {
+              await sendReading(savedReading.rid);
+              setStatusMessage("Reading saved and sent to your caregiver.");
+            } catch (error: unknown) {
+              if (isUnauthorized(error)) {
+                navigate("/login", { replace: true });
+                return;
+              }
+
+              setStatusMessage(
+                "Reading saved, but it could not be sent to your caregiver.",
+              );
+            }
           }}
         />
       )}
