@@ -216,7 +216,9 @@ const JournalPage = () => {
   const readings = data?.readings ?? [];
   const lastReading = data?.last_reading ?? null;
   const averages = data?.averages ?? null;
-  const isCaregiver = account?.isCaregiver ?? Boolean(data?.caregiver_info);
+  const isCaregiver = account
+    ? account.isCaregiver && (account.viewMode ?? "caregiver") === "caregiver"
+    : Boolean(data?.caregiver_info);
   const patientName =
     account?.relatedPersonName?.trim().split(/\s+/)[0] || null;
   const emptyReadingsMessage = isCaregiver

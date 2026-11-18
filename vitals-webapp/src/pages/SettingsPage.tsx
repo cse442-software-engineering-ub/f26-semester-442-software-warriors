@@ -8,39 +8,33 @@ import {
   changeAccountPassword,
   deleteAccount,
   getAccount,
+  setViewingMode,
   updateAccount,
 } from "../api";
 import "./SettingsPage.css";
-
 type ModalName = "password" | "delete" | "saved" | "password-saved" | null;
 type ProfileFields = "name" | "phone" | "email";
 type FieldErrors = Partial<Record<ProfileFields, string>>;
-
 interface SettingsApiError {
   status: number;
   error?: string;
   errors?: Record<string, string>;
 }
-
 const isSettingsApiError = (error: unknown): error is SettingsApiError =>
   typeof error === "object" && error !== null && "status" in error && typeof error.status === "number";
-
 const isUnauthorized = (error: unknown) =>
   isSettingsApiError(error) && (error.status === 401 || error.error === "Not logged in.");
-
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error
     ? error.message
     : isSettingsApiError(error) && error.error
       ? error.error
       : fallback;
-
 interface Profile {
   name: string;
   phone: string;
   email: string;
 }
-
 interface SettingsFieldProps {
   id: ProfileFields;
   label: string;
@@ -49,7 +43,6 @@ interface SettingsFieldProps {
   error?: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
-
 const SettingsField = ({
   id,
   label,
@@ -81,7 +74,6 @@ const SettingsField = ({
     {error && <FieldErrorMessage id={`${id}-error`} message={error} />}
   </label>
 );
-
 const formatPhoneNumber = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 15);
   if (!digits) return "";
@@ -89,12 +81,14 @@ const formatPhoneNumber = (value: string) => {
   if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}${digits.slice(10)}`;
 };
-
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
   const [savedName, setSavedName] = useState("");
   const [isCaregiver, setIsCaregiver] = useState(false);
+  const [viewMode, setViewMode] = useState<"personal" | "caregiver">("personal");
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false);
+  const [viewModeError, setViewModeError] = useState("");
   const [modal, setModal] = useState<ModalName>(null);
   const [passwordErrors, setPasswordErrors] = useState<{ oldPassword?: string; newPassword?: string }>({});
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -106,7 +100,6 @@ const SettingsPage = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   useEffect(() => {
     let isCurrent = true;
-
     getAccount()
       .then((account) => {
         if (!isCurrent) return;
@@ -117,6 +110,7 @@ const SettingsPage = () => {
         });
         setSavedName(account.name);
         setIsCaregiver(account.isCaregiver);
+          setViewMode(account.viewMode ?? (account.isCaregiver ? "caregiver" : "personal"));
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -132,16 +126,13 @@ const SettingsPage = () => {
       .finally(() => {
         if (isCurrent) setIsLoading(false);
       });
-
     return () => {
       isCurrent = false;
     };
   }, [navigate]);
-
   const updateProfile = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     if (name !== "name" && name !== "phone" && name !== "email") return;
-
     if (name === "email") {
       setEmailLimitExceeded(value.length > 254);
       setProfile((current) => ({ ...current, email: value.slice(0, 254) }));
@@ -151,7 +142,6 @@ const SettingsPage = () => {
         [name]: name === "phone" ? formatPhoneNumber(value) : value,
       }));
     }
-
     setFieldErrors((current) => {
       if (!current[name]) return current;
       const next = { ...current };
@@ -160,12 +150,10 @@ const SettingsPage = () => {
     });
     setRequestError("");
   };
-
   const closeModal = () => {
     setModal(null);
     setPasswordErrors({});
   };
-
   const validateProfile = () => {
     // Reject invalid values before sending an account update.
     const errors: FieldErrors = {};
@@ -186,11 +174,9 @@ const SettingsPage = () => {
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
   const saveChanges = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!validateProfile() || isSaving) return;
-
     setIsSaving(true);
     setRequestError("");
     try {
@@ -220,7 +206,6 @@ const SettingsPage = () => {
       setIsSaving(false);
     }
   };
-
   const changePassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -231,7 +216,6 @@ const SettingsPage = () => {
     if (!newPassword.trim()) errors.newPassword = "New password is required.";
     setPasswordErrors(errors);
     if (Object.keys(errors).length > 0 || isChangingPassword) return;
-
     setIsChangingPassword(true);
     try {
       await changeAccountPassword(oldPassword, newPassword);
@@ -254,12 +238,10 @@ const SettingsPage = () => {
       setIsChangingPassword(false);
     }
   };
-
   const showModal = (name: Exclude<ModalName, null | "saved">) => {
     setPasswordErrors({});
     setModal(name);
   };
-
   const handleDeleteAccount = async () => {
     if (isDeletingAccount) return;
     setIsDeletingAccount(true);
@@ -274,7 +256,25 @@ const SettingsPage = () => {
       setIsDeletingAccount(false);
     }
   };
-
+  const switchViewingMode = async () => {
+    if (!isCaregiver || isSwitchingMode) return;
+    const newMode = viewMode === "caregiver" ? "personal" : "caregiver";
+    setIsSwitchingMode(true);
+    setViewModeError("");
+    try {
+      await setViewingMode(newMode);
+      setViewMode(newMode);
+      navigate("/dashboard", { replace: true });
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setViewModeError(getErrorMessage(error, "Unable to switch viewing modes. Please try again."));
+    } finally {
+      setIsSwitchingMode(false);
+    }
+  };
   return (
     <AppLayout
       activeItem="My Profile"
@@ -288,7 +288,6 @@ const SettingsPage = () => {
             <p className="settings-intro">View and modify your account information. Make sure you save all changes by pressing the "Save Changes" button at the bottom of the page.</p>
           </div>
         </header>
-
         <div className="settings-panel">
           <form className="settings-card" onSubmit={saveChanges} noValidate>
             {isLoading ? (
@@ -301,7 +300,6 @@ const SettingsPage = () => {
                     <SettingsField id="phone" label="PHONE NUMBER" value={profile.phone} error={fieldErrors.phone} onChange={updateProfile} />
                     <SettingsField id="email" label="EMAIL ADDRESS" type="text" value={profile.email} error={fieldErrors.email} onChange={updateProfile} />
                   </div>
-
                   {/*
                   <section className="settings-preference-row" id="notification-settings" aria-labelledby="notification-title">
                     <div>
@@ -313,17 +311,40 @@ const SettingsPage = () => {
                     </button>
                   </section>
                   */}
-
                   {requestError && <p className="login-server-error" role="alert">{requestError}</p>}
-
                   <footer className="settings-card-footer">
                     <button className="settings-button settings-button-primary" type="submit" disabled={isSaving}>
                       {isSaving ? "Saving..." : "Save Changes"}
                     </button>
                   </footer>
                 </div>
-
                 <div className="settings-account-actions-column">
+              {isCaregiver && (
+                <section className="settings-preference-row settings-security-row">
+                  <div>
+                    <h2>Viewing Mode</h2>
+                    <p>
+                      {viewMode === "caregiver"
+                        ? "You are currently viewing your patient's health information."
+                        : "You are currently viewing your personal health information."}
+                    </p>
+                    <button
+                      className="settings-button settings-button-outline settings-change-password"
+                      type="button"
+                      onClick={switchViewingMode}
+                      disabled={isSwitchingMode}
+                    >
+                      {isSwitchingMode
+                        ? "Switching..."
+                        : viewMode === "caregiver"
+                          ? "Switch to Personal Mode"
+                          : "Switch to Caregiver Mode"}
+                    </button>
+                    {viewModeError && <p className="login-server-error" role="alert">{viewModeError}</p>}
+                  </div>
+                </section>
+              )}
+
                   {!isCaregiver && (
                     <section className="settings-preference-row settings-security-row">
                       <div>
@@ -335,7 +356,6 @@ const SettingsPage = () => {
                       </div>
                     </section>
                   )}
-
                   <section className="settings-preference-row settings-security-row">
                     <div>
                       <h2>Password</h2>
@@ -345,7 +365,6 @@ const SettingsPage = () => {
                       </button>
                     </div>
                   </section>
-
                   <section className="settings-danger-card" aria-labelledby="delete-account-heading">
                     <div>
                       <h2 id="delete-account-heading">Delete Account</h2>
@@ -361,7 +380,6 @@ const SettingsPage = () => {
           </form>
         </div>
       </div>
-
       {modal && (
         <div className="settings-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>
           {modal === "saved" || modal === "password-saved" ? (
@@ -386,7 +404,6 @@ const SettingsPage = () => {
                   <path d="m5 5 14 14M19 5 5 19" />
                 </svg>
               </button>
-
               {modal === "password" && (
                 <>
                   <h2 id="settings-modal-title">Change Password</h2>
@@ -410,7 +427,6 @@ const SettingsPage = () => {
                   </form>
                 </>
               )}
-
               {modal === "delete" && (
                 <>
                   <h2 id="settings-modal-title">Are you sure you want to delete your account?</h2>
@@ -422,7 +438,6 @@ const SettingsPage = () => {
                   </div>
                 </>
               )}
-
             </section>
           )}
         </div>
@@ -430,5 +445,4 @@ const SettingsPage = () => {
     </AppLayout>
   );
 };
-
 export default SettingsPage;

@@ -116,7 +116,9 @@ const AppointmentsPage = () => {
   useEffect(() => {
     getAccount()
       .then((account) => {
-        setIsCaregiver(account.isCaregiver);
+        setIsCaregiver(
+          account.isCaregiver && (account.viewMode ?? "caregiver") === "caregiver",
+        );
         setPatientName(
           account.relatedPersonName?.trim().split(/\s+/)[0] || null,
         );
