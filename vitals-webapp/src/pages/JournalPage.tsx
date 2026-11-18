@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
-import { deleteReading, getAccount, getJournal, sendReading } from "../api";
+import { deleteReading, getAccount, getJournal, sendReading, getCaregivers } from "../api";
 import type { AccountInfo, JournalData, JournalReading } from "../api";
 import "./JournalPage.css";
 
@@ -479,10 +479,12 @@ const JournalPage = () => {
       {canAddReading && isAddingReading && (
         <AddReadingModal
           onClose={() => setIsAddingReading(false)}
-          onSaved={(savedReading) => {
+          onSaved={async (savedReading) => {
             setIsAddingReading(false);
+
             setData((current) => {
               if (!current) return current;
+
               return {
                 ...current,
                 last_reading: {
@@ -495,28 +497,37 @@ const JournalPage = () => {
                 },
               };
             });
+
             setReloadCount((count) => count + 1);
 
-            void sendReading(savedReading.rid)
-              .then(() => {
-                setStatusMessage("Reading saved and sent to your caregiver.");
+            try {
+              const caregivers = await getCaregivers();
+              const hasAcceptedCaregiver = caregivers.some(
+                (caregiver) => caregiver.status === "accepted",
+              );
 
-                window.setTimeout(() => {
-                  setStatusMessage((current) =>
-                    current === "Reading saved and sent to your caregiver." ? "" : current,
-                  );
-                }, 3000);
-              })
-              .catch((error: unknown) => {
-                if (isUnauthorized(error)) {
-                  navigate("/login", { replace: true });
-                  return;
-                }
+              if (!hasAcceptedCaregiver) {
+                setStatusMessage("Reading saved.");
+                return;
+              }
 
-                setStatusMessage(
-                  "Reading saved, but it could not be sent to your caregiver.",
+              await sendReading(savedReading.rid);
+
+              setStatusMessage("Reading saved and sent to your caregiver.");
+
+              window.setTimeout(() => {
+                setStatusMessage((current) =>
+                  current === "Reading saved and sent to your caregiver." ? "" : current,
                 );
-              });
+              }, 3000);
+            } catch (error: unknown) {
+              if (isUnauthorized(error)) {
+                navigate("/login", { replace: true });
+                return;
+              }
+
+              setStatusMessage("Reading saved.");
+            }
           }}
         />
       )}
