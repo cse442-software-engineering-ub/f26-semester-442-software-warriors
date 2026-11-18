@@ -47,7 +47,8 @@ if ($method === 'GET') {
         'email' => $user['email'],
         'phone' => $user['phone'],
         'isCaregiver' => $isCaregiver,
-        'relatedPersonName' => $relatedPerson ? $relatedPerson['name'] : null
+        'relatedPersonName' => $relatedPerson ? $relatedPerson['name'] : null,
+        'viewMode' => $isCaregiver ? ($_SESSION['viewMode'] ?? 'caregiver') : 'personal'
     ]);
 
     exit;

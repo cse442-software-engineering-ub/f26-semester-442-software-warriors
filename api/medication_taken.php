@@ -1,13 +1,12 @@
 <?php
-
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+require __DIR__ . '/view_context.php';
 
 header('Content-Type: application/json');
 
-function medicationTakenFail(int $status, string $message): void
-{
+function medicationTakenFail(int $status, string $message): void {
     http_response_code($status);
     echo json_encode(['success' => false, 'error' => $message]);
     exit;
@@ -20,13 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $mid = $_POST['mid'] ?? null;
-if ($mid === null || filter_var($mid, FILTER_VALIDATE_INT) === false || (int) $mid <= 0) {
+if ($mid === null || filter_var($mid, FILTER_VALIDATE_INT) === false || (int)$mid <= 0) {
     medicationTakenFail(400, 'Valid medication ID is required');
 }
 
-if (!empty($_SESSION['isCaregiver'])) {
-    $userId = (int) ($_SESSION['patientID'] ?? 0);
-}
+$context = getViewingContext($pdo, $userId);
+$userId = $context['uid'];
 
 try {
     $pdo->beginTransaction();
@@ -35,7 +33,7 @@ try {
     $stmt = $pdo->prepare(
         'SELECT status, as_needed FROM medications WHERE mid = ? AND uid = ? FOR UPDATE'
     );
-    $stmt->execute([(int) $mid, $userId]);
+    $stmt->execute([(int)$mid, $userId]);
     $medication = $stmt->fetch();
 
     if (!$medication) {
@@ -55,20 +53,20 @@ try {
          FROM medication_doses WHERE mid = ? AND taken_at >= ? AND taken_at < ?'
     );
     $stmt->execute([
-        (int) $mid,
+        (int)$mid,
         $today->format('Y-m-d H:i:s'),
         $today->modify('+1 day')->format('Y-m-d H:i:s')
     ]);
     $doses = $stmt->fetch();
-    $count = (int) $doses['taken_count'];
+    $count = (int)$doses['taken_count'];
 
-    if (!(bool) $medication['as_needed'] && $count > 0) {
+    if (!(bool)$medication['as_needed'] && $count > 0) {
         $takenAt = $doses['taken_at'];
         $status = 200;
     } else {
         $takenAt = $now->format('Y-m-d H:i:s');
         $stmt = $pdo->prepare('INSERT INTO medication_doses (mid, taken_at) VALUES (?, ?)');
-        $stmt->execute([(int) $mid, $takenAt]);
+        $stmt->execute([(int)$mid, $takenAt]);
         $count++;
         $status = 201;
     }

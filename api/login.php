@@ -306,15 +306,13 @@ $caregiverRelationship = $stmt->fetch();
 
 //Set the session values used by the rest of the website
 if($caregiverRelationship) {
-
     $_SESSION['isCaregiver'] = true;
-
-    $_SESSION['patientID'] =
-        (int)$caregiverRelationship['uid'];
+    $_SESSION['patientID'] = (int)$caregiverRelationship['uid'];
+    $_SESSION['viewMode'] = 'caregiver';
 }
 else {
-
     $_SESSION['isCaregiver'] = false;
+    $_SESSION['viewMode'] = 'personal';
 
     unset($_SESSION['patientID']);
 }
