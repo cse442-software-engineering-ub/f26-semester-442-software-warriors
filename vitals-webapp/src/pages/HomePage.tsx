@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
 import { Link, useNavigate } from "react-router-dom";
-import { getAccount, getHomepage, sendReading } from "../api";
+import { getAccount, getCaregivers, getHomepage, sendReading } from "../api";
 import type { AccountInfo, HomepageData } from "../api";
 import HealthCard from "../components/HealthCard";
 
@@ -30,7 +30,6 @@ const HomePage = () => {
     const loadHomepage = async () => {
       setIsLoading(true);
       setRequestError("");
-
       try {
         const [homepage, accountInfo] = await Promise.all([
           getHomepage(),
@@ -188,6 +187,18 @@ const HomePage = () => {
             setReloadCount((count) => count + 1);
 
             try {
+              const caregivers = await getCaregivers();
+              const hasAcceptedCaregiver = caregivers.some(
+                (caregiver) => caregiver.status === "accepted",
+              );
+
+              if (!hasAcceptedCaregiver) {
+                setSavedMessage(
+                  `Reading saved: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
+                );
+                return;
+              }
+
               await sendReading(reading.rid);
 
               setSavedMessage(
@@ -200,7 +211,7 @@ const HomePage = () => {
               }
 
               setSavedMessage(
-                `Reading saved, but it could not be sent to your caregiver: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
+                `Reading saved: ${reading.systolic}/${reading.diastolic} mmHg, pulse ${reading.pulse}.`,
               );
             }
           }}
