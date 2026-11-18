@@ -30,7 +30,6 @@ const HomePage = () => {
     const loadHomepage = async () => {
       setIsLoading(true);
       setRequestError("");
-
       try {
         const [homepage, accountInfo] = await Promise.all([
           getHomepage(),

@@ -525,7 +525,6 @@ const JournalPage = () => {
                 navigate("/login", { replace: true });
                 return;
               }
-
               setStatusMessage("Reading saved.");
             }
           }}
