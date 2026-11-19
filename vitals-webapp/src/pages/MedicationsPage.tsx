@@ -180,22 +180,22 @@ const MedicationCard = ({
     {!medication.as_needed && (
       <div className="medications-schedule">
         {!(medication.time) && (
-          <div className={`home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center${missed ? " medications-status-missed" : ""}`}>
+          <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
             <span>TIME: <strong>Unspecified</strong></span>
           </div>
         )}
         {(medication.time) && (
-          <div className={`home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center${missed ? " medications-status-missed" : ""}`}>
+          <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
             <span>TIME: <strong>{formatTime(medication.time)}</strong></span>
           </div>
         )}
         {!(medication.days) && (
-          <div className={`home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center${missed ? " medications-status-missed" : ""}`}>
+          <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
             <span>DAYS: <strong>Unspecified</strong></span>
           </div>
         )}
         {(medication.days) && (
-          <div className={`home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center${missed ? " medications-status-missed" : ""}`}>
+          <div className="home-pill-box home-medication-time grid justify-items-center gap-1 rounded-lg bg-white text-center">
             <span>DAYS: <strong>{formatDays(medication.days)}</strong></span>
           </div>
         )}
@@ -270,7 +270,9 @@ const MedicationsPage = () => {
     getAccount()
       .then((account) => {
         setAccountName(account.name ?? "");
-        setIsCaregiver(account.isCaregiver);
+        setIsCaregiver(
+          account.isCaregiver && (account.viewMode ?? "caregiver") === "caregiver",
+        );
         setPatientName(
           account.relatedPersonName?.trim().split(/\s+/)[0] || null,
         );

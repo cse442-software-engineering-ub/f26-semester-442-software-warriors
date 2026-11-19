@@ -32,7 +32,10 @@ export interface RegisterGeneralError {
   error: string;
 }
 
+export type ViewingMode = "personal" | "caregiver";
+
 export interface AccountInfo {
+  viewMode: ViewingMode;
   id: number;
   name: string;
   phone: string;
@@ -82,6 +85,15 @@ async function settingsRequest<T>(
 
 export async function getAccount(): Promise<AccountInfo> {
   return settingsRequest<AccountInfo>("account.php");
+}
+
+// Update the active view in the PHP session; only caregiver accounts can switch.
+export async function setViewingMode(viewMode: ViewingMode): Promise<void> {
+  await settingsRequest("view_mode.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ viewMode }),
+  });
 }
 
 export async function updateAccount(

@@ -63,7 +63,9 @@ const HomePage = () => {
   const bp = data?.bp_reading ?? null;
   const medications = data?.medications ?? [];
   const appointment = data?.next_appointment ?? null;
-  const isCaregiver = account?.isCaregiver ?? Boolean(data?.caregiver_info);
+  const isCaregiver = account
+    ? account.isCaregiver && (account.viewMode ?? "caregiver") === "caregiver"
+    : Boolean(data?.caregiver_info);
   const canAddReading = !isLoading && data !== null && !isCaregiver;
 
   return (
@@ -169,7 +171,7 @@ const HomePage = () => {
               See all
             </Link>
           </div>
-          <HealthCard 
+          <HealthCard
             isLoading={isLoading}
             type="AppointmentCard"
             emptyString="No appointments."
