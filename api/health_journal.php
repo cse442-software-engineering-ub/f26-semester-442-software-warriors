@@ -4,35 +4,39 @@ error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require_once __DIR__ . '/require_auth.php';
+require __DIR__ . '/view_context.php';
 
 header('Content-Type: application/json');
 $uid = requireAuth();
 $today = date("l");
 
 // American Heart Association categories, checked from most to least serious.
-function bpStatus(int $sys, int $dia): string
-{
-  if ($sys > 180 || $dia > 120) return 'Hypertensive crisis';
-  if ($sys >= 140 || $dia >= 90) return 'High (stage 2)';
-  if ($sys >= 130 || $dia >= 80) return 'High (stage 1)';
-  if ($sys >= 120) return 'Slightly elevated';
-  return 'Within range';
+function bpStatus(int $sys, int $dia): string {
+    if ($sys > 180 || $dia > 120) return 'Hypertensive crisis';
+    if ($sys >= 140 || $dia >= 90) return 'High (stage 2)';
+    if ($sys >= 130 || $dia >= 80) return 'High (stage 1)';
+    if ($sys >= 120) return 'Slightly elevated';
+    return 'Within range';
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed. Use GET.']);
     exit();
-}
+} 
+
 else {
     try {
-        if ($_SESSION['isCaregiver']) {
+        $context = getViewingContext($pdo, $uid);
+
+        if ($context['isPatientView']) {
             // Return caregiver identity while reading journal data for the linked patient.
-            $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
-            $stmt->execute([':uid' => $uid]);
+            $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = ?");
+            $stmt->execute([$uid]);
             $caregiverInfo = $stmt->fetch();
-            $uid = $_SESSION['patientID'];
         }
+
+        $uid = $context['uid'];
         $stmt = $pdo->prepare("SELECT rid, systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC, rid DESC");
         $stmt->execute([':uid' => $uid]);
         $bp_readings = $stmt->fetchAll();
@@ -55,7 +59,7 @@ else {
         $avgStatus = null;
         if (count($bp_readings) > 0) {
             $readingCount = count($bp_readings);
-            if (($readingCount-$null_pulses) <= 0) {
+            if (($readingCount - $null_pulses) <= 0) {
                 $averages = [
                     "systolic" => round($totalSystolic / $readingCount),
                     "diastolic" => round($totalDiastolic / $readingCount),
@@ -71,7 +75,7 @@ else {
             $avgStatus = bpStatus($averages['systolic'], $averages['diastolic']);
         }
 
-        if (!$_SESSION['isCaregiver']) {
+        if (!$context['isPatientView']) {
             echo json_encode([
                 "success" => true,
                 "bp_readings" => $bp_readings ?: null,

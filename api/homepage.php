@@ -4,6 +4,7 @@ error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require_once __DIR__ . '/require_auth.php';
+require __DIR__ . '/view_context.php';
 
 header('Content-Type: application/json');
 $uid = requireAuth();
@@ -16,12 +17,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    if ($_SESSION['isCaregiver']) { // if caregiver then set the uid we grab info from, from the patients db
-        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = :uid");
-        $stmt->execute([':uid' => $uid]);
+    $context = getViewingContext($pdo, $uid);
+
+    if ($context['isPatientView']) {
+        $stmt = $pdo->prepare("SELECT name, email, phone FROM users WHERE id = ?");
+        $stmt->execute([$uid]);
         $caregiverInfo = $stmt->fetch();
-        $uid = $_SESSION['patientID'];
     }
+
+    $uid = $context['uid'];
     $stmt = $pdo->prepare("SELECT systolic, diastolic, status, recorded_at FROM readings WHERE uid = :uid ORDER BY recorded_at DESC LIMIT 1");
     $stmt->execute([':uid' => $uid]);
     $bp_reading = $stmt->fetch();
@@ -44,7 +48,7 @@ try {
     if ($appointment) {
         $appointment['appointment_date'] = date('F jS, Y, g:i a', strtotime($appointment['appointment_date']));
     }
-    if (!$_SESSION['isCaregiver']) {
+    if (!$context['isPatientView']) {
         echo json_encode([
             "success" => true,
             "bp_reading" => $bp_reading ?: null,
