@@ -14,10 +14,9 @@ date_default_timezone_set('America/New_York'); // match what users expect
 require_once __DIR__ . '/PHPMailer/PHPMailer/src/Exception.php';
 require_once __DIR__ . '/PHPMailer/PHPMailer/src/PHPMailer.php';
 require_once __DIR__ . '/PHPMailer/PHPMailer/src/SMTP.php';
+require __DIR__ . '/db.php';
 $config = require __DIR__ . '/mail_config.php';
 
-require __DIR__ . '/mail_config.php';
-require __DIR__ . '/db.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -62,9 +61,6 @@ try {
     ");
     $stmt->execute($dueFrequencies);
     $users = $stmt->fetchAll();
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        echo json_encode("users" => $users);
-    }
 } catch (PDOException $e) {
     error_log("send_notifications.php: DB error: " . $e->getMessage());
     exit(1);
@@ -94,17 +90,20 @@ foreach ($users as $user) {
     $mail = new PHPMailer(true);
     try {
         $mail->isSMTP();
-        $mail->SMTPAuth   = true;
+        $mail->SMTPDebug   = 2;
+        $mail->Debugoutput = function ($str, $level) { error_log("[VITALS] SMTP: $str"); };
+        $mail->SMTPAuth = true;
+        $mail->SMTPSecure = "ssl";
         $mail->Host = $config['host'];
         $mail->Port = 465;
         $mail->Username = $config['username'];
         $mail->Password = $config['password'];
 
-        $mail->setFrom('442.warriors@gmail.com', 'VITALS, 442 Warriors');
+        $mail->setFrom("442.warriors@gmail.com", "VITALS, 442 Warriors");
         $mail->addAddress($email, $user['name']);
 
         $mail->isHTML(true);
-        $mail->Subject = 'VITALS Reminder – Time to log your blood pressure';
+        $mail->Subject = 'VITALS Reminder - Time to log your blood pressure';
         $mail->Body    = $htmlBody;
         $mail->AltBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $htmlBody));
 

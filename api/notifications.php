@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $email_notifications = isset($_POST['email_notifications']) ? (int)$_POST['email_notifications'] : 1;
         $message_frequency   = isset($_POST['message_frequency']) ? $_POST['message_frequency'] : 'none';
-
         // Validate that the submitted frequency is one of the allowed options
         if (!array_key_exists($message_frequency, $FREQUENCY_OPTIONS)) {
             http_response_code(400);
@@ -58,9 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
 
         // Check if a row already exists for this user
-        $stmt = $pdo->prepare("SELECT id FROM notification_preferences WHERE uid = ?");
+        $stmt = $pdo->prepare("SELECT uid FROM notification_preferences WHERE uid = ?");
         $stmt->execute([$userId]);
         $existing = $stmt->fetch();
+
 
         if ($existing) {
             $stmt = $pdo->prepare("UPDATE notification_preferences SET email_notifications = ?, message_frequency = ? WHERE uid = ?");

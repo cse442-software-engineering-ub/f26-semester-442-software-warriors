@@ -4,7 +4,7 @@ error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 $config = require __DIR__ . '/mail_config.php';
-    require __DIR__ . '/session_setup.php';
+require __DIR__ . '/session_setup.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -53,7 +53,6 @@ if ($user) {
         $mail->Host = $config['host'];
         $mail->Port = 465;
         $mail->Username = $config['username'];
-        // NOTE: Replace this with an environment variable or secure config
         $mail->Password = $config['password'];
 
         $mail->addAddress($email, $name);
