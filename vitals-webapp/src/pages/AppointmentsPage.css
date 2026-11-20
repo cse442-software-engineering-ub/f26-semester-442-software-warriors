@@ -138,6 +138,12 @@
   overflow-wrap: anywhere;
 }
 
+.appointments-card-date-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .appointments-card-when {
   display: grid;
   min-width: 200px;
@@ -156,6 +162,29 @@
 .appointments-card-when span {
   color: #444;
   font-size: 14px;
+}
+
+.appointments-note-button {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 2px solid var(--app-blue);
+  border-radius: 8px;
+  background: var(--app-blue);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.appointments-note-button:hover,
+.appointments-note-button:focus-visible {
+  background: var(--app-blue-dark);
+}
+.appointments-note-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
 }
 
 /* Edit (pencil) and Remove side by side (#90) */
@@ -396,11 +425,10 @@
   font-weight: 750;
   letter-spacing: 0.04em;
 }
-.appointments-modal-field input {
+.appointments-modal-field input,
+.appointments-modal-field textarea {
   width: 100%;
-  min-height: 46px;
   box-sizing: border-box;
-  padding: 0 14px;
   border: 1px solid #fff;
   border-radius: 10px;
   background: #fff;
@@ -408,10 +436,21 @@
   font: inherit;
   font-size: 17px;
 }
-.appointments-modal-field input::placeholder {
+.appointments-modal-field input {
+  min-height: 46px;
+  padding: 0 14px;
+}
+.appointments-modal-field textarea {
+  min-height: 88px;
+  padding: 10px 14px;
+  resize: vertical;
+}
+.appointments-modal-field input::placeholder,
+.appointments-modal-field textarea::placeholder {
   color: #6b7280;
 }
-.appointments-modal-field input[aria-invalid="true"] {
+.appointments-modal-field input[aria-invalid="true"],
+.appointments-modal-field textarea[aria-invalid="true"] {
   border: 2px solid #fca5a5;
 }
 .appointments-modal-date {
@@ -469,7 +508,8 @@
 }
 .appointments-modal-close:focus-visible,
 .appointments-modal-submit:focus-visible,
-.appointments-modal-field input:focus-visible {
+.appointments-modal-field input:focus-visible,
+.appointments-modal-field textarea:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -492,7 +532,7 @@
   .appointments-card {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .appointments-card-when {
+  .appointments-card-date-group {
     grid-column: 1 / -1;
     grid-row: 2;
     justify-self: start;
@@ -574,6 +614,19 @@
     gap: 8px;
     min-width: 0;
     padding: 10px;
+  }
+  .appointments-card-date-group {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-self: stretch;
+    gap: 8px;
+  }
+  .appointments-card-when {
+    flex: 1 1 0;
+  }
+  .appointments-note-button {
+    flex: 0 0 auto;
+    padding-inline: 10px;
   }
   .appointments-card-when strong {
     font-size: clamp(12px, 3.8vw, 16px);

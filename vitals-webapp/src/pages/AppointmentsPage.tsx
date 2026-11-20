@@ -54,9 +54,16 @@ const AppointmentCard = ({
           <p className="appointments-card-address">{appointment.address}</p>
         )}
       </div>
-      <div className="appointments-card-when">
-        <strong>{formatDayLabel(date)}</strong>
-        <span>{formatClock(date)}</span>
+      <div className="appointments-card-date-group">
+        <div className="appointments-card-when">
+          <strong>{formatDayLabel(date)}</strong>
+          <span>{formatClock(date)}</span>
+        </div>
+        {isPast && (
+          <button className="appointments-note-button" type="button">
+            Add Note
+          </button>
+        )}
       </div>
       { !isPast && canEdit && (
             // Same pencil as the Medications page

@@ -277,6 +277,16 @@ const AddAppointmentModal = ({
             {fieldError("address")}
           </label>
 
+          {isEditing && (
+            <label className="appointments-modal-field">
+              <span>NOTES</span>
+              <textarea
+                rows={3}
+                placeholder="Add notes for this appointment"
+              />
+            </label>
+          )}
+
           <div className="appointments-modal-actions">
             {generalError && (
               <p className="appointments-modal-error" role="alert">
