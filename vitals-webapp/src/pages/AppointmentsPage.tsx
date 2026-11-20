@@ -29,15 +29,99 @@ const sortSoonestFirst = (list: AppointmentRecord[]) =>
       a.appointment_date.localeCompare(b.appointment_date) || a.aid - b.aid,
   );
 
+const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
+  const [notes, setNotes] = useState("");
+  const [notesError, setNotesError] = useState("");
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
+
+  return (
+    <div
+      className="appointments-modal-backdrop"
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <section
+        className="appointments-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="appointments-notes-modal-title"
+      >
+        <button
+          className="appointments-modal-close"
+          type="button"
+          aria-label="Close dialog"
+          onClick={onClose}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="m5 5 14 14M19 5 5 19" />
+          </svg>
+        </button>
+        <h2 id="appointments-notes-modal-title">Notes</h2>
+        <div className="appointments-modal-form">
+          <label className="appointments-modal-field">
+            <span>EDIT NOTE</span>
+            <textarea
+              rows={5}
+              placeholder="Add notes for this appointment"
+              value={notes}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value.length > 1000) {
+                  setNotes(value.slice(0, 1000));
+                  setNotesError("Notes cannot exceed 1,000 characters.");
+                  return;
+                }
+                setNotes(value);
+                setNotesError("");
+              }}
+              aria-invalid={Boolean(notesError)}
+              aria-describedby={notesError ? "appointment-notes-error" : undefined}
+            />
+            {notesError && (
+              <p
+                className="appointments-modal-error"
+                id="appointment-notes-error"
+                role="alert"
+              >
+                {notesError}
+              </p>
+            )}
+          </label>
+          <div className="appointments-modal-actions">
+            <button className="appointments-modal-submit" type="button">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
 const AppointmentCard = ({
   appointment,
   onEdit,
+  onAddNote,
   onRemove,
   isPast,
   canEdit,
 }: {
   appointment: AppointmentRecord;
   onEdit: (Appointment: AppointmentRecord) => void;
+  onAddNote: () => void;
   onRemove: (appointment: AppointmentRecord) => void;
   isPast: boolean;
   canEdit: boolean;
@@ -54,9 +138,20 @@ const AppointmentCard = ({
           <p className="appointments-card-address">{appointment.address}</p>
         )}
       </div>
-      <div className="appointments-card-when">
-        <strong>{formatDayLabel(date)}</strong>
-        <span>{formatClock(date)}</span>
+      <div className="appointments-card-date-group">
+        <div className="appointments-card-when">
+          <strong>{formatDayLabel(date)}</strong>
+          <span>{formatClock(date)}</span>
+        </div>
+        {isPast && (
+          <button
+            className="appointments-note-button"
+            type="button"
+            onClick={onAddNote}
+          >
+            Add Note
+          </button>
+        )}
       </div>
       { !isPast && canEdit && (
             // Same pencil as the Medications page
@@ -82,6 +177,13 @@ const AppointmentCard = ({
                 </svg>
             </button>
             <button
+              className="appointments-note-button"
+              type="button"
+              onClick={onAddNote}
+            >
+              Add Note
+            </button>
+            <button
               className="appointments-remove-button"
               type="button"
               aria-label={`Remove appointment with ${appointment.doctors_name}`}
@@ -105,6 +207,7 @@ const AppointmentsPage = () => {
   const [isUpcoming, setIsUpcoming] = useState(true);
   // The appointment being edited, or null when the Edit popup is closed
   const [editing, setEditing] = useState<AppointmentRecord | null>(null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [toRemove, setToRemove] = useState<AppointmentRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -321,6 +424,7 @@ const AppointmentsPage = () => {
                   canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
+                  onAddNote={() => setIsEditingNotes(true)}
                   onRemove={askToRemove}
                 />
               ))}
@@ -357,6 +461,7 @@ const AppointmentsPage = () => {
                   canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
+                  onAddNote={() => setIsEditingNotes(true)}
                   onRemove={askToRemove}
                 />
               ))}
@@ -384,6 +489,10 @@ const AppointmentsPage = () => {
           onSaved={handleEdited}
           onUnauthorized={goToLogin}
         />
+      )}
+
+      {isEditingNotes && (
+        <EditNotesModal onClose={() => setIsEditingNotes(false)} />
       )}
 
       {/* Same confirm box as Logout, so it reuses the app-logout-dialog styles */}

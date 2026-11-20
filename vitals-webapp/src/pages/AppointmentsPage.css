@@ -109,7 +109,7 @@
 
 .appointments-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 18px;
   padding: 20px 24px;
@@ -138,11 +138,21 @@
   overflow-wrap: anywhere;
 }
 
+.appointments-card-date-group {
+  display: flex;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-items: center;
+  justify-self: start;
+  gap: 12px;
+}
+
 .appointments-card-when {
-  display: grid;
+  display: flex;
   min-width: 200px;
-  justify-items: center;
-  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 10px 20px;
   border-radius: 8px;
   background: #fff;
@@ -152,17 +162,49 @@
   color: var(--app-blue);
   font-size: 16px;
   font-weight: 750;
+  white-space: nowrap;
 }
 .appointments-card-when span {
   color: #444;
   font-size: 14px;
+  white-space: nowrap;
+}
+.appointments-card-when span::before {
+  content: "|";
+  margin-right: 8px;
+  color: #b8c4d6;
+}
+
+.appointments-note-button {
+  min-height: 34px;
+  padding: 0 16px;
+  border: 2px solid var(--app-blue);
+  border-radius: 8px;
+  background: var(--app-blue);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.appointments-note-button:hover,
+.appointments-note-button:focus-visible {
+  background: var(--app-blue-dark);
+}
+.appointments-note-button:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
 }
 
 /* Edit (pencil) and Remove side by side (#90) */
 .appointments-card-actions {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 .appointments-edit-button {
   display: grid;
@@ -200,6 +242,7 @@
   font: inherit;
   font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 160ms ease;
 }
@@ -396,11 +439,10 @@
   font-weight: 750;
   letter-spacing: 0.04em;
 }
-.appointments-modal-field input {
+.appointments-modal-field input,
+.appointments-modal-field textarea {
   width: 100%;
-  min-height: 46px;
   box-sizing: border-box;
-  padding: 0 14px;
   border: 1px solid #fff;
   border-radius: 10px;
   background: #fff;
@@ -408,10 +450,21 @@
   font: inherit;
   font-size: 17px;
 }
-.appointments-modal-field input::placeholder {
+.appointments-modal-field input {
+  min-height: 46px;
+  padding: 0 14px;
+}
+.appointments-modal-field textarea {
+  min-height: 88px;
+  padding: 10px 14px;
+  resize: vertical;
+}
+.appointments-modal-field input::placeholder,
+.appointments-modal-field textarea::placeholder {
   color: #6b7280;
 }
-.appointments-modal-field input[aria-invalid="true"] {
+.appointments-modal-field input[aria-invalid="true"],
+.appointments-modal-field textarea[aria-invalid="true"] {
   border: 2px solid #fca5a5;
 }
 .appointments-modal-date {
@@ -469,7 +522,8 @@
 }
 .appointments-modal-close:focus-visible,
 .appointments-modal-submit:focus-visible,
-.appointments-modal-field input:focus-visible {
+.appointments-modal-field input:focus-visible,
+.appointments-modal-field textarea:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -488,14 +542,6 @@
 @media (max-width: 1150px) {
   .appointments-content {
     grid-template-columns: minmax(0, 1fr) 300px;
-  }
-  .appointments-card {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .appointments-card-when {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: start;
   }
 }
 
@@ -537,7 +583,7 @@
     padding-bottom: 12px;
   }
 
-  /* Doctor + Edit/Remove on top, a line, location and address, then one white row with date | time */
+  /* Doctor, location, address, date, then the action buttons. */
   .appointments-card {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
@@ -552,8 +598,9 @@
     align-self: center;
   }
   .appointments-card-actions {
-    grid-column: 2;
-    grid-row: 1;
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-content: flex-end;
   }
   .appointments-card-location,
   .appointments-card-address {
@@ -565,23 +612,33 @@
     border-top: 1px solid #b8c4d6;
   }
   .appointments-card-when {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content;
-    grid-column: 1 / -1;
-    grid-row: auto;
-    justify-self: stretch;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     min-width: 0;
     padding: 10px;
+  }
+  .appointments-card-date-group {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-self: stretch;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .appointments-card-when {
+    flex: none;
+  }
+  .appointments-note-button {
+    align-self: flex-start;
+    padding-inline: 10px;
   }
   .appointments-card-when strong {
     font-size: clamp(12px, 3.8vw, 16px);
     line-height: 1.3;
   }
   .appointments-card-when span {
-    padding-left: 8px;
-    border-left: 1px solid #d8d8d8;
     white-space: nowrap;
     font-size: clamp(12px, 3.5vw, 14px);
   }
