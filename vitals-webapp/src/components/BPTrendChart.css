@@ -1,0 +1,218 @@
+/* Blood Pressure Trend card on the Journal page (#106) */
+.bp-trend-card {
+  min-width: 0;
+  margin-top: 24px;
+  padding: 18px 20px 14px;
+}
+
+.bp-trend-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bp-trend-header h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.bp-trend-ranges {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--app-blue);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.bp-trend-range {
+  min-width: 78px;
+  padding: 7px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--app-blue);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bp-trend-range + .bp-trend-range {
+  border-left: 1px solid var(--app-blue);
+}
+
+.bp-trend-range:hover {
+  background: #e8eefb;
+}
+
+.bp-trend-range:focus-visible,
+.bp-trend-retry:focus-visible {
+  outline: 2px solid var(--app-blue);
+  outline-offset: -3px;
+}
+
+.bp-trend-range-active,
+.bp-trend-range-active:hover {
+  background: var(--app-blue);
+  color: #fff;
+}
+
+.bp-trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  color: #374151;
+  font-size: 14px;
+  list-style: none;
+}
+
+.bp-trend-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bp-trend-key {
+  display: inline-block;
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.bp-trend-key-systolic {
+  background: #1e40af;
+}
+
+.bp-trend-key-diastolic {
+  background: #0f766e;
+}
+
+.bp-trend-key-normal {
+  height: 12px;
+  border: 1px solid #86c99b;
+  background: #e3f4e8;
+}
+
+.bp-trend-box {
+  width: 100%;
+  min-width: 0;
+  margin-top: 6px;
+}
+
+.bp-trend-svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.bp-trend-normal {
+  fill: #e3f4e8;
+}
+
+.bp-trend-normal-label {
+  fill: #2f7a45;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bp-trend-diastolic-limit {
+  stroke: #0f766e;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.bp-trend-diastolic-limit-label {
+  fill: #0f766e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bp-trend-grid {
+  stroke: #d8dfec;
+  stroke-width: 1;
+}
+
+.bp-trend-axis {
+  stroke: #9aa5b8;
+  stroke-width: 1;
+}
+
+.bp-trend-axis-text {
+  fill: #4b5563;
+  font-size: 12px;
+}
+
+.bp-trend-axis-title {
+  fill: #374151;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bp-trend-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.bp-trend-line-systolic {
+  stroke: #1e40af;
+}
+
+.bp-trend-line-diastolic {
+  stroke: #0f766e;
+}
+
+.bp-trend-dot-systolic {
+  fill: #1e40af;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.bp-trend-dot-diastolic {
+  fill: #0f766e;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.bp-trend-message {
+  margin: 0;
+  padding: 36px 8px;
+  color: #4b5563;
+  text-align: center;
+}
+
+.bp-trend-message p {
+  margin: 0;
+}
+
+.bp-trend-retry {
+  margin-top: 10px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--app-blue);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .bp-trend-card {
+    padding: 14px 12px 10px;
+  }
+
+  .bp-trend-ranges {
+    width: 100%;
+  }
+
+  .bp-trend-range {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 6px;
+  }
+}
