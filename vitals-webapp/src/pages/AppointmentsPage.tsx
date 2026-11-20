@@ -30,6 +30,9 @@ const sortSoonestFirst = (list: AppointmentRecord[]) =>
   );
 
 const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
+  const [notes, setNotes] = useState("");
+  const [notesError, setNotesError] = useState("");
+
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -70,7 +73,32 @@ const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
         <div className="appointments-modal-form">
           <label className="appointments-modal-field">
             <span>EDIT NOTE</span>
-            <textarea rows={5} placeholder="Add notes for this appointment" />
+            <textarea
+              rows={5}
+              placeholder="Add notes for this appointment"
+              value={notes}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value.length > 1000) {
+                  setNotes(value.slice(0, 1000));
+                  setNotesError("Notes cannot exceed 1,000 characters.");
+                  return;
+                }
+                setNotes(value);
+                setNotesError("");
+              }}
+              aria-invalid={Boolean(notesError)}
+              aria-describedby={notesError ? "appointment-notes-error" : undefined}
+            />
+            {notesError && (
+              <p
+                className="appointments-modal-error"
+                id="appointment-notes-error"
+                role="alert"
+              >
+                {notesError}
+              </p>
+            )}
           </label>
           <div className="appointments-modal-actions">
             <button className="appointments-modal-submit" type="button">
