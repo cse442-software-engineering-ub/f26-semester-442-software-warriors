@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddReadingModal from "../components/AddReadingModal";
+import BPTrendChart from "../components/BPTrendChart";
+import type { TrendPoint } from "../components/BPTrendChart";
 import { deleteReading, getAccount, getJournal, sendReading, getCaregivers } from "../api";
-import type { AccountInfo, JournalData, JournalReading } from "../api";
+import type { AccountInfo, JournalData, JournalRange, JournalReading } from "../api";
 import "./JournalPage.css";
 
 const EMPTY_MESSAGE = "No blood pressure readings have been recorded yet.";
@@ -169,6 +171,12 @@ const JournalPage = () => {
   const [isRemoving, setIsRemoving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [actionError, setActionError] = useState("");
+  // Trend chart (#106): readings and averages for the chosen range only.
+  const [range, setRange] = useState<JournalRange>(30);
+  const [rangeData, setRangeData] = useState<JournalData | null>(null);
+  const [isRangeLoading, setIsRangeLoading] = useState(true);
+  const [rangeError, setRangeError] = useState("");
+  const [rangeRetryCount, setRangeRetryCount] = useState(0);
 
   // Escape closes the remove popup, like the other popups
   useEffect(() => {
@@ -213,9 +221,47 @@ const JournalPage = () => {
     };
   }, [navigate, reloadCount]);
 
+  // Load the chart range again when the range changes or a reading is added, edited or removed.
+  useEffect(() => {
+    let isCurrent = true;
+    const loadRange = async () => {
+      setIsRangeLoading(true);
+      setRangeError("");
+      try {
+        const journal = await getJournal(range);
+        if (isCurrent) setRangeData(journal);
+      } catch (error: unknown) {
+        if (!isCurrent) return;
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setRangeData(null);
+        setRangeError("Could not load the chart.");
+      } finally {
+        if (isCurrent) setIsRangeLoading(false);
+      }
+    };
+    void loadRange();
+    return () => {
+      isCurrent = false;
+    };
+  }, [navigate, range, reloadCount, rangeRetryCount]);
+
   const readings = data?.readings ?? [];
   const lastReading = data?.last_reading ?? null;
-  const averages = data?.averages ?? null;
+  // The three averages follow the chart range, not the whole history.
+  const averages = rangeData?.averages ?? null;
+  const rangeLabel = `Last ${range} days`;
+  const trendPoints: TrendPoint[] = (rangeData?.readings ?? [])
+    .map((reading, index) => ({
+      key: reading.rid ?? `${reading.date_time}-${index}`,
+      date: parseReadingDate(reading.date_time),
+      systolic: reading.systolic,
+      diastolic: reading.diastolic,
+    }))
+    .filter((point): point is TrendPoint => point.date !== null)
+    .reverse();
   const isCaregiver = account
     ? account.isCaregiver && (account.viewMode ?? "caregiver") === "caregiver"
     : Boolean(data?.caregiver_info);
@@ -326,14 +372,17 @@ const JournalPage = () => {
           <article className="journal-average-card">
             <h3>Systolic Average</h3>
             <p><strong>{averages?.systolic ?? "—"}</strong> mmHg</p>
+            <span className="journal-average-range">{rangeLabel}</span>
           </article>
           <article className="journal-average-card">
             <h3>Diastolic Average</h3>
             <p><strong>{averages?.diastolic ?? "—"}</strong> mmHg</p>
+            <span className="journal-average-range">{rangeLabel}</span>
           </article>
           <article className="journal-average-card">
             <h3>Pulse Rate Average</h3>
             <p><strong>{averages?.pulse ?? "—"}</strong> bpm</p>
+            <span className="journal-average-range">{rangeLabel}</span>
           </article>
         </section>
 
@@ -362,6 +411,15 @@ const JournalPage = () => {
             </p>
           )}
         </section>
+
+        <BPTrendChart
+          points={trendPoints}
+          range={range}
+          onRangeChange={setRange}
+          isLoading={isRangeLoading}
+          error={rangeError}
+          onRetry={() => setRangeRetryCount((count) => count + 1)}
+        />
 
         <section
           className="mt-6 min-w-0"

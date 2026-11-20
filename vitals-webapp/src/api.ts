@@ -529,8 +529,13 @@ const normalizeJournalAverages = (value: unknown): JournalAverages | null => {
   };
 };
 
-export async function getJournal(): Promise<JournalData> {
-  const response = await fetch(`${API_BASE}/health_journal.php`, {
+// Ranges the trend chart can ask health_journal.php for (#105).
+export type JournalRange = 7 | 30 | 90;
+
+// No range = every reading. With a range, only that many days back, and the averages cover the same days.
+export async function getJournal(days?: JournalRange): Promise<JournalData> {
+  const query = days === undefined ? "" : `?days=${days}`;
+  const response = await fetch(`${API_BASE}/health_journal.php${query}`, {
     credentials: "include",
   });
   const data = await response.json().catch(() => ({}));
