@@ -34,11 +34,13 @@ const AppointmentCard = ({
   onEdit,
   onRemove,
   isPast,
+  canEdit,
 }: {
   appointment: AppointmentRecord;
   onEdit: (Appointment: AppointmentRecord) => void;
   onRemove: (appointment: AppointmentRecord) => void;
   isPast: boolean;
+  canEdit: boolean;
 }) => {
   const date = parseAppointmentDate(appointment.appointment_date);
   return (
@@ -56,7 +58,7 @@ const AppointmentCard = ({
         <strong>{formatDayLabel(date)}</strong>
         <span>{formatClock(date)}</span>
       </div>
-      { !isPast && (
+      { !isPast && canEdit && (
             // Same pencil as the Medications page
             <div className="appointments-card-actions">
               <button
@@ -109,6 +111,8 @@ const AppointmentsPage = () => {
   const [removeError, setRemoveError] = useState("");
   const [isCaregiver, setIsCaregiver] = useState(false);
   const [patientName, setPatientName] = useState<string | null>(null);
+  const [canEditAppointments, setCanEditAppointments] = useState(true);
+  const [isAccountLoaded, setIsAccountLoaded] = useState(false);
 
   const goToLogin = () => navigate("/login", { replace: true });
 
@@ -122,12 +126,19 @@ const AppointmentsPage = () => {
         setPatientName(
           account.relatedPersonName?.trim().split(/\s+/)[0] || null,
         );
+        setCanEditAppointments(
+          !(
+            !account.isCaregiver &&
+            account.permissions?.can_edit_appointments === false
+          ),
+        );
       })
       .catch((error: unknown) => {
         if (isUnauthorized(error)) {
           navigate("/login", { replace: true });
         }
-      });
+      })
+      .finally(() => setIsAccountLoaded(true));
 
     getAllAppointments()
       .then(({ appointments, past_appointments }) => {
@@ -260,13 +271,15 @@ const AppointmentsPage = () => {
             |
           </span>
           <span/>
-          <button
-            className="appointments-add-button border-spacing-5 gap-8"
-            type="button"
-            onClick={() => setIsAdding(true)}
-          >
-            <span aria-hidden="true">+</span> Add Appointment
-          </button>
+          {isAccountLoaded && canEditAppointments && (
+            <button
+              className="appointments-add-button border-spacing-5 gap-8"
+              type="button"
+              onClick={() => setIsAdding(true)}
+            >
+              <span aria-hidden="true">+</span> Add Appointment
+            </button>
+          )}
         </div>
 
         { isUpcoming && (
@@ -305,6 +318,7 @@ const AppointmentsPage = () => {
                 <AppointmentCard
                   key={appointment.aid}
                   isPast={false}
+                  canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
                   onRemove={askToRemove}
@@ -340,6 +354,7 @@ const AppointmentsPage = () => {
                 <AppointmentCard
                   key={appointment.aid}
                   isPast={true}
+                  canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
                   onRemove={askToRemove}
