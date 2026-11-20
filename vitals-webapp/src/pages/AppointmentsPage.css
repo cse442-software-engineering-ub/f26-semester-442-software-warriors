@@ -190,8 +190,10 @@
 /* Edit (pencil) and Remove side by side (#90) */
 .appointments-card-actions {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 .appointments-edit-button {
   display: grid;
@@ -229,6 +231,7 @@
   font: inherit;
   font-size: 13px;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 160ms ease;
 }
@@ -577,7 +580,7 @@
     padding-bottom: 12px;
   }
 
-  /* Doctor + Edit/Remove on top, a line, location and address, then one white row with date | time */
+  /* Doctor, location, address, date, then the action buttons. */
   .appointments-card {
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
@@ -592,8 +595,9 @@
     align-self: center;
   }
   .appointments-card-actions {
-    grid-column: 2;
-    grid-row: 1;
+    grid-column: 1 / -1;
+    grid-row: auto;
+    justify-content: flex-end;
   }
   .appointments-card-location,
   .appointments-card-address {
@@ -619,13 +623,15 @@
     grid-column: 1 / -1;
     grid-row: auto;
     justify-self: stretch;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
   }
   .appointments-card-when {
-    flex: 1 1 0;
+    flex: none;
   }
   .appointments-note-button {
-    flex: 0 0 auto;
+    align-self: flex-start;
     padding-inline: 10px;
   }
   .appointments-card-when strong {

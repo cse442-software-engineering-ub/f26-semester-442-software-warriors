@@ -177,6 +177,13 @@ const AppointmentCard = ({
                 </svg>
             </button>
             <button
+              className="appointments-note-button"
+              type="button"
+              onClick={onAddNote}
+            >
+              Add Note
+            </button>
+            <button
               className="appointments-remove-button"
               type="button"
               aria-label={`Remove appointment with ${appointment.doctors_name}`}
