@@ -862,30 +862,34 @@ export async function removeAppointment(aid: number): Promise<void> {
   });
 }
 
-// Add notifications Prefrences from backend
+// Notification preferences (notifications.php)
+// GET -> { email_notifications: 0|1, message_frequency: string, frequency_options: {...} }
 export interface NotificationPreferences {
   emailNotifications: boolean;
+  messageFrequency: string;
 }
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
-  const response = await fetch("/notifications_preferences.php", {
-    method: "GET",
-    credentials: "include",
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw { status: response.status, error: data.error };
-  return data;
+  const data = await settingsRequest<{
+    email_notifications?: number | boolean;
+    message_frequency?: string;
+  }>("notifications.php");
+
+  return {
+    emailNotifications: Boolean(Number(data.email_notifications)),
+    messageFrequency: data.message_frequency ?? "none",
+  };
 }
 
 export async function updateNotificationPreferences(
   prefs: NotificationPreferences,
 ): Promise<void> {
-  const response = await fetch("/notifications_preferences.php", {
+  await settingsRequest("notifications.php", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(prefs),
+    body: JSON.stringify({
+      email_notifications: prefs.emailNotifications ? 1 : 0,
+      message_frequency: prefs.messageFrequency,
+    }),
   });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw { status: response.status, error: data.error };
 }

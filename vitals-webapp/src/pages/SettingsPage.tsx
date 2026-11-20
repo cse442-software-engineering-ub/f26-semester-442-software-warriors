@@ -12,6 +12,8 @@ import {
   setViewingMode,
   updateCaregiverPermissions,
   updateAccount,
+  getNotificationPreferences,
+  updateNotificationPreferences,
 } from "../api";
 import "./SettingsPage.css";
 type ModalName = "password" | "delete" | "saved" | "password-saved" | null;
@@ -98,6 +100,11 @@ const SettingsPage = () => {
   const [isSwitchingMode, setIsSwitchingMode] = useState(false);
   const [viewModeError, setViewModeError] = useState("");
   const [permissions, setPermissions] = useState<CaregiverPermissions>(defaultPermissions);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationsMessage, setNotificationsMessage] = useState("");
+  const [notificationsError, setNotificationsError] = useState("");
+  const [messageFrequency, setMessageFrequency] = useState("none");
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [permissionsMessage, setPermissionsMessage] = useState("");
   const [permissionsError, setPermissionsError] = useState("");
@@ -144,6 +151,31 @@ const SettingsPage = () => {
       isCurrent = false;
     };
   }, [navigate]);
+  
+  //grabs preferences from api.ts for notifications
+  //sets error if preferences couldn't be loaded
+  useEffect(() => {
+    let isCurrent = true;
+    getNotificationPreferences()
+      .then((prefs) => {
+        if (!isCurrent) return;
+        setEmailNotifications(prefs.emailNotifications);
+
+        setMessageFrequency(prefs.messageFrequency);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setNotificationsError("Unable to load your notification preferences.");
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [navigate]);
+
   const updateProfile = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     if (name !== "name" && name !== "phone" && name !== "email") return;
@@ -313,6 +345,26 @@ const SettingsPage = () => {
       setIsSavingPermissions(false);
     }
   };
+  
+  //save function for when user updates their preferences for notifications
+  const saveNotifications = async () => {
+    if (isSavingNotifications) return;
+    setIsSavingNotifications(true);
+    setNotificationsMessage("");
+    setNotificationsError("");
+    try {
+      await updateNotificationPreferences({ emailNotifications, messageFrequency });
+      setNotificationsMessage("Notification preferences updated.");
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setNotificationsError("Could not save. Please try again.");
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
   return (
     <AppLayout
       activeItem="My Profile"
@@ -418,6 +470,59 @@ const SettingsPage = () => {
               </>
             )}
           </form>
+          {/* Notifications Section */}
+          <div className="settings-preference-row settings-security-row">
+            <div className="settings-field">
+              <h2 id="notifications-heading">NOTIFICATION PREFERENCES</h2>
+            </div>
+            <div className="settings-permission-list">
+              <div className="settings-permission-row">
+                <span className="settings-permission-label">
+                  <span>Email notifications</span>
+                  <span className="settings-permission-info">
+                    <button
+                      className="settings-permission-info-button"
+                      type="button"
+                      aria-label="More information about email notifications"
+                      aria-describedby="email-notifications-tooltip"
+                    >
+                      <span aria-hidden="true">i</span>
+                    </button>
+                    <span className="settings-permission-tooltip" id="email-notifications-tooltip" role="tooltip">
+                      Send reminders and important account updates to your email address.
+                    </span>
+                  </span>
+                </span>
+                <button
+                  className="settings-permission-switch"
+                  type="button"
+                  role="switch"
+                  aria-label="Email notifications"
+                  aria-checked={emailNotifications}
+                  onClick={() => {
+                    setEmailNotifications((current) => !current);
+                    setNotificationsMessage("");
+                    setNotificationsError("");
+                  }}
+                >
+                  <span className="settings-permission-switch-knob" />
+                  <span className="settings-permission-switch-state">
+                    {emailNotifications ? "On" : "Off"}
+                  </span>
+                </button>
+              </div>
+            </div>
+            <button
+              className="settings-button settings-button-primary settings-permissions-save"
+              type="button"
+              onClick={saveNotifications}
+              disabled={isSavingNotifications}
+            >
+              {isSavingNotifications ? "Saving..." : "Save Preferences"}
+            </button>
+            {notificationsMessage && <p className="settings-permissions-success" role="status">{notificationsMessage}</p>}
+            {notificationsError && <p className="settings-permissions-error" role="alert">{notificationsError}</p>}
+          </div>
         </div>
         {isCaregiver && (
           <section className="settings-panel settings-permissions-panel" aria-labelledby="permissions-heading">
@@ -478,6 +583,7 @@ const SettingsPage = () => {
           </section>
         )}
       </div>
+
       {modal && (
         <div className="settings-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>
           {modal === "saved" || modal === "password-saved" ? (
