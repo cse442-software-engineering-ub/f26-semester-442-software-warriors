@@ -861,3 +861,31 @@ export async function removeAppointment(aid: number): Promise<void> {
     method: "DELETE",
   });
 }
+
+// Add notifications Prefrences from backend
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  const response = await fetch("/notifications_preferences.php", {
+    method: "GET",
+    credentials: "include",
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw { status: response.status, error: data.error };
+  return data;
+}
+
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferences,
+): Promise<void> {
+  const response = await fetch("/notifications_preferences.php", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(prefs),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw { status: response.status, error: data.error };
+}
