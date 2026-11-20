@@ -5,10 +5,12 @@ import AppLayout from "../components/AppLayout";
 import { FieldErrorMessage } from "../components/InputField";
 import {
   ACCOUNT_UPDATED_EVENT,
+  type CaregiverPermissions,
   changeAccountPassword,
   deleteAccount,
   getAccount,
   setViewingMode,
+  updateCaregiverPermissions,
   updateAccount,
 } from "../api";
 import "./SettingsPage.css";
@@ -24,6 +26,11 @@ const isSettingsApiError = (error: unknown): error is SettingsApiError =>
   typeof error === "object" && error !== null && "status" in error && typeof error.status === "number";
 const isUnauthorized = (error: unknown) =>
   isSettingsApiError(error) && (error.status === 401 || error.error === "Not logged in.");
+const defaultPermissions: CaregiverPermissions = {
+  can_edit_medications: true,
+  can_edit_appointments: true,
+  can_view_medication_history: true,
+};
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error
     ? error.message
@@ -86,9 +93,14 @@ const SettingsPage = () => {
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
   const [savedName, setSavedName] = useState("");
   const [isCaregiver, setIsCaregiver] = useState(false);
+  const [permissionsPatientName, setPermissionsPatientName] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"personal" | "caregiver">("personal");
   const [isSwitchingMode, setIsSwitchingMode] = useState(false);
   const [viewModeError, setViewModeError] = useState("");
+  const [permissions, setPermissions] = useState<CaregiverPermissions>(defaultPermissions);
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const [permissionsMessage, setPermissionsMessage] = useState("");
+  const [permissionsError, setPermissionsError] = useState("");
   const [modal, setModal] = useState<ModalName>(null);
   const [passwordErrors, setPasswordErrors] = useState<{ oldPassword?: string; newPassword?: string }>({});
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -110,7 +122,9 @@ const SettingsPage = () => {
         });
         setSavedName(account.name);
         setIsCaregiver(account.isCaregiver);
-          setViewMode(account.viewMode ?? (account.isCaregiver ? "caregiver" : "personal"));
+        setPermissionsPatientName(account.relatedPersonName);
+        setViewMode(account.viewMode ?? (account.isCaregiver ? "caregiver" : "personal"));
+        setPermissions(account.permissions ?? defaultPermissions);
         setRequestError("");
       })
       .catch((error: unknown) => {
@@ -275,6 +289,30 @@ const SettingsPage = () => {
       setIsSwitchingMode(false);
     }
   };
+  const togglePermission = (key: keyof CaregiverPermissions) => {
+    setPermissions((current) => ({ ...current, [key]: !current[key] }));
+    setPermissionsMessage("");
+    setPermissionsError("");
+  };
+  const savePermissions = async () => {
+    if (isSavingPermissions) return;
+    setIsSavingPermissions(true);
+    setPermissionsMessage("");
+    setPermissionsError("");
+    try {
+      await updateCaregiverPermissions(permissions);
+      const patientFirstName = permissionsPatientName?.trim().split(/\s+/)[0];
+      setPermissionsMessage(`Permissions updated for ${patientFirstName || "your patient"}.`);
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setPermissionsError("Could not save. Please try again.");
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  };
   return (
     <AppLayout
       activeItem="My Profile"
@@ -320,29 +358,31 @@ const SettingsPage = () => {
                 </div>
                 <div className="settings-account-actions-column">
               {isCaregiver && (
-                <section className="settings-preference-row settings-security-row">
-                  <div>
-                    <h2>Viewing Mode</h2>
-                    <p>
-                      {viewMode === "caregiver"
-                        ? "You are currently viewing your patient's health information."
-                        : "You are currently viewing your personal health information."}
-                    </p>
-                    <button
-                      className="settings-button settings-button-outline settings-change-password"
-                      type="button"
-                      onClick={switchViewingMode}
-                      disabled={isSwitchingMode}
-                    >
-                      {isSwitchingMode
-                        ? "Switching..."
-                        : viewMode === "caregiver"
-                          ? "Switch to Personal Mode"
-                          : "Switch to Caregiver Mode"}
-                    </button>
-                    {viewModeError && <p className="login-server-error" role="alert">{viewModeError}</p>}
-                  </div>
-                </section>
+                <>
+                  <section className="settings-preference-row settings-security-row">
+                    <div>
+                      <h2>Viewing Mode</h2>
+                      <p>
+                        {viewMode === "caregiver"
+                          ? "You are currently viewing your patient's health information."
+                          : "You are currently viewing your personal health information."}
+                      </p>
+                      <button
+                        className="settings-button settings-button-outline settings-change-password"
+                        type="button"
+                        onClick={switchViewingMode}
+                        disabled={isSwitchingMode}
+                      >
+                        {isSwitchingMode
+                          ? "Switching..."
+                          : viewMode === "caregiver"
+                            ? "Switch to Personal Mode"
+                            : "Switch to Caregiver Mode"}
+                      </button>
+                      {viewModeError && <p className="login-server-error" role="alert">{viewModeError}</p>}
+                    </div>
+                  </section>
+                </>
               )}
 
                   {!isCaregiver && (
@@ -379,6 +419,64 @@ const SettingsPage = () => {
             )}
           </form>
         </div>
+        {isCaregiver && (
+          <section className="settings-panel settings-permissions-panel" aria-labelledby="permissions-heading">
+            <div className="settings-permissions-row">
+              <h2 id="permissions-heading">
+                {permissionsPatientName ? `${permissionsPatientName.trim().split(/\s+/)[0]}’s Permissions` : "Patient Permissions"}
+              </h2>
+              <div className="settings-permission-list">
+                {([
+                  ["can_edit_medications", "Can edit medications", "Allows the patient to add, change, or remove medications. Marking a dose as taken remains available."],
+                  ["can_edit_appointments", "Can edit appointments", "Allows the patient to add, change, or remove appointments."],
+                  ["can_view_medication_history", "Can view medication history", "Controls whether the patient can see their medication history."],
+                ] as const).map(([key, label, description]) => (
+                  <div className="settings-permission-row" key={key}>
+                    <span className="settings-permission-label">
+                      <span>{label}</span>
+                      <span className="settings-permission-info">
+                        <button
+                          className="settings-permission-info-button"
+                          type="button"
+                          aria-label={`More information about ${label}`}
+                          aria-describedby={`${key}-tooltip`}
+                        >
+                          <span aria-hidden="true">i</span>
+                        </button>
+                        <span className="settings-permission-tooltip" id={`${key}-tooltip`} role="tooltip">
+                          {description}
+                        </span>
+                      </span>
+                    </span>
+                    <button
+                      className="settings-permission-switch"
+                      type="button"
+                      role="switch"
+                      aria-label={label}
+                      aria-checked={permissions[key]}
+                      onClick={() => togglePermission(key)}
+                    >
+                      <span className="settings-permission-switch-knob" />
+                      <span className="settings-permission-switch-state">
+                        {permissions[key] ? "On" : "Off"}
+                      </span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                className="settings-button settings-button-primary settings-permissions-save"
+                type="button"
+                onClick={savePermissions}
+                disabled={isSavingPermissions}
+              >
+                {isSavingPermissions ? "Saving..." : "Save Permissions"}
+              </button>
+              {permissionsMessage && <p className="settings-permissions-success" role="status">{permissionsMessage}</p>}
+              {permissionsError && <p className="settings-permissions-error" role="alert">{permissionsError}</p>}
+            </div>
+          </section>
+        )}
       </div>
       {modal && (
         <div className="settings-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>

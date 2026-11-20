@@ -34,6 +34,12 @@ export interface RegisterGeneralError {
 
 export type ViewingMode = "personal" | "caregiver";
 
+export interface CaregiverPermissions {
+  can_edit_medications: boolean;
+  can_edit_appointments: boolean;
+  can_view_medication_history: boolean;
+}
+
 export interface AccountInfo {
   viewMode: ViewingMode;
   id: number;
@@ -42,6 +48,7 @@ export interface AccountInfo {
   email: string;
   isCaregiver: boolean;
   relatedPersonName: string | null;
+  permissions?: CaregiverPermissions | null;
 }
 
 export type AccountUpdate = Pick<AccountInfo, "name" | "phone" | "email">;
@@ -93,6 +100,16 @@ export async function setViewingMode(viewMode: ViewingMode): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ viewMode }),
+  });
+}
+
+export async function updateCaregiverPermissions(
+  permissions: CaregiverPermissions,
+): Promise<void> {
+  await settingsRequest("update_permissions.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(permissions),
   });
 }
 
@@ -587,6 +604,17 @@ export interface MedicationRecord {
   taken_count?: number; // number of doses taken today, for as-needed medications
 }
 
+export interface MedicationHistoryRecord {
+  medication_name: string;
+  dosage: string;
+  taken_at: string;
+}
+
+export interface MedicationsResponse {
+  medications: MedicationRecord[];
+  history?: MedicationHistoryRecord[] | null;
+}
+
 // Fields sent when adding or editing a medication
 export type MedicationInput = Omit<MedicationRecord, "mid" | "taken_at" | "taken_count" | "time"> & {
   time: string;
@@ -594,10 +622,16 @@ export type MedicationInput = Omit<MedicationRecord, "mid" | "taken_at" | "taken
 
 // GET medications.php -> { success: true, medications: [...] } (401 when not logged in)
 export async function getMedications(): Promise<MedicationRecord[]> {
-  const data = await settingsRequest<{ medications?: MedicationRecord[] }>(
-    "medications.php",
-  );
+  const data = await settingsRequest<MedicationsResponse>("medications.php");
   return data.medications ?? [];
+}
+
+export async function getMedicationsWithHistory(): Promise<MedicationsResponse> {
+  const data = await settingsRequest<MedicationsResponse>("medications.php");
+  return {
+    medications: data.medications ?? [],
+    history: data.history,
+  };
 }
 
 // POST medications.php (form-data) -> 201 { success: true, mid }

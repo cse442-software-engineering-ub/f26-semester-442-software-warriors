@@ -98,6 +98,109 @@
 .settings-preference-row h2 { margin: 0; }
 .settings-preference-row p { margin: 5px 0 0; color: #666; font-size: 14px; line-height: 1.45; }
 
+.settings-permissions-row > div { width: 100%; }
+.settings-permissions-panel { margin-top: 20px; }
+.settings-permissions-panel .settings-permissions-row {
+  width: calc((100% - clamp(1rem, 3vw, 2rem)) / 2);
+}
+.settings-permissions-panel .settings-permissions-row h2 {
+  margin: 0;
+  color: #163ba2;
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+.settings-permission-list { display: grid; gap: 8px; margin-top: 12px; }
+.settings-permission-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d2deed;
+  border-radius: 9px;
+  background: #fff;
+  color: #24334a;
+  font-size: 14px;
+  font-weight: 600;
+}
+.settings-permission-label { display: inline-flex; min-width: 0; align-items: center; gap: 8px; }
+.settings-permission-info { position: relative; display: inline-flex; flex: 0 0 auto; }
+.settings-permission-info-button {
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #163ba2;
+  border-radius: 50%;
+  background: #fff;
+  color: #163ba2;
+  cursor: help;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1;
+}
+.settings-permission-info-button:focus-visible { outline: 3px solid #163ba2; outline-offset: 2px; }
+.settings-permission-tooltip {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(280px, calc(100vw - 48px));
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #12348f;
+  border-radius: 8px;
+  background: #163ba2;
+  color: #fff;
+  box-shadow: 0 6px 16px rgb(15 23 42 / 20%);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  visibility: hidden;
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+}
+.settings-permission-info-button:hover + .settings-permission-tooltip,
+.settings-permission-info-button:focus-visible + .settings-permission-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+.settings-permission-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 92px;
+  height: 36px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border: 1px solid #aebbd0;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #374151;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+.settings-permission-switch[aria-checked="true"] { border-color: #163ba2; background: #163ba2; color: #fff; }
+.settings-permission-switch:focus-visible { outline: 3px solid #163ba2; outline-offset: 3px; }
+.settings-permission-switch-knob { width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(15 23 42 / 25%); }
+.settings-permission-switch[aria-checked="true"] .settings-permission-switch-knob { order: 1; }
+.settings-permission-switch-state { text-align: center; }
+.settings-permissions-save { width: 100%; box-sizing: border-box; margin-top: 12px; }
+.settings-permissions-success, .settings-permissions-error { margin-top: 9px !important; font-weight: 600; }
+.settings-permissions-success { color: #1b6b32 !important; }
+.settings-permissions-error { color: #b42318 !important; }
+
 .settings-change-password { margin-top: 7px; }
 /*
 .settings-notification-button { display: inline-flex; width: fit-content; }
@@ -182,6 +285,7 @@
   .settings-page-heading h1 { font-size: clamp(27px, 7.2vw, 32px); }
   .settings-intro { font-size: 14px; }
   .settings-panel { padding: 20px 16px; }
+  .settings-permissions-panel .settings-permissions-row { width: 100%; }
   .settings-card { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .settings-profile-column { grid-column: 1; grid-row: 1; }
   .settings-account-actions-column { grid-column: 1; grid-row: 2; gap: 14px; }

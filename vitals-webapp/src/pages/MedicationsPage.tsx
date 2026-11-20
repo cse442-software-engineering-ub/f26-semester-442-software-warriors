@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
-import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedications, markMedicationTaken, updateMedication } from "../api";
-import type { MedicationRecord } from "../api";
+import { addMedication as addMedicationRequest, deleteMedication, getAccount, getMedicationsWithHistory, markMedicationTaken, updateMedication } from "../api";
+import type { CaregiverPermissions, MedicationHistoryRecord, MedicationRecord } from "../api";
 import "./MedicationsPage.css";
 
 const isUnauthorized = (error: unknown) =>
@@ -25,6 +25,13 @@ const formatTime = (time: string) => {
 const formatTakenAt = (takenAt: string) => {
   const time = takenAt.includes(" ") ? takenAt.split(" ")[1] : takenAt;
   return formatTime(time);
+};
+
+const formatHistoryTime = (takenAt: string) => {
+  const time = takenAt.includes(" ") ? takenAt.split(" ")[1] : takenAt;
+  const [hours, minutes] = time.split(":");
+  const hour = Number(hours);
+  return `${String(hour % 12 || 12).padStart(2, "0")}:${minutes} ${hour >= 12 ? "PM" : "AM"}`;
 };
 
 // "Monday,Tuesday" -> "Mon, Tue"
@@ -152,6 +159,7 @@ const MedicationCard = ({
   medication,
   missed,
   isTaking,
+  canEdit,
   onEdit,
   onRemove,
   onTake,
@@ -159,6 +167,7 @@ const MedicationCard = ({
   medication: MedicationRecord;
   missed: boolean;
   isTaking: boolean;
+  canEdit: boolean;
   onEdit: (medication: MedicationRecord) => void;
   onRemove: (medication: MedicationRecord) => void;
   onTake: (medication: MedicationRecord) => void;
@@ -233,15 +242,17 @@ const MedicationCard = ({
           </button>
         )}
       </div>
-      <div className="medications-actions">
-        <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`} onClick={() => onEdit(medication)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
-            <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
-          </svg>
-        </button>
-        <button className="medications-remove-button" type="button" onClick={() => onRemove(medication)}>Remove</button>
-      </div>
+      {canEdit && (
+        <div className="medications-actions">
+          <button className="medications-edit-button" type="button" aria-label={`Edit ${medication.medication_name}`} onClick={() => onEdit(medication)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6" />
+              <path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4Z" />
+            </svg>
+          </button>
+          <button className="medications-remove-button" type="button" onClick={() => onRemove(medication)}>Remove</button>
+        </div>
+      )}
     </div>
   </article>
 );
@@ -264,7 +275,11 @@ const MedicationsPage = () => {
 
   const [accountName, setAccountName] = useState("");
   const [isCaregiver, setIsCaregiver] = useState(false);
+  const [isCaregiverAccount, setIsCaregiverAccount] = useState(false);
+  const [isAccountLoaded, setIsAccountLoaded] = useState(false);
   const [patientName, setPatientName] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<CaregiverPermissions | null>(null);
+  const [history, setHistory] = useState<MedicationHistoryRecord[] | null>(null);
 
   useEffect(() => {
     getAccount()
@@ -273,24 +288,28 @@ const MedicationsPage = () => {
         setIsCaregiver(
           account.isCaregiver && (account.viewMode ?? "caregiver") === "caregiver",
         );
+        setIsCaregiverAccount(account.isCaregiver);
         setPatientName(
           account.relatedPersonName?.trim().split(/\s+/)[0] || null,
         );
+        setPermissions(account.permissions ?? null);
       })
       .catch((error: unknown) => {
         if (isUnauthorized(error)) navigate("/login", { replace: true });
-      });
+      })
+      .finally(() => setIsAccountLoaded(true));
   }, [navigate]);
 
   // Load the user's medications, and again whenever reloadCount changes
   useEffect(() => {
-    getMedications()
-      .then((list) => {
+    getMedicationsWithHistory()
+      .then(({ medications: list, history: medicationHistory }) => {
         // Report missing taken_at rather than guessing, and compare the response against its load time.
         if (list.some((medication: MedicationWithTakenAt) => medication.taken_at === undefined)) {
           console.error("Missed medication tags require taken_at from the server.");
         }
         setMedications(list);
+        setHistory(medicationHistory ?? null);
         setNow(new Date());
         setRequestError("");
       })
@@ -377,6 +396,20 @@ const MedicationsPage = () => {
       statusFilter.includes(medication.status) &&
       scheduleFilter.includes(medication.as_needed ? "as needed" : "scheduled"),
   );
+  const isPatientWithCaregiver = !isCaregiverAccount;
+  const canEditMedications =
+    isAccountLoaded &&
+    (!isPatientWithCaregiver || permissions?.can_edit_medications !== false);
+  const canViewMedicationHistory =
+    isAccountLoaded &&
+    (!isPatientWithCaregiver || permissions?.can_view_medication_history !== false);
+
+  const formatHistoryDate = (takenAt: string) => {
+    const datePart = takenAt.split(" ")[0];
+    const [year, month, day] = datePart.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  };
 
   const openFilterModal = () => {
     setStatusDraft(statusFilter);
@@ -534,9 +567,11 @@ const MedicationsPage = () => {
 
       <div className="medications-toolbar">
         <button className="medications-filter-button" type="button" aria-pressed={statusFilter.length < statusOptions.length || scheduleFilter.length < scheduleOptions.length} onClick={openFilterModal}>Filter</button>
-        <button className="medications-add-button" type="button" onClick={openAddModal}>
-          <span aria-hidden="true">+</span> Add Medication
-        </button>
+        {canEditMedications && (
+          <button className="medications-add-button" type="button" onClick={openAddModal}>
+            <span aria-hidden="true">+</span> Add Medication
+          </button>
+        )}
       </div>
       {takenError && <p className="medications-taken-error" role="alert">{takenError}</p>}
 
@@ -556,12 +591,34 @@ const MedicationsPage = () => {
             medication={medication}
             missed={isMedicationMissed(medication, now)}
             isTaking={takingMid === medication.mid}
+            canEdit={canEditMedications}
             onEdit={openEditModal}
             onRemove={askToRemove}
             onTake={takeMedication}
           />
         ))}
       </section>
+      {canViewMedicationHistory && (
+        <section className="medication-history" aria-labelledby="medication-history-title">
+          <h2 id="medication-history-title">Medication History</h2>
+          <div className="medication-history-table-wrap">
+            <table>
+              <thead>
+                <tr><th>Medication</th><th>Dosage</th><th>Date and time</th></tr>
+              </thead>
+              <tbody>
+                {(history ?? []).map((item, index) => (
+                  <tr key={`${item.taken_at}-${item.medication_name}-${index}`}>
+                    <td>{item.medication_name}</td>
+                    <td>{item.dosage}</td>
+                    <td>{formatHistoryDate(item.taken_at)}, {formatHistoryTime(item.taken_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
 
     {toRemove && (
