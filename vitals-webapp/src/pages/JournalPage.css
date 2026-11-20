@@ -97,6 +97,12 @@
   letter-spacing: -0.03em;
 }
 
+/* "Last 30 days" under each average (#106) */
+.journal-average-range {
+  color: #6b7280;
+  font-size: 12px;
+}
+
 .journal-average-card .home-status-badge {
   padding: 0;
   background: transparent;
