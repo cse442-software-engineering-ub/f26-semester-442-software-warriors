@@ -26,6 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 } 
 
 else {
+    // Optional ?days=7, 30 or 90 for the trend chart. No days = every reading (same as before).
+    $days = null;
+    if (isset($_GET['days'])) {
+        $days = filter_var($_GET['days'], FILTER_VALIDATE_INT);
+        if (!in_array($days, [7, 30, 90], true)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'days must be 7, 30 or 90.']);
+            exit();
+        }
+    }
+
     try {
         $context = getViewingContext($pdo, $uid);
 
@@ -37,8 +48,14 @@ else {
         }
 
         $uid = $context['uid'];
-        $stmt = $pdo->prepare("SELECT rid, systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC, rid DESC");
-        $stmt->execute([':uid' => $uid]);
+        if ($days === null) {
+            $stmt = $pdo->prepare("SELECT rid, systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid ORDER BY recorded_at DESC, rid DESC");
+            $stmt->execute([':uid' => $uid]);
+        } else {
+            // Only readings from the last $days days, so the averages below cover the same range.
+            $stmt = $pdo->prepare("SELECT rid, systolic, diastolic, status, recorded_at, pulse FROM readings WHERE uid = :uid AND recorded_at >= NOW() - INTERVAL :days DAY ORDER BY recorded_at DESC, rid DESC");
+            $stmt->execute([':uid' => $uid, ':days' => $days]);
+        }
         $bp_readings = $stmt->fetchAll();
         $totalPulse = 0;
         $totalSystolic = 0;
