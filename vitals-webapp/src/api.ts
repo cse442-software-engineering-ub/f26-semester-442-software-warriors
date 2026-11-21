@@ -886,10 +886,12 @@ export async function updateNotificationPreferences(
 ): Promise<void> {
   await settingsRequest("notifications.php", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email_notifications: prefs.emailNotifications ? 1 : 0,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: new URLSearchParams({
+      email_notifications: prefs.emailNotifications ? "1" : "0",
       message_frequency: prefs.messageFrequency,
-    }),
+    }).toString(),
   });
 }

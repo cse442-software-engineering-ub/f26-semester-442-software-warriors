@@ -33,6 +33,13 @@ const defaultPermissions: CaregiverPermissions = {
   can_edit_appointments: true,
   can_view_medication_history: true,
 };
+const frequencyChoices = [
+  { value: "once_daily_noon", label: "Once a day (12:00 PM)" },
+  { value: "twice_daily", label: "Twice a day (8:00 AM and 8:00 PM)" },
+  { value: "every_hour", label: "Every hour" },
+  { value: "every_30_minutes", label: "Every 30 minutes" },
+  { value: "none", label: "Never" },
+];
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error
     ? error.message
@@ -347,13 +354,16 @@ const SettingsPage = () => {
   };
   
   //save function for when user updates their preferences for notifications
-  const saveNotifications = async () => {
+    const saveNotifications = async () => {
     if (isSavingNotifications) return;
     setIsSavingNotifications(true);
     setNotificationsMessage("");
     setNotificationsError("");
     try {
       await updateNotificationPreferences({ emailNotifications, messageFrequency });
+      const saved = await getNotificationPreferences();
+      setEmailNotifications(saved.emailNotifications);
+      setMessageFrequency(saved.messageFrequency);
       setNotificationsMessage("Notification preferences updated.");
     } catch (error: unknown) {
       if (isUnauthorized(error)) {
@@ -471,7 +481,7 @@ const SettingsPage = () => {
             )}
           </form>
           {/* Notifications Section */}
-          <div className="settings-preference-row settings-security-row">
+          <div className="settings-preference-row settings-security-row p-3">
             <div className="settings-field">
               <h2 id="notifications-heading">NOTIFICATION PREFERENCES</h2>
             </div>
@@ -494,13 +504,19 @@ const SettingsPage = () => {
                   </span>
                 </span>
                 <button
-                  className="settings-permission-switch"
+                  className="settings-permission-switch settings-field"
                   type="button"
                   role="switch"
                   aria-label="Email notifications"
                   aria-checked={emailNotifications}
                   onClick={() => {
-                    setEmailNotifications((current) => !current);
+                    setEmailNotifications((current) => {
+                      const next = !current;
+                      if (next && messageFrequency === "none") {
+                        setMessageFrequency("once_daily_noon");
+                      }
+                      return next;
+                    });
                     setNotificationsMessage("");
                     setNotificationsError("");
                   }}
@@ -511,9 +527,33 @@ const SettingsPage = () => {
                   </span>
                 </button>
               </div>
+
+              {emailNotifications && (
+                <div className="settings-permission-row settings-field">
+                  <label className="settings-permission-label" htmlFor="message-frequency">
+                    <span>Reminder email frequency</span>
+                  </label>
+                  <select
+                    id="message-frequency"
+                    className="settings-select settings-field"
+                    value={messageFrequency}
+                    onChange={(event) => {
+                      setMessageFrequency(event.target.value);
+                      setNotificationsMessage("");
+                      setNotificationsError("");
+                    }}
+                  >
+                    {frequencyChoices.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <button
-              className="settings-button settings-button-primary settings-permissions-save"
+              className="w-499 settings-button settings-button-primary settings-permissions-save"
               type="button"
               onClick={saveNotifications}
               disabled={isSavingNotifications}

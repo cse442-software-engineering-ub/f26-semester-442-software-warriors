@@ -323,3 +323,73 @@
     transition: none;
   }
 }
+
+.settings-select {
+  min-width: 16rem;
+  padding: 0.65rem 0.9rem;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #c4c9d4;
+  border-radius: 0.75rem;
+}
+
+.settings-select:focus-visible {
+  outline: 3px solid #173ba3;
+  outline-offset: 2px;
+}
+
+.settings-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .settings-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+.settings-permission-list .settings-permission-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.75rem;
+  width: 100%;
+}
+
+.settings-permission-list .settings-permission-row .settings-select {
+  height: 2.75rem;
+}
+
+
+.settings-permission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 499px; /* match the width of the Name/Phone/Email boxes */
+}
+
+.settings-permission-list .settings-permission-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: 62px;
+  padding: 0 1rem;
+  background: #fff;
+  border: 1px solid #b8bcc4;
+  border-radius: 12px;
+}
+
+.settings-permission-list .settings-select {
+  min-width: 0;
+  width: 55%;
+  height: 40px;
+}
