@@ -393,3 +393,28 @@
   width: 55%;
   height: 40px;
 }
+
+/* Notification preferences box on the Settings page */
+.settings-notifications {
+  --notifications-width: 499px;
+  margin-top: 24px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.settings-notifications .settings-permission-list {
+  width: 100%;
+  max-width: var(--notifications-width);
+}
+
+/* Blue text for "Email notifications" and "Reminder email frequency" */
+.settings-notifications .settings-permission-label > span:first-child {
+  color: var(--app-blue, #173ba3);
+}
+
+/* Save Preferences matches the width of the toggle row */
+.settings-notifications .settings-notifications-save {
+  width: 100%;
+  max-width: var(--notifications-width);
+  margin-bottom: 0;
+}

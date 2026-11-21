@@ -46,10 +46,25 @@
   border-radius: 10px;
   background: var(--app-blue);
 }
-.appointments-tabs {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 3px;
+.appointments-tab {
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+.appointments-tab:hover {
+  background: rgb(255 255 255 / 15%);
+}
+.appointments-tab:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 2px;
+}
+.appointments-tab-active,
+.appointments-tab-active:hover {
+  background: #fff;
+  color: var(--app-blue-dark);
+  cursor: default;
 }
 .appointments-toolbar-separator { color: #fff; }
 .appointments-tab,
@@ -65,10 +80,6 @@
   font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
-}
-.appointments-tab {
-  border: 1px solid #fff;
-  color: #fff;
 }
 .appointments-add-button {
   border: 1px solid #fff;

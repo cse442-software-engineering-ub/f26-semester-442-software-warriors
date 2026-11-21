@@ -481,33 +481,21 @@ const SettingsPage = () => {
             )}
           </form>
           {/* Notifications Section */}
-          <div className="settings-preference-row settings-security-row p-3">
+          <div className="settings-preference-row settings-security-row settings-notifications">
             <div className="settings-field">
               <h2 id="notifications-heading">NOTIFICATION PREFERENCES</h2>
+              <p>Send reminders and important account updates to your email address.</p>
             </div>
             <div className="settings-permission-list">
               <div className="settings-permission-row">
                 <span className="settings-permission-label">
-                  <span>Email notifications</span>
-                  <span className="settings-permission-info">
-                    <button
-                      className="settings-permission-info-button"
-                      type="button"
-                      aria-label="More information about email notifications"
-                      aria-describedby="email-notifications-tooltip"
-                    >
-                      <span aria-hidden="true">i</span>
-                    </button>
-                    <span className="settings-permission-tooltip" id="email-notifications-tooltip" role="tooltip">
-                      Send reminders and important account updates to your email address.
-                    </span>
-                  </span>
+                  <span>Email Notifications</span>
                 </span>
                 <button
                   className="settings-permission-switch settings-field"
                   type="button"
                   role="switch"
-                  aria-label="Email notifications"
+                  aria-label="Email Notifications"
                   aria-checked={emailNotifications}
                   onClick={() => {
                     setEmailNotifications((current) => {
@@ -531,7 +519,7 @@ const SettingsPage = () => {
               {emailNotifications && (
                 <div className="settings-permission-row settings-field">
                   <label className="settings-permission-label" htmlFor="message-frequency">
-                    <span>Reminder email frequency</span>
+                    <span className="">Reminder Email Frequency</span>
                   </label>
                   <select
                     id="message-frequency"
@@ -553,7 +541,7 @@ const SettingsPage = () => {
               )}
             </div>
             <button
-              className="w-499 settings-button settings-button-primary settings-permissions-save"
+              className="settings-button settings-button-primary settings-permissions-save settings-notifications-save"
               type="button"
               onClick={saveNotifications}
               disabled={isSavingNotifications}

@@ -337,46 +337,27 @@ const AppointmentsPage = () => {
               : "View, add, and manage your upcoming doctor appointments."}
           </p>
         </header>
-
         <div className="appointments-toolbar">
-          { isUpcoming && (
-            <span>
-              <span className="appointments-tab border-spacing-5 p-5 gap-15" aria-current="page">
-                Upcoming
-              </span>
-              <span className="gap-1 p-1"/>
-              <button
-                className="appointments-add-button border-spacing-5 p-5 gap-15"
-                type="button"
-                onClick={() => setIsUpcoming(false)}
-              >
-                Past
-              </button>
-            </span>
-          )}
-          { !isUpcoming && (
-            <span>
-              <button
-                className="appointments-add-button border-spacing-5 p-5 gap-15"
-                type="button"
-                onClick={() => setIsUpcoming(true)}
-              >
-                Upcoming
-              </button>
-              <span className="gap-1 p-1"/>
-              <span className="appointments-tab border-spacing-5 p-5 gap-15" aria-current="page">
-                Past
-              </span>
-            </span>
-          )}
-          <span/>
-          <span className="text-white border-spacing-5">
-            |
-          </span>
-          <span/>
+          <button
+            className={`appointments-tab${isUpcoming ? " appointments-tab-active" : ""}`}
+            type="button"
+            aria-pressed={isUpcoming}
+            onClick={() => setIsUpcoming(true)}
+          >
+            Upcoming
+          </button>
+          <button
+            className={`appointments-tab${!isUpcoming ? " appointments-tab-active" : ""}`}
+            type="button"
+            aria-pressed={!isUpcoming}
+            onClick={() => setIsUpcoming(false)}
+          >
+            Past
+          </button>
+          <span className="appointments-toolbar-separator" aria-hidden="true">|</span>
           {isAccountLoaded && canEditAppointments && (
             <button
-              className="appointments-add-button border-spacing-5 gap-8"
+              className="appointments-add-button"
               type="button"
               onClick={() => setIsAdding(true)}
             >
