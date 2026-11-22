@@ -56,6 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             exit();
         }
 
+        $email_notifications = number_format($email_notifications);
+        if (($email_notifications) > 1 || ($email_notifications) < 0 || !filter_var($email_notifications, FILTER_VALIDATE_INT)) {
+            http_response_code(400);
+            echo json_encode([
+                'error'   => 'Notifications must be 0 or 1',
+            ]);
+            exit();
+        }
+
         // Check if a row already exists for this user
         $stmt = $pdo->prepare("SELECT uid FROM notification_preferences WHERE uid = ?");
         $stmt->execute([$userId]);
