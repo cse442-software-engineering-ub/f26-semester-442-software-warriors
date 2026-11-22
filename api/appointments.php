@@ -106,6 +106,30 @@ function aidFromUrl(): int {
     return (int)$aid;
 }
 
+// The ?from=YYYY-MM-DD&to=YYYY-MM-DD the calendar sends (#132), or null when both are missing.
+// Stops with 400 when they are not real dates, to is before from, or to is more than 42 days later.
+function rangeFromUrl(): ?array {
+    if (!isset($_GET['from']) && !isset($_GET['to'])) {
+        return null;
+    }
+    $dates = [];
+    foreach (['from', 'to'] as $key) {
+        $value = $_GET[$key] ?? '';
+        if (!is_string($value) || !preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $value, $m) || !checkdate((int)$m[2], (int)$m[3], (int)$m[1])) {
+            fail(400, ['error' => 'from and to must be real dates like 2026-12-07.']);
+        }
+        $dates[$key] = new DateTimeImmutable($value);
+    }
+    $days = (int)$dates['from']->diff($dates['to'])->format('%r%a');
+    if ($days < 0 || $days > 42) {
+        fail(400, ['error' => 'to must be on or after from, at most 42 days later.']);
+    }
+    return [$dates['from']->format('Y-m-d'), $dates['to']->format('Y-m-d')];
+}
+
+// Checked before any SQL, so a bad date never reaches the database
+$range = $method === 'GET' ? rangeFromUrl() : null;
+
 try {
     $context = getViewingContext($pdo, $uid);
 
@@ -116,6 +140,23 @@ try {
     }
 
     $uid = $context['uid'];
+
+    // ---------- GET with ?from=&to=: every appointment on those days, past or upcoming (#132) ----------
+    if ($method === 'GET' && $range !== null) {
+        $stmt = $pdo->prepare(
+            'SELECT ' . APPOINTMENT_COLUMNS . ' FROM appointments
+             WHERE uid = ? AND appointment_date >= ? AND appointment_date < ? + INTERVAL 1 DAY
+             ORDER BY appointment_date ASC, aid ASC'
+        );
+        $stmt->execute([$uid, $range[0], $range[1]]);
+        $rows = $stmt->fetchAll();
+        foreach ($rows as &$row) {
+            $row['aid'] = (int)$row['aid'];
+        }
+        unset($row);
+        echo json_encode(['appointments' => $rows]);
+        exit;
+    }
 
     // ---------- GET: my upcoming appointments, soonest first ----------
     if ($method === 'GET') {
