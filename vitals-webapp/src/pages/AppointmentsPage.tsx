@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddAppointmentModal from "../components/AddAppointmentModal";
 import WeekCalendar from "../components/WeekCalendar";
-import { getAccount, getAllAppointments, removeAppointment } from "../api";
+import {
+  getAccount,
+  getAllAppointments,
+  removeAppointment,
+  saveAppointmentNotes,
+} from "../api";
 import type { AppointmentRecord } from "../api";
 import {
   formatClock,
@@ -29,9 +34,44 @@ const sortSoonestFirst = (list: AppointmentRecord[]) =>
       a.appointment_date.localeCompare(b.appointment_date) || a.aid - b.aid,
   );
 
-const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
-  const [notes, setNotes] = useState("");
+// Notes for one appointment: opens with its saved note and saves it with PUT ?aid=N (notes only)
+const EditNotesModal = ({
+  appointment,
+  onClose,
+  onSaved,
+  onUnauthorized,
+}: {
+  appointment: AppointmentRecord;
+  onClose: () => void;
+  onSaved: (saved: AppointmentRecord) => void;
+  onUnauthorized: () => void;
+}) => {
+  const [notes, setNotes] = useState(appointment.notes ?? "");
   const [notesError, setNotesError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const saveNotes = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setNotesError("");
+    try {
+      onSaved(await saveAppointmentNotes(appointment.aid, notes));
+    } catch (error: unknown) {
+      const err = error as {
+        status?: number;
+        error?: string;
+        errors?: { notes?: string };
+      };
+      if (err?.status === 401) {
+        onUnauthorized();
+        return;
+      }
+      setNotesError(
+        err?.errors?.notes ?? err?.error ?? "Could not save the note. Please try again.",
+      );
+      setIsSaving(false);
+    }
+  };
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -101,8 +141,13 @@ const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
             )}
           </label>
           <div className="appointments-modal-actions">
-            <button className="appointments-modal-submit" type="button">
-              Save Changes
+            <button
+              className="appointments-modal-submit"
+              type="button"
+              onClick={saveNotes}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -121,7 +166,7 @@ const AppointmentCard = ({
 }: {
   appointment: AppointmentRecord;
   onEdit: (Appointment: AppointmentRecord) => void;
-  onAddNote: () => void;
+  onAddNote: (appointment: AppointmentRecord) => void;
   onRemove: (appointment: AppointmentRecord) => void;
   isPast: boolean;
   canEdit: boolean;
@@ -137,6 +182,11 @@ const AppointmentCard = ({
         {appointment.address && (
           <p className="appointments-card-address">{appointment.address}</p>
         )}
+        {appointment.notes && (
+          <p className="appointments-card-notes">
+            <span>Note:</span> {appointment.notes}
+          </p>
+        )}
       </div>
       <div className="appointments-card-date-group">
         <div className="appointments-card-when">
@@ -147,9 +197,9 @@ const AppointmentCard = ({
           <button
             className="appointments-note-button"
             type="button"
-            onClick={onAddNote}
+            onClick={() => onAddNote(appointment)}
           >
-            Add Note
+            {appointment.notes ? "Edit Note" : "Add Note"}
           </button>
         )}
       </div>
@@ -179,9 +229,9 @@ const AppointmentCard = ({
             <button
               className="appointments-note-button"
               type="button"
-              onClick={onAddNote}
+              onClick={() => onAddNote(appointment)}
             >
-              Add Note
+              {appointment.notes ? "Edit Note" : "Add Note"}
             </button>
             <button
               className="appointments-remove-button"
@@ -207,7 +257,7 @@ const AppointmentsPage = () => {
   const [isUpcoming, setIsUpcoming] = useState(true);
   // The appointment being edited, or null when the Edit popup is closed
   const [editing, setEditing] = useState<AppointmentRecord | null>(null);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesFor, setNotesFor] = useState<AppointmentRecord | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [toRemove, setToRemove] = useState<AppointmentRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -289,6 +339,20 @@ const AppointmentsPage = () => {
     );
     setStatusMessage(`Appointment with ${saved.doctors_name} updated.`);
     setCalendarReload((count) => count + 1);
+  };
+
+  // Put the saved note on the card in whichever list (upcoming or past) it is in
+  const handleNotesSaved = (saved: AppointmentRecord) => {
+    const withNote = (list: AppointmentRecord[]) =>
+      list.map((item) => (item.aid === saved.aid ? saved : item));
+    setAppointments(withNote);
+    setPastAppointments(withNote);
+    setNotesFor(null);
+    setStatusMessage(
+      saved.notes
+        ? `Note saved for ${saved.doctors_name}.`
+        : `Note removed for ${saved.doctors_name}.`,
+    );
   };
 
   const closePopup = () => {
@@ -429,7 +493,7 @@ const AppointmentsPage = () => {
                   canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
-                  onAddNote={() => setIsEditingNotes(true)}
+                  onAddNote={setNotesFor}
                   onRemove={askToRemove}
                 />
               ))}
@@ -466,7 +530,7 @@ const AppointmentsPage = () => {
                   canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
-                  onAddNote={() => setIsEditingNotes(true)}
+                  onAddNote={setNotesFor}
                   onRemove={askToRemove}
                 />
               ))}
@@ -496,8 +560,14 @@ const AppointmentsPage = () => {
         />
       )}
 
-      {isEditingNotes && (
-        <EditNotesModal onClose={() => setIsEditingNotes(false)} />
+      {notesFor && (
+        <EditNotesModal
+          key={notesFor.aid}
+          appointment={notesFor}
+          onClose={() => setNotesFor(null)}
+          onSaved={handleNotesSaved}
+          onUnauthorized={goToLogin}
+        />
       )}
 
       {/* Same confirm box as Logout, so it reuses the app-logout-dialog styles */}

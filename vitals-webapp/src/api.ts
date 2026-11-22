@@ -772,6 +772,7 @@ export interface AppointmentRecord {
   appointment_date: string;
   location: string | null;
   address: string | null;
+  notes: string | null;
 }
 
 // What the New Appointment popup sends (every box is text, the server checks it)
@@ -854,6 +855,25 @@ export async function updateAppointment(
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
       },
       body: appointmentFormBody(input),
+    },
+  );
+  return data.appointment;
+}
+
+// PUT appointments.php?aid=N with only "notes" -> 200 { appointment: {...} }
+// An empty note removes it. 400 { errors: { notes } } when it is longer than 1,000 characters.
+export async function saveAppointmentNotes(
+  aid: number,
+  notes: string,
+): Promise<AppointmentRecord> {
+  const data = await settingsRequest<{ appointment: AppointmentRecord }>(
+    `appointments.php?aid=${aid}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+      },
+      body: new URLSearchParams({ notes: notes.trim() }).toString(),
     },
   );
   return data.appointment;
