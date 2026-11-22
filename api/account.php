@@ -35,10 +35,12 @@ if ($method === 'GET') {
         $stmt->execute([$_SESSION['patientID'] ?? 0]);
     } else {
         // A patient may have multiple linked caregiver accounts; use the first one for the single-name UI.
+        // The link lives in the caregivers table (the invite flow never sets users.patientEmail).
         $stmt = $pdo->prepare(
-            'SELECT name FROM users WHERE patientEmail = ? AND isCaregiver = 1 ORDER BY id ASC LIMIT 1'
+            'SELECT u.name FROM caregivers c JOIN users u ON u.id = c.caregiver_uid
+             WHERE c.uid = ? ORDER BY c.cid ASC LIMIT 1'
         );
-        $stmt->execute([$user['email']]);
+        $stmt->execute([$userId]);
     }
     $relatedPerson = $stmt->fetch();
 
