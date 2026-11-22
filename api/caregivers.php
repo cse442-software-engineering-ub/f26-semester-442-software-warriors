@@ -3,6 +3,7 @@ require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
 require __DIR__ . '/rate_limit.php';
+require __DIR__ . '/input.php';
 $config = require __DIR__ . '/mail_config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -144,9 +145,9 @@ if($method === 'GET') {
 
 //handle POST requests
 if($method === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phoneNumber = trim($_POST['phone_number'] ?? '');
+    $name = textInput($_POST, 'name');
+    $email = textInput($_POST, 'email');
+    $phoneNumber = textInput($_POST, 'phone_number');
 
     //make sure all required fields are provided
     if($name === '') {
@@ -442,9 +443,9 @@ if($method === 'PUT') {
     }
 
     $cid = $data['cid'] ?? null;
-    $name = trim($data['name'] ?? '');
-    $email = trim($data['email'] ?? '');
-    $phoneNumber = trim($data['phone_number'] ?? '');
+    $name = textInput($data, 'name');
+    $email = textInput($data, 'email');
+    $phoneNumber = textInput($data, 'phone_number');
 
     //make sure there is a caregiver ID
     if($cid === null || filter_var($cid, FILTER_VALIDATE_INT) === false || (int)$cid <= 0) {

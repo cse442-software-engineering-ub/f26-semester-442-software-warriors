@@ -2,6 +2,7 @@
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+require __DIR__ . '/input.php';
 
 header('Content-Type: application/json');
 
@@ -116,15 +117,21 @@ if($method === 'POST') {
     }
 
     //grabs the existing account information depending on whats being updated.
-    $name = $hasName ? trim($_POST['name']) : $currentUser['name'];
-    $email = $hasEmail ? trim($_POST['email']) : $currentUser['email'];
-    $phone = $hasPhone ? trim($_POST['phone']) : $currentUser['phone'];
+    $name = $hasName ? textInput($_POST, 'name') : $currentUser['name'];
+    $email = $hasEmail ? textInput($_POST, 'email') : $currentUser['email'];
+    $phone = $hasPhone ? textInput($_POST, 'phone') : $currentUser['phone'];
 
     if($name === ''){
         accountFail(400, 'Name is required.');
     }
+    if(mb_strlen($name) > 100){
+        accountFail(400, 'Name can be at most 100 characters.');
+    }
     if($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)){
         accountFail(400, 'A valid email is required.');
+    }
+    if(strlen($email) > 255){
+        accountFail(400, 'Email can be at most 255 characters.');
     }
     if($phone === '' || !preg_match('/^\d{10}$/', $phone)){
         accountFail(400, 'A valid phone number (digits only) is required.');
