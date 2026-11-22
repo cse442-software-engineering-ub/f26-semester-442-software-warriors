@@ -46,6 +46,8 @@ if ($_SESSION['otp_tries'] > 5) {
 // Compare entered OTP with stored OTP (cast to string to avoid type mismatches)
 if (hash_equals((string)$stored_otp, (string)$entered_otp)) {
     $_SESSION['otp_verified'] = true;
+    $_SESSION['otp_verified_email'] = $_SESSION['reset_email']; // the code only unlocks THIS email
+    unset($_SESSION['reset_otp']); // a code works once
     http_response_code(200);
     echo json_encode([
         'status' => 'success',

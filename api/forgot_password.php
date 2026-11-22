@@ -29,6 +29,9 @@ if (empty($email)) {
     exit();
 }
 
+// A new request always starts over: forget any code that was already verified
+unset($_SESSION['otp_verified'], $_SESSION['otp_verified_email']);
+
 // Check for email and retrieve the user's name
 $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ?");
 $stmt->execute([$email]);
