@@ -7,9 +7,10 @@
  * Both only go to users with email_notifications on.
  */
 
-//if (php_sapi_name() !== 'cli') {
-  //  exit("This script must be run from the command line.\n");
-//}
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit("Forbidden.\n");
+}
 
 date_default_timezone_set('America/New_York'); // match what users expect
 
