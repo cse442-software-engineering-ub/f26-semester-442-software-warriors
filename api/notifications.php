@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             exit();
         }
 
-        if ($email_notifications > 1 || $email_notifications < 0 || !filter_var($email_notifications, FILTER_VALIDATE_INT)) {
+        $email_notifications = number_format($email_notifications);
+        if (($email_notifications) > 1 || ($email_notifications) < 0 || !filter_var($email_notifications, FILTER_VALIDATE_INT)) {
             http_response_code(400);
             echo json_encode([
                 'error'   => 'Notifications must be 0 or 1',
