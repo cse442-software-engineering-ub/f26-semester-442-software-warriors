@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
+require __DIR__ . '/rate_limit.php';
 //require __DIR__ . '/require_auth.php';
 
 header('Content-Type: application/json');
@@ -30,6 +31,11 @@ if ($email === '' || $password === '') {
   exit;
 }
 
+// 5 wrong passwords for one email -> wait 15 minutes (stops password guessing)
+if (tooManyAttempts($pdo, 'login', $email, 5, 15)) {
+  loginFail(429, 'Too many failed attempts. Try again in 15 minutes.');
+}
+
 $stmt = $pdo->prepare('SELECT id, password_hash, isCaregiver, patientEmail FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
@@ -40,11 +46,13 @@ $hash = $user ? $user['password_hash'] : password_hash('timing-dummy', PASSWORD_
 $valid = password_verify($password, $hash);
 
 if (!$user || !$valid) {
+  recordAttempt($pdo, 'login', $email);
   loginFail(401, 'Incorrect email or password.');
   exit();
 }
 
 // Only reach here on successful authentication.
+clearAttempts($pdo, 'login', $email);
 if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
   $stmt = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
   $stmt->execute([password_hash($password, PASSWORD_DEFAULT), $user['id']]);

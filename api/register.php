@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
+require __DIR__ . '/input.php';
 
 header('Content-Type: application/json');
 
@@ -18,23 +19,27 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
 
-$name     = trim($data['name']     ?? '');
-$email    = trim($data['email']    ?? '');
-$phone    = trim($data['phone']    ?? '');
-$password = $data['password']      ?? '';
+$data     = is_array($data) ? $data : [];
+$name     = textInput($data, 'name');
+$email    = textInput($data, 'email');
+$phone    = textInput($data, 'phone');
+$password = is_string($data['password'] ?? null) ? $data['password'] : '';
 
 $errors = [];
 
 if ($name === '') {
   $errors['name'] = 'Name is required.';
+} elseif (mb_strlen($name) > 100) {
+  $errors['name'] = 'Name can be at most 100 characters.';
 }
 
-if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
   $errors['email'] = 'A valid email is required.';
 }
 
-if ($phone === '' || !preg_match('/^\d{7,15}$/', $phone)) {
-  $errors['phone'] = 'A valid phone number (digits only, 7-15 characters) is required.';
+// 10 digits, the same rule as account.php, caregivers.php and the Register and Settings pages
+if ($phone === '' || !preg_match('/^\d{10}$/', $phone)) {
+  $errors['phone'] = 'A valid 10-digit phone number is required.';
 }
 
 if (strlen($password) < 8) {

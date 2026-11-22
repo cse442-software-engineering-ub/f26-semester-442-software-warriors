@@ -2,6 +2,7 @@
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+require __DIR__ . '/input.php';
 
 header('Content-Type: application/json');
 
@@ -34,10 +35,12 @@ if ($method === 'GET') {
         $stmt->execute([$_SESSION['patientID'] ?? 0]);
     } else {
         // A patient may have multiple linked caregiver accounts; use the first one for the single-name UI.
+        // The link lives in the caregivers table (the invite flow never sets users.patientEmail).
         $stmt = $pdo->prepare(
-            'SELECT name FROM users WHERE patientEmail = ? AND isCaregiver = 1 ORDER BY id ASC LIMIT 1'
+            'SELECT u.name FROM caregivers c JOIN users u ON u.id = c.caregiver_uid
+             WHERE c.uid = ? ORDER BY c.cid ASC LIMIT 1'
         );
-        $stmt->execute([$user['email']]);
+        $stmt->execute([$userId]);
     }
     $relatedPerson = $stmt->fetch();
 
@@ -116,17 +119,26 @@ if($method === 'POST') {
     }
 
     //grabs the existing account information depending on whats being updated.
-    $name = $hasName ? trim($_POST['name']) : $currentUser['name'];
-    $email = $hasEmail ? trim($_POST['email']) : $currentUser['email'];
-    $phone = $hasPhone ? trim($_POST['phone']) : $currentUser['phone'];
+    $name = $hasName ? textInput($_POST, 'name') : $currentUser['name'];
+    $email = $hasEmail ? textInput($_POST, 'email') : $currentUser['email'];
+    $phone = $hasPhone ? textInput($_POST, 'phone') : $currentUser['phone'];
 
     if($name === ''){
         accountFail(400, 'Name is required.');
     }
+    if(mb_strlen($name) > 100){
+        accountFail(400, 'Name can be at most 100 characters.');
+    }
     if($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)){
         accountFail(400, 'A valid email is required.');
     }
-    if($phone === '' || !preg_match('/^\d{10}$/', $phone)){
+    if(strlen($email) > 255){
+        accountFail(400, 'Email can be at most 255 characters.');
+    }
+    //A phone saved before the 10-digit rule can stay as it is, so the user can still change
+    //their name or email. A new phone must be 10 digits.
+    $phoneChanged = $phone !== (string)$currentUser['phone'];
+    if($phone === '' || ($phoneChanged && !preg_match('/^\d{10}$/', $phone))){
         accountFail(400, 'A valid phone number (digits only) is required.');
     }
 

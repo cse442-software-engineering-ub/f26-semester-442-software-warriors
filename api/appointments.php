@@ -15,8 +15,8 @@ function fail(int $status, array $body): void {
     exit;
 }
 
-// The columns sent back to the browser (never uid or notes)
-const APPOINTMENT_COLUMNS = 'aid, doctors_name, appointment_date, location, address';
+// The columns sent back to the browser (never uid)
+const APPOINTMENT_COLUMNS = 'aid, doctors_name, appointment_date, location, address, notes';
 
 // Checks the 7 popup fields. Used by POST (add) and PUT (edit), so both follow the same rules.
 // Returns [values ready to save, errors]. errors is empty when everything is valid.
@@ -220,6 +220,22 @@ try {
         }
 
         parse_str(file_get_contents('php://input'), $input);
+
+        // Only "notes" sent: save the note. Add Note is on past appointments too, so no date check.
+        if (array_keys($input) === ['notes']) {
+            if (!is_string($input['notes'])) {
+                fail(400, ['errors' => ['notes' => 'Notes must be text.']]);
+            }
+            $notes = trim($input['notes']);
+            if (mb_strlen($notes) > 1000) {
+                fail(400, ['errors' => ['notes' => 'Notes cannot exceed 1,000 characters.']]);
+            }
+            $stmt = $pdo->prepare('UPDATE appointments SET notes = ? WHERE aid = ? AND uid = ?');
+            $stmt->execute([$notes === '' ? null : $notes, $aid, $uid]);
+            echo json_encode(['appointment' => findMine($pdo, $aid, $uid)]);
+            exit;
+        }
+
         [$values, $errors] = checkAppointment($input, $pdo);
         if ($errors) {
             fail(400, ['errors' => $errors]);

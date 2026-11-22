@@ -92,6 +92,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile>({ name: "", phone: "", email: "" });
   const [savedName, setSavedName] = useState("");
+  const [savedPhoneDigits, setSavedPhoneDigits] = useState("");
   const [isCaregiver, setIsCaregiver] = useState(false);
   const [permissionsPatientName, setPermissionsPatientName] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"personal" | "caregiver">("personal");
@@ -121,6 +122,7 @@ const SettingsPage = () => {
           email: account.email,
         });
         setSavedName(account.name);
+        setSavedPhoneDigits(account.phone.replace(/\D/g, ""));
         setIsCaregiver(account.isCaregiver);
         setPermissionsPatientName(account.relatedPersonName);
         setViewMode(account.viewMode ?? (account.isCaregiver ? "caregiver" : "personal"));
@@ -175,8 +177,9 @@ const SettingsPage = () => {
     if (!profile.name.trim()) errors.name = "Name is required.";
     if (!profile.phone.trim()) {
       errors.phone = "Phone Number is required.";
-    } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
-      errors.phone = "Please enter a valid phone number.";
+    } else if (phoneDigits.length !== 10 && phoneDigits !== savedPhoneDigits) {
+      // 10 digits, the same as account.php (an older saved phone can stay as it is)
+      errors.phone = "Please enter a 10-digit phone number.";
     }
     if (emailLimitExceeded) {
       errors.email = "Character limit exceeded.";
@@ -200,6 +203,7 @@ const SettingsPage = () => {
         email: profile.email.trim(),
       });
       setSavedName(profile.name.trim());
+      setSavedPhoneDigits(profile.phone.replace(/\D/g, ""));
       window.dispatchEvent(new Event(ACCOUNT_UPDATED_EVENT));
       setModal("saved");
     } catch (error: unknown) {

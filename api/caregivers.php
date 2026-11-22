@@ -2,6 +2,8 @@
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+require __DIR__ . '/rate_limit.php';
+require __DIR__ . '/input.php';
 $config = require __DIR__ . '/mail_config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -143,9 +145,9 @@ if($method === 'GET') {
 
 //handle POST requests
 if($method === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phoneNumber = trim($_POST['phone_number'] ?? '');
+    $name = textInput($_POST, 'name');
+    $email = textInput($_POST, 'email');
+    $phoneNumber = textInput($_POST, 'phone_number');
 
     //make sure all required fields are provided
     if($name === '') {
@@ -270,6 +272,12 @@ if($method === 'POST') {
             );
         }
     }
+
+    //5 invitations per patient per day, so our Gmail can't be used to spam people
+    if(tooManyAttempts($pdo, 'caregiver_invite', (string)$userId, 5, 1440)) {
+        caregiverFail(429, 'You have sent too many invitations today. Try again tomorrow.');
+    }
+    recordAttempt($pdo, 'caregiver_invite', (string)$userId);
 
     //Create a random invitation token
     $inviteToken = bin2hex(random_bytes(32));
@@ -435,9 +443,9 @@ if($method === 'PUT') {
     }
 
     $cid = $data['cid'] ?? null;
-    $name = trim($data['name'] ?? '');
-    $email = trim($data['email'] ?? '');
-    $phoneNumber = trim($data['phone_number'] ?? '');
+    $name = textInput($data, 'name');
+    $email = textInput($data, 'email');
+    $phoneNumber = textInput($data, 'phone_number');
 
     //make sure there is a caregiver ID
     if($cid === null || filter_var($cid, FILTER_VALIDATE_INT) === false || (int)$cid <= 0) {
@@ -520,13 +528,20 @@ if($method === 'PUT') {
 
     //make sure the caregiver exists and is associated with the logged in user
     $stmt = $pdo->prepare(
-        'SELECT cid FROM caregivers WHERE cid = ? AND uid = ?'
+        'SELECT cid, email, caregiver_uid FROM caregivers WHERE cid = ? AND uid = ?'
     );
 
     $stmt->execute([(int) $cid, $userId]);
+    $currentCaregiver = $stmt->fetch();
 
-    if(!$stmt->fetch()) {
+    if(!$currentCaregiver) {
         caregiverFail(404, 'Caregiver not found.');
+    }
+
+    //The email is where readings get sent. It can't be changed to an address that never accepted
+    //the invite, so to use a different email, remove the caregiver and invite the new address.
+    if(strtolower((string)$currentCaregiver['email']) !== strtolower($email)) {
+        caregiverFail(400, 'The email can\'t be changed. Remove this caregiver and invite the new email instead.');
     }
 
     //update the caregiver information

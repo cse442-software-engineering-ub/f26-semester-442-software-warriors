@@ -293,7 +293,8 @@ const CaregiversPage = () => {
             </label>
             <label className="medications-modal-field" htmlFor="caregiver-email">
               <span>EMAIL ADDRESS</span>
-              <input id="caregiver-email" name="email" type="email" placeholder="Email Address" value={emailInput} onChange={(event) => { const value = event.target.value; if (value.length > maxEmailLength) { setEmailInput(value.slice(0, maxEmailLength)); setEmailError(`Email cannot be longer than ${maxEmailLength} characters.`); return; } setEmailInput(value); setEmailError(""); }} aria-invalid={Boolean(emailError)} />
+              <input id="caregiver-email" name="email" type="email" placeholder="Email Address" value={emailInput} onChange={(event) => { const value = event.target.value; if (value.length > maxEmailLength) { setEmailInput(value.slice(0, maxEmailLength)); setEmailError(`Email cannot be longer than ${maxEmailLength} characters.`); return; } setEmailInput(value); setEmailError(""); }} aria-invalid={Boolean(emailError)} readOnly={editingCid !== null} aria-describedby={editingCid !== null ? "caregiver-email-note" : undefined} />
+              {editingCid !== null && <p id="caregiver-email-note" className="caregiver-email-note">To use a different email, remove this caregiver and invite the new email.</p>}
               {emailError && <p className="medications-modal-error" role="alert">{emailError}</p>}
             </label>
             {formError && <p className="medications-modal-error" role="alert">{formError}</p>}

@@ -11,7 +11,11 @@ if (session_status() === PHP_SESSION_NONE) {
 header('Content-Type: application/json');
 
 // Check if OTP has been verified
-if (!isset($_SESSION['otp_verified']) || !isset($_SESSION['reset_email'])) {
+if (
+    empty($_SESSION['otp_verified'])
+    || !isset($_SESSION['reset_email'], $_SESSION['otp_verified_email'])
+    || $_SESSION['otp_verified_email'] !== $_SESSION['reset_email']
+) {
     http_response_code(403);
     echo json_encode(['error' => 'Unauthorized. Please verify your OTP first.']);
     exit();

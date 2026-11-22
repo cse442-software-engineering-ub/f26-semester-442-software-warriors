@@ -4,6 +4,7 @@ require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/session_setup.php';
 require_once __DIR__ . '/require_auth.php';
+require_once __DIR__ . '/rate_limit.php';
 
 $config = require __DIR__ . '/mail_config.php';
 
@@ -90,6 +91,12 @@ $reading = $stmt->fetch();
 if(!$reading) {
     notifyFail(404, 'Reading not found.');
 }
+
+//10 shared readings per patient per hour, so our Gmail can't be used to spam the caregiver
+if(tooManyAttempts($pdo, 'send_reading', (string)$userId, 10, 60)) {
+    notifyFail(429, 'You have shared too many readings. Try again in an hour.');
+}
+recordAttempt($pdo, 'send_reading', (string)$userId);
 
 //Get all accepted caregivers belonging to the patient
 //Only accepted caregivers exist in this table

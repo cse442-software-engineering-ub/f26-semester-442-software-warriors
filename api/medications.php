@@ -2,6 +2,7 @@
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+require __DIR__ . '/input.php';
 require __DIR__ . '/view_context.php';
 
 header('Content-Type: application/json');
@@ -104,11 +105,11 @@ if ($method === 'GET') {
 
 // Handle POST requests
 if ($method === 'POST') {
-    $medicationName = trim($_POST['medication_name'] ?? '');
-    $dosage = trim($_POST['dosage'] ?? '');
-    $time = trim($_POST['time'] ?? '');
-    $days = trim($_POST['days'] ?? '');
-    $status = trim($_POST['status'] ?? '');
+    $medicationName = textInput($_POST, 'medication_name');
+    $dosage = textInput($_POST, 'dosage');
+    $time = textInput($_POST, 'time');
+    $days = textInput($_POST, 'days');
+    $status = textInput($_POST, 'status');
     $asNeeded = parseAsNeeded($_POST['as_needed'] ?? false);
 
     // Make sure all required medication information was provided
@@ -117,6 +118,16 @@ if ($method === 'POST') {
     }
     if ($dosage === '') {
         medicationFail(400, 'Dosage is required.');
+    }
+    // Same limits as the Medications form; longer text would not fit in the database
+    if (mb_strlen($medicationName) > 70) {
+        medicationFail(400, 'Medication name can be at most 70 characters.');
+    }
+    if (mb_strlen($dosage) > 15) {
+        medicationFail(400, 'Dosage can be at most 15 characters.');
+    }
+    if (mb_strlen($days) > 100) {
+        medicationFail(400, 'Days are not valid.');
     }
 
     $validStatuses = ['active', 'inactive'];
@@ -177,11 +188,11 @@ if ($method === 'PUT') {
     }
 
     $mid = $data['mid'] ?? null;
-    $medicationName = trim($data['medication_name'] ?? '');
-    $dosage = trim($data['dosage'] ?? '');
-    $time = trim($data['time'] ?? '');
-    $days = trim($data['days'] ?? '');
-    $status = trim($data['status'] ?? '');
+    $medicationName = textInput($data, 'medication_name');
+    $dosage = textInput($data, 'dosage');
+    $time = textInput($data, 'time');
+    $days = textInput($data, 'days');
+    $status = textInput($data, 'status');
     $asNeeded = parseAsNeeded($data['as_needed'] ?? false);
 
     if ($mid === null || filter_var($mid, FILTER_VALIDATE_INT) === false || (int)$mid <= 0) {
@@ -192,6 +203,16 @@ if ($method === 'PUT') {
     }
     if ($dosage === '') {
         medicationFail(400, 'Dosage is required.');
+    }
+    // Same limits as the Medications form; longer text would not fit in the database
+    if (mb_strlen($medicationName) > 70) {
+        medicationFail(400, 'Medication name can be at most 70 characters.');
+    }
+    if (mb_strlen($dosage) > 15) {
+        medicationFail(400, 'Dosage can be at most 15 characters.');
+    }
+    if (mb_strlen($days) > 100) {
+        medicationFail(400, 'Days are not valid.');
     }
 
     $validStatuses = ['active', 'inactive'];

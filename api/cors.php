@@ -1,9 +1,14 @@
 <?php
-$allowed_origins = [
-    'http://localhost:5173',
-    'https://aptitude.cse.buffalo.edu',
-    'https://cattle.cse.buffalo.edu',
-];
+// Each server only trusts itself. aptitude and cattle are shared by every CSE442 team, so trusting
+// the other server would let any page on it read a logged-in user's data here.
+// localhost:5173 is only needed on aptitude, where `npm run dev` sends its requests.
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$allowed_origins = [];
+if ($host === 'aptitude.cse.buffalo.edu') {
+    $allowed_origins = ['https://aptitude.cse.buffalo.edu', 'http://localhost:5173'];
+} elseif ($host === 'cattle.cse.buffalo.edu') {
+    $allowed_origins = ['https://cattle.cse.buffalo.edu'];
+}
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowed_origins, true)) {

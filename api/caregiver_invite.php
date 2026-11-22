@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
+require __DIR__ . '/input.php';
 
 header('Content-Type: application/json');
 ini_set('session.use_cookies', '1');
@@ -69,7 +70,7 @@ if($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 //Get token from invitation link
-$token = trim($_GET['token'] ?? '');
+$token = is_string($_GET['token'] ?? null) ? trim($_GET['token']) : '';
 
 if($token === '') {
     invitationFail(

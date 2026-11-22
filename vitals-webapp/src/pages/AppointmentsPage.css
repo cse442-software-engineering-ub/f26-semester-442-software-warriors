@@ -724,3 +724,15 @@
     font-size: clamp(12px, 3.5vw, 14px);
   }
 }
+
+/* Saved note under the address (Add Note / Edit Note) */
+.appointments-card-notes {
+  margin: 6px 0 0;
+  color: #333;
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.appointments-card-notes span {
+  font-weight: 600;
+}

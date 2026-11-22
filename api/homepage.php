@@ -8,6 +8,8 @@ require __DIR__ . '/view_context.php';
 
 header('Content-Type: application/json');
 $uid = requireAuth();
+// Same timezone as medications.php, so "today" doesn't switch to tomorrow at 7 PM when the server runs on UTC
+date_default_timezone_set('America/New_York');
 $today = date("l");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
