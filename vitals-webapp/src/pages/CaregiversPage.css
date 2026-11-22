@@ -146,3 +146,14 @@
     font-size: 21px;
   }
 }
+/* Edit Caregiver: the email can't be changed (where shared readings go) */
+.caregiver-email-note {
+  margin: 4px 0 0;
+  color: #555;
+  font-size: 12px;
+}
+#caregiver-email[readonly] {
+  background: #f1f1f1;
+  color: #555;
+  cursor: not-allowed;
+}

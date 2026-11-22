@@ -527,13 +527,20 @@ if($method === 'PUT') {
 
     //make sure the caregiver exists and is associated with the logged in user
     $stmt = $pdo->prepare(
-        'SELECT cid FROM caregivers WHERE cid = ? AND uid = ?'
+        'SELECT cid, email, caregiver_uid FROM caregivers WHERE cid = ? AND uid = ?'
     );
 
     $stmt->execute([(int) $cid, $userId]);
+    $currentCaregiver = $stmt->fetch();
 
-    if(!$stmt->fetch()) {
+    if(!$currentCaregiver) {
         caregiverFail(404, 'Caregiver not found.');
+    }
+
+    //The email is where readings get sent. It can't be changed to an address that never accepted
+    //the invite, so to use a different email, remove the caregiver and invite the new address.
+    if(strtolower((string)$currentCaregiver['email']) !== strtolower($email)) {
+        caregiverFail(400, 'The email can\'t be changed. Remove this caregiver and invite the new email instead.');
     }
 
     //update the caregiver information
