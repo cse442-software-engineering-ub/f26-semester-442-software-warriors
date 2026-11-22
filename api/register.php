@@ -37,8 +37,9 @@ if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email
   $errors['email'] = 'A valid email is required.';
 }
 
-if ($phone === '' || !preg_match('/^\d{7,15}$/', $phone)) {
-  $errors['phone'] = 'A valid phone number (digits only, 7-15 characters) is required.';
+// 10 digits, the same rule as account.php, caregivers.php and the Register and Settings pages
+if ($phone === '' || !preg_match('/^\d{10}$/', $phone)) {
+  $errors['phone'] = 'A valid 10-digit phone number is required.';
 }
 
 if (strlen($password) < 8) {

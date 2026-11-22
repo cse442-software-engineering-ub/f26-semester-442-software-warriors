@@ -133,7 +133,10 @@ if($method === 'POST') {
     if(strlen($email) > 255){
         accountFail(400, 'Email can be at most 255 characters.');
     }
-    if($phone === '' || !preg_match('/^\d{10}$/', $phone)){
+    //A phone saved before the 10-digit rule can stay as it is, so the user can still change
+    //their name or email. A new phone must be 10 digits.
+    $phoneChanged = $phone !== (string)$currentUser['phone'];
+    if($phone === '' || ($phoneChanged && !preg_match('/^\d{10}$/', $phone))){
         accountFail(400, 'A valid phone number (digits only) is required.');
     }
 
