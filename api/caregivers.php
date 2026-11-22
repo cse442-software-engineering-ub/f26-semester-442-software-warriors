@@ -2,6 +2,7 @@
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
 require __DIR__ . '/require_auth.php';
+require __DIR__ . '/rate_limit.php';
 $config = require __DIR__ . '/mail_config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -270,6 +271,12 @@ if($method === 'POST') {
             );
         }
     }
+
+    //5 invitations per patient per day, so our Gmail can't be used to spam people
+    if(tooManyAttempts($pdo, 'caregiver_invite', (string)$userId, 5, 1440)) {
+        caregiverFail(429, 'You have sent too many invitations today. Try again tomorrow.');
+    }
+    recordAttempt($pdo, 'caregiver_invite', (string)$userId);
 
     //Create a random invitation token
     $inviteToken = bin2hex(random_bytes(32));

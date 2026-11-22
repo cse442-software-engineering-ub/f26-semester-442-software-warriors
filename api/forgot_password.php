@@ -3,6 +3,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 require __DIR__ . '/cors.php';
 require __DIR__ . '/db.php';
+require __DIR__ . '/rate_limit.php';
 $config = require __DIR__ . '/mail_config.php';
 require __DIR__ . '/session_setup.php';
 
@@ -22,8 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $email = $_POST['email'] ?? '';
+$email = is_string($email) ? trim($email) : '';
 
-if (empty($email)) {
+if ($email === '') {
     http_response_code(400);
     echo json_encode(['error' => 'Email is required.']);
     exit();
@@ -31,6 +33,18 @@ if (empty($email)) {
 
 // A new request always starts over: forget any code that was already verified
 unset($_SESSION['otp_verified'], $_SESSION['otp_verified_email']);
+
+// 3 codes per email per hour, so nobody can flood someone's inbox or keep guessing new codes
+if (tooManyAttempts($pdo, 'forgot_password', $email, 3, 60)) {
+    http_response_code(429);
+    echo json_encode(['status' => 'error', 'message' => 'Too many codes requested for this email. Try again in an hour.']);
+    exit();
+}
+recordAttempt($pdo, 'forgot_password', $email);
+
+// Same answer whether or not the email has an account, so this page can't be used to find out
+// who uses VITALS
+$sentMessage = 'If an account exists for that email, we sent it a code.';
 
 // Check for email and retrieve the user's name
 $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ?");
@@ -69,7 +83,7 @@ if ($user) {
         http_response_code(200);
         echo json_encode([
             'status' => 'success',
-            'message' => 'An OTP has been sent to your email address.',
+            'message' => $sentMessage,
             //'debug_otp' => $otp // Capturable by Postman tewsts AFTER TESTING COMPLETES THIS SHOULD BE DELETED
         ]);
         exit();
@@ -84,7 +98,12 @@ if ($user) {
         exit();
     }
 } else {
-    http_response_code(404);
-    echo json_encode(['error' => 'Email address not found!']);
+    // No account: keep a code nobody receives, so the next steps fail the same way as a wrong code
+    $_SESSION['reset_otp'] = random_int(100000, 999999);
+    $_SESSION['reset_email'] = $email;
+    $_SESSION['otp_time'] = time();
+    $_SESSION['otp_tries'] = 0;
+    http_response_code(200);
+    echo json_encode(['status' => 'success', 'message' => $sentMessage]);
     exit();
 }
