@@ -311,11 +311,40 @@
   list-style: none;
 }
 .appointments-calendar-days li {
+  display: flex;
+}
+/* #133: each day is a button with a dot under the date when it has an appointment */
+.appointments-calendar-day {
   display: grid;
   justify-items: center;
   gap: 4px;
-  padding: 10px 0;
+  width: 100%;
+  padding: 10px 0 8px;
+  border: 2px solid transparent;
   border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.appointments-calendar-day:hover {
+  background: #e8eefb;
+}
+.appointments-calendar-day:focus-visible {
+  outline: 3px solid #aec9f2;
+  outline-offset: 1px;
+}
+.appointments-calendar-days .appointments-calendar-selected {
+  border-color: var(--app-blue);
+  background: #d6e6fa;
+}
+.appointments-calendar-days .appointments-calendar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--app-blue);
+}
+.appointments-calendar-days .appointments-calendar-dot-none {
+  visibility: hidden;
 }
 .appointments-calendar-days span {
   color: #555;
@@ -333,6 +362,13 @@
 .appointments-calendar-today span,
 .appointments-calendar-today strong {
   color: #fff;
+}
+.appointments-calendar-days .appointments-calendar-today .appointments-calendar-dot {
+  background: #fff;
+}
+/* Today and selected: white ring inside the blue box */
+.appointments-calendar-days .appointments-calendar-today.appointments-calendar-selected {
+  box-shadow: inset 0 0 0 2px #fff;
 }
 
 .appointments-calendar-subtitle {
@@ -365,6 +401,24 @@
   color: #555;
   font-size: 13px;
   overflow-wrap: anywhere;
+}
+.appointments-calendar-message {
+  margin: 12px 0 0;
+  color: #555;
+  font-size: 14px;
+}
+.appointments-calendar-message p {
+  margin: 0;
+}
+.appointments-calendar-retry {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--app-blue);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* ---------- New Appointment popup (blue box from Figma) ---------- */

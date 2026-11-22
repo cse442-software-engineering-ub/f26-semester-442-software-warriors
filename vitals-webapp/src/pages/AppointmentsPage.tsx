@@ -216,6 +216,8 @@ const AppointmentsPage = () => {
   const [patientName, setPatientName] = useState<string | null>(null);
   const [canEditAppointments, setCanEditAppointments] = useState(true);
   const [isAccountLoaded, setIsAccountLoaded] = useState(false);
+  // Goes up by 1 after an add, edit or remove, so the calendar loads its week again (#133)
+  const [calendarReload, setCalendarReload] = useState(0);
 
   const goToLogin = () => navigate("/login", { replace: true });
 
@@ -273,6 +275,7 @@ const AppointmentsPage = () => {
     setIsAdding(false);
     setAppointments((current) => sortSoonestFirst([...current, saved]));
     setStatusMessage(`Appointment with ${saved.doctors_name} added.`);
+    setCalendarReload((count) => count + 1);
   };
 
   // After an edit: swap the old card for the saved one (same aid), then re-sort,
@@ -285,6 +288,7 @@ const AppointmentsPage = () => {
       ),
     );
     setStatusMessage(`Appointment with ${saved.doctors_name} updated.`);
+    setCalendarReload((count) => count + 1);
   };
 
   const closePopup = () => {
@@ -309,6 +313,7 @@ const AppointmentsPage = () => {
         current.filter((item) => item.aid !== appointment.aid),
       );
       setStatusMessage(`Appointment with ${appointment.doctors_name} removed.`);
+      setCalendarReload((count) => count + 1);
     } catch (error: unknown) {
       if (isUnauthorized(error)) {
         goToLogin();
@@ -468,7 +473,7 @@ const AppointmentsPage = () => {
           </section>
         )}
 
-        <WeekCalendar appointments={appointments} />
+        <WeekCalendar reloadKey={calendarReload} />
       </div>
 
       {isAdding && (
