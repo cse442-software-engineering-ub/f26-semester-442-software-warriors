@@ -801,6 +801,18 @@ export async function getAllAppointments(): Promise<AllAppointmentsResponse> {
   };
 }
 
+// GET appointments.php?from=YYYY-MM-DD&to=YYYY-MM-DD (#132): every appointment on those days,
+// past or upcoming, soonest first. The calendar uses it for its dots (#133).
+export async function getAppointmentsInRange(
+  from: string,
+  to: string,
+): Promise<AppointmentRecord[]> {
+  const data = await settingsRequest<{ appointments?: AppointmentRecord[] }>(
+    `appointments.php?from=${from}&to=${to}`,
+  );
+  return data.appointments ?? [];
+}
+
 // POST appointments.php (form fields)
 // 201 { appointment: {...} }          -> saved, returns the new row
 // 400 { errors: { field: message } }  -> show each message under its box
