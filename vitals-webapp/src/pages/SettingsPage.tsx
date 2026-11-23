@@ -158,7 +158,7 @@ const SettingsPage = () => {
       isCurrent = false;
     };
   }, [navigate]);
-  
+
   //grabs preferences from api.ts for notifications
   //sets error if preferences couldn't be loaded
   useEffect(() => {
@@ -352,7 +352,7 @@ const SettingsPage = () => {
       setIsSavingPermissions(false);
     }
   };
-  
+
   //save function for when user updates their preferences for notifications
     const saveNotifications = async () => {
     if (isSavingNotifications) return;
@@ -419,35 +419,7 @@ const SettingsPage = () => {
                   </footer>
                 </div>
                 <div className="settings-account-actions-column">
-              {isCaregiver && (
-                <>
-                  <section className="settings-preference-row settings-security-row">
-                    <div>
-                      <h2>Viewing Mode</h2>
-                      <p>
-                        {viewMode === "caregiver"
-                          ? "You are currently viewing your patient's health information."
-                          : "You are currently viewing your personal health information."}
-                      </p>
-                      <button
-                        className="settings-button settings-button-outline settings-change-password"
-                        type="button"
-                        onClick={switchViewingMode}
-                        disabled={isSwitchingMode}
-                      >
-                        {isSwitchingMode
-                          ? "Switching..."
-                          : viewMode === "caregiver"
-                            ? "Switch to Personal Mode"
-                            : "Switch to Caregiver Mode"}
-                      </button>
-                      {viewModeError && <p className="login-server-error" role="alert">{viewModeError}</p>}
-                    </div>
-                  </section>
-                </>
-              )}
-
-                  {!isCaregiver && (
+                  {(!isCaregiver || viewMode === "personal") && (
                     <section className="settings-preference-row settings-security-row">
                       <div>
                         <h2>Caregivers</h2>
@@ -467,6 +439,31 @@ const SettingsPage = () => {
                       </button>
                     </div>
                   </section>
+                  {isCaregiver && (
+                    <section className="settings-preference-row settings-security-row">
+                      <div>
+                        <h2>Viewing Mode</h2>
+                        <p>
+                          {viewMode === "caregiver"
+                            ? "You are currently viewing your patient's health information."
+                            : "You are currently viewing your personal health information."}
+                        </p>
+                        <button
+                          className="settings-button settings-button-outline settings-change-password"
+                          type="button"
+                          onClick={switchViewingMode}
+                          disabled={isSwitchingMode}
+                        >
+                          {isSwitchingMode
+                            ? "Switching..."
+                            : viewMode === "caregiver"
+                              ? "Switch to Personal Mode"
+                              : "Switch to Caregiver Mode"}
+                        </button>
+                        {viewModeError && <p className="login-server-error" role="alert">{viewModeError}</p>}
+                      </div>
+                    </section>
+                  )}
                   <section className="settings-danger-card" aria-labelledby="delete-account-heading">
                     <div>
                       <h2 id="delete-account-heading">Delete Account</h2>
