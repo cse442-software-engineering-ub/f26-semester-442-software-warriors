@@ -28,6 +28,10 @@ export const addDays = (date: Date, days: number) => {
   return copy;
 };
 
+// -> "2026-12-09" in the browser's local time (what appointments.php?from=&to= expects)
+export const toDateKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
 export const isSameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&

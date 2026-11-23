@@ -612,6 +612,7 @@ export interface MedicationRecord {
 export interface MedicationHistoryRecord {
   medication_name: string;
   dosage: string;
+  scheduled_time: string | null;
   taken_at: string;
 }
 
@@ -799,6 +800,18 @@ export async function getAllAppointments(): Promise<AllAppointmentsResponse> {
     appointments: data.appointments ?? [],
     past_appointments: data.past_appointments ?? [],
   };
+}
+
+// GET appointments.php?from=YYYY-MM-DD&to=YYYY-MM-DD (#132): every appointment on those days,
+// past or upcoming, soonest first. The calendar uses it for its dots (#133).
+export async function getAppointmentsInRange(
+  from: string,
+  to: string,
+): Promise<AppointmentRecord[]> {
+  const data = await settingsRequest<{ appointments?: AppointmentRecord[] }>(
+    `appointments.php?from=${from}&to=${to}`,
+  );
+  return data.appointments ?? [];
 }
 
 // POST appointments.php (form fields)
