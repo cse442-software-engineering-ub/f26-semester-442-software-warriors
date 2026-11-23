@@ -12,6 +12,8 @@ import {
   setViewingMode,
   updateCaregiverPermissions,
   updateAccount,
+  getNotificationPreferences,
+  updateNotificationPreferences,
 } from "../api";
 import "./SettingsPage.css";
 type ModalName = "password" | "delete" | "saved" | "password-saved" | null;
@@ -31,6 +33,13 @@ const defaultPermissions: CaregiverPermissions = {
   can_edit_appointments: true,
   can_view_medication_history: true,
 };
+const frequencyChoices = [
+  { value: "once_daily_noon", label: "Once a day (12:00 PM)" },
+  { value: "twice_daily", label: "Twice a day (8:00 AM and 8:00 PM)" },
+  { value: "every_hour", label: "Every hour" },
+  { value: "every_30_minutes", label: "Every 30 minutes" },
+  { value: "none", label: "Never" },
+];
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error
     ? error.message
@@ -98,6 +107,11 @@ const SettingsPage = () => {
   const [isSwitchingMode, setIsSwitchingMode] = useState(false);
   const [viewModeError, setViewModeError] = useState("");
   const [permissions, setPermissions] = useState<CaregiverPermissions>(defaultPermissions);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [notificationsMessage, setNotificationsMessage] = useState("");
+  const [notificationsError, setNotificationsError] = useState("");
+  const [messageFrequency, setMessageFrequency] = useState("none");
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [permissionsMessage, setPermissionsMessage] = useState("");
   const [permissionsError, setPermissionsError] = useState("");
@@ -144,6 +158,31 @@ const SettingsPage = () => {
       isCurrent = false;
     };
   }, [navigate]);
+  
+  //grabs preferences from api.ts for notifications
+  //sets error if preferences couldn't be loaded
+  useEffect(() => {
+    let isCurrent = true;
+    getNotificationPreferences()
+      .then((prefs) => {
+        if (!isCurrent) return;
+        setEmailNotifications(prefs.emailNotifications);
+
+        setMessageFrequency(prefs.messageFrequency);
+      })
+      .catch((error: unknown) => {
+        if (!isCurrent) return;
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setNotificationsError("Unable to load your notification preferences.");
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [navigate]);
+
   const updateProfile = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     if (name !== "name" && name !== "phone" && name !== "email") return;
@@ -313,6 +352,29 @@ const SettingsPage = () => {
       setIsSavingPermissions(false);
     }
   };
+  
+  //save function for when user updates their preferences for notifications
+    const saveNotifications = async () => {
+    if (isSavingNotifications) return;
+    setIsSavingNotifications(true);
+    setNotificationsMessage("");
+    setNotificationsError("");
+    try {
+      await updateNotificationPreferences({ emailNotifications, messageFrequency });
+      const saved = await getNotificationPreferences();
+      setEmailNotifications(saved.emailNotifications);
+      setMessageFrequency(saved.messageFrequency);
+      setNotificationsMessage("Notification preferences updated.");
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setNotificationsError("Could not save. Please try again.");
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
   return (
     <AppLayout
       activeItem="My Profile"
@@ -418,6 +480,77 @@ const SettingsPage = () => {
               </>
             )}
           </form>
+          {/* Notifications Section */}
+          <div className="settings-preference-row settings-security-row settings-notifications">
+            <div className="settings-field">
+              <h2 id="notifications-heading">NOTIFICATION PREFERENCES</h2>
+              <p>Send reminders and important account updates to your email address.</p>
+            </div>
+            <div className="settings-permission-list">
+              <div className="settings-permission-row">
+                <span className="settings-permission-label">
+                  <span>Email Notifications</span>
+                </span>
+                <button
+                  className="settings-permission-switch settings-field"
+                  type="button"
+                  role="switch"
+                  aria-label="Email Notifications"
+                  aria-checked={emailNotifications}
+                  onClick={() => {
+                    setEmailNotifications((current) => {
+                      const next = !current;
+                      if (next && messageFrequency === "none") {
+                        setMessageFrequency("once_daily_noon");
+                      }
+                      return next;
+                    });
+                    setNotificationsMessage("");
+                    setNotificationsError("");
+                  }}
+                >
+                  <span className="settings-permission-switch-knob" />
+                  <span className="settings-permission-switch-state">
+                    {emailNotifications ? "On" : "Off"}
+                  </span>
+                </button>
+              </div>
+
+              {emailNotifications && (
+                <div className="settings-permission-row settings-field">
+                  <label className="settings-permission-label" htmlFor="message-frequency">
+                    <span className="">Reminder Email Frequency</span>
+                  </label>
+                  <select
+                    id="message-frequency"
+                    className="settings-select settings-field"
+                    value={messageFrequency}
+                    onChange={(event) => {
+                      setMessageFrequency(event.target.value);
+                      setNotificationsMessage("");
+                      setNotificationsError("");
+                    }}
+                  >
+                    {frequencyChoices.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <button
+              className="settings-button settings-button-primary settings-permissions-save settings-notifications-save"
+              type="button"
+              onClick={saveNotifications}
+              disabled={isSavingNotifications}
+            >
+              {isSavingNotifications ? "Saving..." : "Save Preferences"}
+            </button>
+            {notificationsMessage && <p className="settings-permissions-success" role="status">{notificationsMessage}</p>}
+            {notificationsError && <p className="settings-permissions-error" role="alert">{notificationsError}</p>}
+          </div>
         </div>
         {isCaregiver && (
           <section className="settings-panel settings-permissions-panel" aria-labelledby="permissions-heading">
@@ -478,6 +611,7 @@ const SettingsPage = () => {
           </section>
         )}
       </div>
+
       {modal && (
         <div className="settings-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>
           {modal === "saved" || modal === "password-saved" ? (

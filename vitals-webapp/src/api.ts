@@ -873,3 +873,37 @@ export async function removeAppointment(aid: number): Promise<void> {
     method: "DELETE",
   });
 }
+
+// Notification preferences (notifications.php)
+// GET -> { email_notifications: 0|1, message_frequency: string, frequency_options: {...} }
+export interface NotificationPreferences {
+  emailNotifications: boolean;
+  messageFrequency: string;
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  const data = await settingsRequest<{
+    email_notifications?: number | boolean;
+    message_frequency?: string;
+  }>("notifications.php");
+
+  return {
+    emailNotifications: Boolean(Number(data.email_notifications)),
+    messageFrequency: data.message_frequency ?? "none",
+  };
+}
+
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferences,
+): Promise<void> {
+  await settingsRequest("notifications.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+    },
+    body: new URLSearchParams({
+      email_notifications: prefs.emailNotifications ? "1" : "0",
+      message_frequency: prefs.messageFrequency,
+    }).toString(),
+  });
+}
