@@ -405,6 +405,7 @@ const MedicationsPage = () => {
             }
           : item),
       );
+      setReloadCount((count) => count + 1);
     } catch (error: unknown) {
       if (isUnauthorized(error)) {
         navigate("/login", { replace: true });
