@@ -320,7 +320,7 @@
     min-height: calc(100svh - 86px);
     flex-direction: column;
     margin: 0;
-    padding: 30px 18px calc(150px + 26px);
+    padding: 30px 18px calc(180px + env(safe-area-inset-bottom, 0px));
   }
 
   .home-content,
@@ -330,8 +330,11 @@
 
   .app-sidebar {
     inset: auto 0 0;
-    width: auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
     height: auto;
+    box-sizing: border-box;
     flex-direction: row;
     align-items: stretch;
     padding: 9px 10px;
@@ -346,11 +349,23 @@
 
   .app-logout-control-bottomnav {
     display: flex;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .app-logout-control-bottomnav .app-sidebar-link {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .app-sidebar-navigation {
     display: grid;
+    flex: 1 1 0;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-template-rows: auto;
     align-items: stretch;

@@ -418,3 +418,66 @@
   max-width: var(--notifications-width);
   margin-bottom: 0;
 }
+
+@media (max-width: 680px) {
+  .settings-content {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .settings-panel,
+  .settings-card,
+  .settings-profile-column,
+  .settings-account-actions-column,
+  .settings-permissions-row,
+  .settings-permission-list,
+  .settings-notifications {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .settings-content .settings-button {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .settings-permission-list .settings-permission-row {
+    position: relative;
+    gap: 8px;
+    padding: 10px 12px;
+    min-height: 62px;
+  }
+
+  .settings-permission-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .settings-permission-label > span:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .settings-permission-info {
+    position: static;
+  }
+
+  .settings-permission-tooltip {
+    top: calc(100% + 8px);
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
+
+  .settings-permission-list .settings-select {
+    min-width: 0;
+    max-width: 55%;
+    box-sizing: border-box;
+    padding: 8px;
+  }
+}
