@@ -45,6 +45,36 @@ if ($caregiver) {
 
 $userId = $context['uid'];
 
+try {
+    $permissions = null;
+    if (empty($_SESSION['isCaregiver'])) {
+        $stmt = $pdo->prepare(
+            'SELECT p.can_edit_medications, p.can_edit_appointments, p.can_view_medication_history
+             FROM caregivers c
+             LEFT JOIN patient_permissions p ON p.pid = c.uid
+             WHERE c.uid = ? AND c.caregiver_uid IS NOT NULL
+             LIMIT 1'
+        );
+        $stmt->execute([$userId]);
+        $permissionRow = $stmt->fetch();
+        if ($permissionRow) {
+            $permissions = [
+                'can_edit_medications' => $permissionRow['can_edit_medications'] === null ? true : (bool)$permissionRow['can_edit_medications'],
+                'can_edit_appointments' => $permissionRow['can_edit_appointments'] === null ? true : (bool)$permissionRow['can_edit_appointments'],
+                'can_view_medication_history' => $permissionRow['can_view_medication_history'] === null ? true : (bool)$permissionRow['can_view_medication_history'],
+            ];
+        }
+    }
+} catch (PDOException $e) {
+    error_log('Failed to load medication permissions: ' . $e->getMessage());
+    medicationFail(500, 'Could not load permissions.');
+}
+
+if (in_array($method, ['POST', 'PUT', 'DELETE'], true)
+    && $permissions !== null && !$permissions['can_edit_medications']) {
+    medicationFail(403, 'You do not have permission to edit medications.');
+}
+
 // Handle GET requests
 if ($method === 'GET') {
     $today = new DateTimeImmutable('today', new DateTimeZone('America/New_York'));
@@ -86,19 +116,33 @@ if ($method === 'GET') {
     }
     unset($medication);
 
-    if (!$caregiver) {
-        echo json_encode([
-            'success' => true,
-            'medications' => $medications
-        ]);
-    } else {
-        echo json_encode([
-            'success' => true,
-            'medications' => $medications,
-            'caregiver_info' => $caregiverInfo
-        ]);
+    $history = null;
+    if ($permissions === null || $permissions['can_view_medication_history']) {
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT m.medication_name, m.dosage, d.taken_at
+                 FROM medication_doses d
+                 JOIN medications m ON m.mid = d.mid
+                 WHERE m.uid = ? AND d.taken_at >= ? AND d.taken_at < ?
+                 ORDER BY d.taken_at DESC, m.mid ASC'
+            );
+            $stmt->execute([
+                $userId,
+                $today->modify('-6 days')->format('Y-m-d H:i:s'),
+                $today->modify('+1 day')->format('Y-m-d H:i:s'),
+            ]);
+            $history = $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log('Failed to load medication history: ' . $e->getMessage());
+            medicationFail(500, 'Could not load medication history.');
+        }
     }
 
+    $response = ['success' => true, 'medications' => $medications, 'history' => $history];
+    if ($caregiver) {
+        $response['caregiver_info'] = $caregiverInfo;
+    }
+    echo json_encode($response);
     exit();
 }
 

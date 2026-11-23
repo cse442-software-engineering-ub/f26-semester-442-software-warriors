@@ -41,6 +41,34 @@ if ($method === 'GET') {
     }
     $relatedPerson = $stmt->fetch();
 
+    try {
+        $permissions = null;
+        $permissionsPatientId = $isCaregiver ? (int)($_SESSION['patientID'] ?? 0) : $userId;
+        if ($permissionsPatientId > 0) {
+            $stmt = $pdo->prepare(
+                'SELECT p.can_edit_medications, p.can_edit_appointments, p.can_view_medication_history
+                 FROM caregivers c
+                 LEFT JOIN patient_permissions p ON p.pid = c.uid
+                 WHERE c.uid = ? AND c.caregiver_uid IS NOT NULL
+                   AND (? = 0 OR c.caregiver_uid = ?)
+                 LIMIT 1'
+            );
+            $caregiverId = $isCaregiver ? $userId : 0;
+            $stmt->execute([$permissionsPatientId, $caregiverId, $caregiverId]);
+            $permissionRow = $stmt->fetch();
+            if ($permissionRow) {
+                $permissions = [
+                    'can_edit_medications' => $permissionRow['can_edit_medications'] === null ? true : (bool)$permissionRow['can_edit_medications'],
+                    'can_edit_appointments' => $permissionRow['can_edit_appointments'] === null ? true : (bool)$permissionRow['can_edit_appointments'],
+                    'can_view_medication_history' => $permissionRow['can_view_medication_history'] === null ? true : (bool)$permissionRow['can_view_medication_history'],
+                ];
+            }
+        }
+    } catch (PDOException $e) {
+        error_log('Failed to load account permissions: ' . $e->getMessage());
+        accountFail(500, 'Could not load permissions.');
+    }
+
     echo json_encode([
         'id' => (int) $user['id'],
         'name' => $user['name'],
@@ -48,6 +76,7 @@ if ($method === 'GET') {
         'phone' => $user['phone'],
         'isCaregiver' => $isCaregiver,
         'relatedPersonName' => $relatedPerson ? $relatedPerson['name'] : null,
+        'permissions' => $permissions,
         'viewMode' => $isCaregiver ? ($_SESSION['viewMode'] ?? 'caregiver') : 'personal'
     ]);
 
@@ -276,6 +305,9 @@ if($method === 'DELETE') {
                 ]);
             }
         }
+
+        $stmt = $pdo->prepare('DELETE FROM patient_permissions WHERE pid = ?');
+        $stmt->execute([$userId]);
 
         //Delete the user's account last
         $stmt = $pdo->prepare(
