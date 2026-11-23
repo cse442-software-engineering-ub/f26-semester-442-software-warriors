@@ -141,6 +141,21 @@ try {
 
     $uid = $context['uid'];
 
+    if (empty($_SESSION['isCaregiver']) && in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
+        $stmt = $pdo->prepare(
+            'SELECT p.can_edit_appointments
+             FROM caregivers c
+             LEFT JOIN patient_permissions p ON p.pid = c.uid
+             WHERE c.uid = ? AND c.caregiver_uid IS NOT NULL
+             LIMIT 1'
+        );
+        $stmt->execute([$uid]);
+        $permissionRow = $stmt->fetch();
+        if ($permissionRow && $permissionRow['can_edit_appointments'] !== null && !(bool)$permissionRow['can_edit_appointments']) {
+            fail(403, ['success' => false, 'error' => 'You do not have permission to edit appointments.']);
+        }
+    }
+
     // ---------- GET with ?from=&to=: every appointment on those days, past or upcoming (#132) ----------
     if ($method === 'GET' && $range !== null) {
         $stmt = $pdo->prepare(
