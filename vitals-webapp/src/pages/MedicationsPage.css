@@ -63,18 +63,28 @@
 .medications-add-button:focus-visible { outline: 3px solid #aec9f2; outline-offset: 2px; }
 
 .medications-list { display: grid; gap: 12px; margin-top: 20px; }
-.medication-history {
-  margin-top: 24px;
-  padding: 20px;
-  border-radius: 14px;
-  background: #eaf3fb;
-}
-.medication-history h2 { margin: 0 0 12px; color: #163ba2; font-size: 19px; font-weight: 750; }
-.medication-history-table-wrap { overflow-x: auto; border-radius: 9px; background: #fff; }
-.medication-history table { width: 100%; border-collapse: collapse; text-align: left; }
-.medication-history th, .medication-history td { padding: 11px 12px; border-bottom: 1px solid #d2deed; color: #24334a; font-size: 14px; }
-.medication-history th { color: #163ba2; font-weight: 750; }
-.medication-history tbody tr:last-child td { border-bottom: 0; }
+.medication-history-section { margin-top: 24px; }
+.medication-history-title { margin: 0 0 12px; color: #1a1a1a; font-size: 20px; font-weight: 700; }
+.medication-history-log { min-width: 0; overflow-x: auto; }
+.medication-history-table-wrap { position: relative; width: 100%; overflow-x: auto; }
+.medication-history-table { width: 100%; border-collapse: collapse; color: #1a1a1a; font-size: 16px; text-align: left; }
+.medication-history-table th { padding: 10px 12px; background: var(--app-blue); color: #fff; font-size: 15px; font-weight: 700; }
+.medication-history-table th:first-child { border-radius: 7px 0 0 7px; }
+.medication-history-table th:last-child { border-radius: 0 7px 7px 0; }
+.medication-history-table td { padding: 13px 12px; border-bottom: 1px solid rgb(22 59 162 / 10%); }
+.medication-history-table tbody tr:last-child td { border-bottom: 0; }
+.medication-history-timing { display: inline-flex; align-items: center; justify-content: center; padding: 4px 9px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.medication-history-timing-on-time { background: #d9f0de; color: #1b6b32; }
+.medication-history-timing-early { background: #fff1c2; color: #805b00; }
+.medication-history-timing-late { background: #fce4e4; color: #b42318; }
+.medication-history-mobile { display: none; }
+.medication-history-mobile-card { display: grid; gap: 8px 12px; padding: 12px; border-radius: 10px; background: #fff; }
+.medication-history-mobile-name { min-width: 0; color: #1a1a1a; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.medication-history-mobile-details { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; color: #1a1a1a; font-size: 14px; }
+.medication-history-mobile-details span { display: grid; gap: 2px; }
+.medication-history-mobile-details span:nth-child(2) { text-align: right; }
+.medication-history-mobile-details small { color: #666; font-size: 11px; }
+.medication-history-mobile-details .medication-history-timing { display: inline-flex; justify-self: end; font-size: 11px; }
 /* Keep the schedule separate from the name and controls so it can wrap. */
 .medications-card {
   display: grid;
@@ -226,6 +236,19 @@
     grid-row: 2;
     min-height: 32px;
   }
+}
+
+@media (max-width: 680px) {
+  .medication-history-table-wrap { display: none; }
+  .medication-history-mobile { display: grid; gap: 8px; }
+  .medication-history-log:has(.medication-history-mobile) {
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+  .medication-history-mobile-card { background: #eaf3fb; padding: 14px; }
+  .medication-history-mobile-name { font-size: 13px; }
 }
 
 @media (max-width: 360px) {

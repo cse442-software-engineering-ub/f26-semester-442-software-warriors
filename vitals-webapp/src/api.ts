@@ -612,6 +612,7 @@ export interface MedicationRecord {
 export interface MedicationHistoryRecord {
   medication_name: string;
   dosage: string;
+  scheduled_time: string | null;
   taken_at: string;
 }
 

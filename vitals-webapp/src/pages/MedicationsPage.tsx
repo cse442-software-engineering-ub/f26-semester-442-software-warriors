@@ -34,6 +34,41 @@ const formatHistoryTime = (takenAt: string) => {
   return `${String(hour % 12 || 12).padStart(2, "0")}:${minutes} ${hour >= 12 ? "PM" : "AM"}`;
 };
 
+type HistoryTiming = "on-time" | "early" | "late";
+
+const getHistoryTiming = (
+  item: MedicationHistoryRecord,
+): HistoryTiming | null => {
+  if (!item.scheduled_time) return null;
+
+  const takenTime = item.taken_at.split(" ")[1];
+  if (!takenTime) return null;
+
+  const toMinutes = (time: string) => {
+    const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(time);
+    if (!match) return null;
+    return Number(match[1]) * 60 + Number(match[2]) + Number(match[3] ?? 0) / 60;
+  };
+  const takenMinutes = toMinutes(takenTime);
+  const scheduledMinutes = toMinutes(item.scheduled_time);
+  if (takenMinutes === null || scheduledMinutes === null) return null;
+
+  let difference = takenMinutes - scheduledMinutes;
+  if (difference > 12 * 60) difference -= 24 * 60;
+  if (difference < -12 * 60) difference += 24 * 60;
+  if (difference < -60) return "early";
+  if (difference > 60) return "late";
+  return "on-time";
+};
+
+const HistoryTimingTag = ({ item }: { item: MedicationHistoryRecord }) => {
+  const timing = getHistoryTiming(item);
+  if (!timing) return null;
+
+  const label = timing === "on-time" ? "On time" : timing === "early" ? "Early" : "Late";
+  return <span className={`medication-history-timing medication-history-timing-${timing}`}>{label}</span>;
+};
+
 // "Monday,Tuesday" -> "Mon, Tue"
 const formatDays = (days: string) =>
   days
@@ -599,23 +634,47 @@ const MedicationsPage = () => {
         ))}
       </section>
       {canViewMedicationHistory && (
-        <section className="medication-history" aria-labelledby="medication-history-title">
-          <h2 id="medication-history-title">Medication History</h2>
-          <div className="medication-history-table-wrap">
-            <table>
-              <thead>
-                <tr><th>Medication</th><th>Dosage</th><th>Date and time</th></tr>
-              </thead>
-              <tbody>
-                {(history ?? []).map((item, index) => (
-                  <tr key={`${item.taken_at}-${item.medication_name}-${index}`}>
-                    <td>{item.medication_name}</td>
-                    <td>{item.dosage}</td>
-                    <td>{formatHistoryDate(item.taken_at)}, {formatHistoryTime(item.taken_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <section className="medication-history-section" aria-labelledby="medication-history-title">
+          <h2 id="medication-history-title" className="medication-history-title">Medication History</h2>
+          <div className="home-card medication-history-log">
+            {!history?.length ? (
+              <p className="home-empty">No medication history yet.</p>
+            ) : (
+              <>
+                <div className="medication-history-table-wrap">
+                  <table className="medication-history-table">
+                    <thead>
+                      <tr><th scope="col">Medication</th><th scope="col">Dosage</th><th scope="col">Date and time</th><th scope="col">Timing</th></tr>
+                    </thead>
+                    <tbody>
+                      {history.map((item, index) => (
+                        <tr key={`${item.taken_at}-${item.medication_name}-${index}`}>
+                          <td>{item.medication_name}</td>
+                          <td>{item.dosage}</td>
+                          <td>{formatHistoryDate(item.taken_at)}, {formatHistoryTime(item.taken_at)}</td>
+                          <td><HistoryTimingTag item={item} /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="medication-history-mobile">
+                  {history.map((item, index) => (
+                    <article className="medication-history-mobile-card" key={`${item.taken_at}-${item.medication_name}-${index}`}>
+                      <strong className="medication-history-mobile-name">{item.medication_name}</strong>
+                      <div className="medication-history-mobile-details">
+                        <span>{item.dosage}<small>Dosage</small></span>
+                        <span>
+                          {formatHistoryDate(item.taken_at)}, {formatHistoryTime(item.taken_at)}
+                          <small>Date &amp; Time</small>
+                        </span>
+                        <HistoryTimingTag item={item} />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}

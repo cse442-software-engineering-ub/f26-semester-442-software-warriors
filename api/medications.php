@@ -120,7 +120,7 @@ if ($method === 'GET') {
     if ($permissions === null || $permissions['can_view_medication_history']) {
         try {
             $stmt = $pdo->prepare(
-                'SELECT m.medication_name, m.dosage, d.taken_at
+                'SELECT m.medication_name, m.dosage, m.time AS scheduled_time, d.taken_at
                  FROM medication_doses d
                  JOIN medications m ON m.mid = d.mid
                  WHERE m.uid = ? AND d.taken_at >= ? AND d.taken_at < ?
