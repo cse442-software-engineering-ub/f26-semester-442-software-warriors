@@ -802,6 +802,30 @@ export async function getAllAppointments(): Promise<AllAppointmentsResponse> {
   };
 }
 
+export async function getAppointmentNotes(aid: number): Promise<string | null> {
+  const data = await settingsRequest<{ notes: string | null }>(
+    `appointments.php?action=notes&aid=${aid}`,
+  );
+  if (data.notes !== null && typeof data.notes !== "string") {
+    throw new Error("Invalid appointment notes response.");
+  }
+  return data.notes;
+}
+
+export async function saveAppointmentNotes(aid: number, notes: string): Promise<void> {
+  const data = await settingsRequest<{ saved: boolean }>(
+    `appointments.php?action=notes&aid=${aid}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: new URLSearchParams({ notes }).toString(),
+    },
+  );
+  if (data.saved !== true) {
+    throw new Error("Invalid appointment notes save response.");
+  }
+}
+
 // GET appointments.php?from=YYYY-MM-DD&to=YYYY-MM-DD (#132): every appointment on those days,
 // past or upcoming, soonest first. The calendar uses it for its dots (#133).
 export async function getAppointmentsInRange(

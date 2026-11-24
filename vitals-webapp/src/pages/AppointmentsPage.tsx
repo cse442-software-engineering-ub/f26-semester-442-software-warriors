@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import AddAppointmentModal from "../components/AddAppointmentModal";
 import WeekCalendar from "../components/WeekCalendar";
-import { getAccount, getAllAppointments, removeAppointment } from "../api";
+import { getAccount, getAllAppointments, getAppointmentNotes, removeAppointment, saveAppointmentNotes } from "../api";
 import type { AppointmentRecord } from "../api";
 import {
   formatClock,
@@ -29,22 +29,76 @@ const sortSoonestFirst = (list: AppointmentRecord[]) =>
       a.appointment_date.localeCompare(b.appointment_date) || a.aid - b.aid,
   );
 
-const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
+const EditNotesModal = ({ aid, canEdit, onClose, onSaved }: {
+  aid: number;
+  canEdit: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) => {
+  const navigate = useNavigate();
   const [notes, setNotes] = useState("");
   const [notesError, setNotesError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getAppointmentNotes(aid)
+      .then((savedNotes) => {
+        if (active) setNotes(savedNotes ?? "");
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (isUnauthorized(error)) {
+          navigate("/login", { replace: true });
+          return;
+        }
+        setLoadError("Couldn't load the appointment note. Please try again.");
+      })
+      .finally(() => {
+        if (active) setIsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [aid, navigate]);
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !isSaving) onClose();
     };
     document.addEventListener("keydown", closeOnEscape);
     return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
+  }, [onClose, isSaving]);
+
+  const saveNotes = async () => {
+    if (isLoading || isSaving || loadError || !canEdit) return;
+    setSaveError("");
+    setIsSaving(true);
+    try {
+      await saveAppointmentNotes(aid, notes);
+      onSaved();
+    } catch (error: unknown) {
+      if (isUnauthorized(error)) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      setSaveError(
+        typeof error === "object" && error !== null && "error" in error && typeof error.error === "string"
+          ? error.error
+          : "Couldn't save the appointment note. Please try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div
       className="appointments-modal-backdrop"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+      onMouseDown={(event) => event.target === event.currentTarget && !isSaving && onClose()}
     >
       <section
         className="appointments-modal"
@@ -57,6 +111,7 @@ const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
           type="button"
           aria-label="Close dialog"
           onClick={onClose}
+          disabled={isSaving}
         >
           <svg
             viewBox="0 0 24 24"
@@ -71,12 +126,18 @@ const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
         </button>
         <h2 id="appointments-notes-modal-title">Notes</h2>
         <div className="appointments-modal-form">
+          {isLoading && <p role="status">Loading note...</p>}
+          {loadError && (
+            <p className="appointments-modal-error" role="alert">{loadError}</p>
+          )}
           <label className="appointments-modal-field">
             <span>EDIT NOTE</span>
             <textarea
               rows={5}
               placeholder="Add notes for this appointment"
               value={notes}
+              disabled={isLoading || isSaving || Boolean(loadError)}
+              readOnly={!canEdit}
               onChange={(event) => {
                 const value = event.target.value;
                 if (value.length > 1000) {
@@ -100,9 +161,18 @@ const EditNotesModal = ({ onClose }: { onClose: () => void }) => {
               </p>
             )}
           </label>
+          {saveError && (
+            <p className="appointments-modal-error" role="alert">{saveError}</p>
+          )}
+          {!canEdit && <p>You do not have permission to edit appointments.</p>}
           <div className="appointments-modal-actions">
-            <button className="appointments-modal-submit" type="button">
-              Save Changes
+            <button
+              className="appointments-modal-submit"
+              type="button"
+              disabled={isLoading || isSaving || Boolean(loadError) || !canEdit}
+              onClick={saveNotes}
+            >
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -207,7 +277,7 @@ const AppointmentsPage = () => {
   const [isUpcoming, setIsUpcoming] = useState(true);
   // The appointment being edited, or null when the Edit popup is closed
   const [editing, setEditing] = useState<AppointmentRecord | null>(null);
-  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesAppointment, setNotesAppointment] = useState<AppointmentRecord | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [toRemove, setToRemove] = useState<AppointmentRecord | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -410,7 +480,7 @@ const AppointmentsPage = () => {
                   canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
-                  onAddNote={() => setIsEditingNotes(true)}
+                  onAddNote={() => setNotesAppointment(appointment)}
                   onRemove={askToRemove}
                 />
               ))}
@@ -447,7 +517,7 @@ const AppointmentsPage = () => {
                   canEdit={isAccountLoaded && canEditAppointments}
                   appointment={appointment}
                   onEdit={setEditing}
-                  onAddNote={() => setIsEditingNotes(true)}
+                  onAddNote={() => setNotesAppointment(appointment)}
                   onRemove={askToRemove}
                 />
               ))}
@@ -477,8 +547,17 @@ const AppointmentsPage = () => {
         />
       )}
 
-      {isEditingNotes && (
-        <EditNotesModal onClose={() => setIsEditingNotes(false)} />
+      {notesAppointment && (
+        <EditNotesModal
+          key={notesAppointment.aid}
+          aid={notesAppointment.aid}
+          canEdit={isAccountLoaded && canEditAppointments}
+          onClose={() => setNotesAppointment(null)}
+          onSaved={() => {
+            setNotesAppointment(null);
+            setStatusMessage("Appointment note saved.");
+          }}
+        />
       )}
 
       {/* Same confirm box as Logout, so it reuses the app-logout-dialog styles */}

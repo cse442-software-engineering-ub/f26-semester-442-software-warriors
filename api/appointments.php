@@ -97,7 +97,7 @@ function findMine(PDO $pdo, int $aid, int $uid): ?array {
     return $row;
 }
 
-// The ?aid=N in the URL, used by PUT and DELETE. Stops with 400 when it is missing or not a number.
+// The ?aid=N in the URL, used by notes GET and POST, PUT and DELETE. Stops with 400 when it is missing or not a number.
 function aidFromUrl(): int {
     $aid = (string)($_GET['aid'] ?? '');
     if ($aid === '' || !ctype_digit($aid)) {
@@ -154,6 +154,40 @@ try {
         if ($permissionRow && $permissionRow['can_edit_appointments'] !== null && !(bool)$permissionRow['can_edit_appointments']) {
             fail(403, ['success' => false, 'error' => 'You do not have permission to edit appointments.']);
         }
+    }
+
+    // ---------- GET ?action=notes&aid=N: notes for one appointment ----------
+    if ($method === 'GET' && ($_GET['action'] ?? '') === 'notes') {
+        $aid = aidFromUrl();
+        $stmt = $pdo->prepare('SELECT notes FROM appointments WHERE aid = ? AND uid = ?');
+        $stmt->execute([$aid, $uid]);
+        $appointment = $stmt->fetch();
+        if (!$appointment) {
+            fail(404, ['error' => 'Appointment not found.']);
+        }
+        echo json_encode(['notes' => $appointment['notes']]);
+        exit;
+    }
+
+    // ---------- POST ?action=notes&aid=N: update one appointment's notes ----------
+    if ($method === 'POST' && ($_GET['action'] ?? '') === 'notes') {
+        $aid = aidFromUrl();
+        $notes = $_POST['notes'] ?? null;
+        if (!is_string($notes) || !mb_check_encoding($notes, 'UTF-8')) {
+            fail(400, ['error' => 'A valid note is required.']);
+        }
+        // Match the textarea's JavaScript length limit, measured in UTF-16 code units.
+        if (strlen(mb_convert_encoding($notes, 'UTF-16LE', 'UTF-8')) > 2000) {
+            fail(400, ['error' => 'Notes cannot exceed 1,000 characters.']);
+        }
+
+        $stmt = $pdo->prepare('UPDATE appointments SET notes = ? WHERE aid = ? AND uid = ?');
+        $stmt->execute([$notes, $aid, $uid]);
+        if ($stmt->rowCount() === 0 && !findMine($pdo, $aid, $uid)) {
+            fail(404, ['error' => 'Appointment not found.']);
+        }
+        echo json_encode(['saved' => true]);
+        exit;
     }
 
     // ---------- GET with ?from=&to=: every appointment on those days, past or upcoming (#132) ----------
