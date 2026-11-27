@@ -8,7 +8,8 @@ require __DIR__ . '/view_context.php';
 
 header('Content-Type: application/json');
 $uid = requireAuth();
-$today = date("l");
+$today = new DateTime('today');
+$date = date("l");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
@@ -30,16 +31,46 @@ try {
     $stmt->execute([':uid' => $uid]);
     $bp_reading = $stmt->fetch();
 
-    $stmt = $pdo->prepare("SELECT medication_name, dosage, time, days FROM medications WHERE uid = :uid AND FIND_IN_SET(:today, days) > 0 ORDER BY time ASC");
-    $stmt->execute([':uid' => $uid, ':today' => $today]);
-    $medications = $stmt->fetchAll();
+    // Today's window (use separate objects so one doesn't mutate the other)
+    $dayStart = new DateTime('today');
+    $dayEnd   = (clone $dayStart)->modify('+1 day');
 
-    if ($medications) {
+    $stmt = $pdo->prepare(
+        "SELECT m.mid, m.medication_name, m.dosage, m.time, m.days, m.status, m.as_needed,
+                doses.taken_at, COALESCE(doses.taken_count, 0) AS taken_count
+         FROM medications m
+         LEFT JOIN (
+             SELECT mid, MAX(taken_at) AS taken_at, COUNT(*) AS taken_count
+             FROM medication_doses
+             WHERE taken_at >= ? AND taken_at < ?
+             GROUP BY mid
+         ) doses ON doses.mid = m.mid
+         WHERE m.uid = ?
+           AND m.status = 'active'
+           AND FIND_IN_SET(?, m.days) > 0
+         ORDER BY m.time ASC"
+    );
+    $stmt->execute([
+        $dayStart->format('Y-m-d H:i:s'),
+        $dayEnd->format('Y-m-d H:i:s'),
+        $uid,
+        $date
+    ]);
+    $allMeds = $stmt->fetchAll();
 
-        foreach ($medications as &$med) { //reformats time from TIME to human readable
-            $med['time'] = date('g:i A', strtotime($med['time']));
+    $scheduled = [];
+    $asNeeded  = [];
+    foreach ($allMeds as $med) {
+        $med['time'] = date('g:i A', strtotime($med['time']));
+        if ($med['as_needed']) {
+            $asNeeded[] = $med;            // always shown, can be taken any time
+        } elseif ($med['taken_count'] < 1) {
+            $scheduled[] = $med;           // scheduled and not yet taken today
         }
     }
+
+    // Next 3 untaken scheduled meds (already in time order), then as-needed meds
+    $medications = array_merge(array_slice($scheduled, 0, 3), $asNeeded);
 
     $stmt = $pdo->prepare("SELECT doctors_name, appointment_date, notes FROM appointments WHERE uid = :uid and appointment_date > NOW() ORDER BY appointment_date ASC LIMIT 1");
     $stmt->execute([':uid' => $uid]);
@@ -53,7 +84,8 @@ try {
             "success" => true,
             "bp_reading" => $bp_reading ?: null,
             "medications" => $medications ?: null,
-            "next_appointment" => $appointment ?: null
+            "next_appointment" => $appointment ?: null,
+            "removed" => $array_remove ?: null
         ]);
     } else {
         echo json_encode([

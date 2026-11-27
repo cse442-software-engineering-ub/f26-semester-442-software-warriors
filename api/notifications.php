@@ -44,23 +44,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 } else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $email_notifications = isset($_POST['email_notifications']) ? (int)$_POST['email_notifications'] : 1;
-        $message_frequency   = isset($_POST['message_frequency']) ? $_POST['message_frequency'] : 'none';
+        $raw_notifications = $_POST['email_notifications'] ?? '1';
+        $message_frequency = $_POST['message_frequency'] ?? 'none';
+
+        // Validate email_notifications (raw string, before any casting)
+        if (!in_array($raw_notifications, ['0', '1'], true)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Notifications must be 0 or 1']);
+            exit();
+        }
+        $email_notifications = (int)$raw_notifications;
         // Validate that the submitted frequency is one of the allowed options
         if (!array_key_exists($message_frequency, $FREQUENCY_OPTIONS)) {
             http_response_code(400);
             echo json_encode([
                 'error'   => 'Invalid message_frequency value.',
                 'allowed' => array_keys($FREQUENCY_OPTIONS)
-            ]);
-            exit();
-        }
-
-        $email_notifications = number_format($email_notifications);
-        if (($email_notifications) > 1 || ($email_notifications) < 0 || !filter_var($email_notifications, FILTER_VALIDATE_INT)) {
-            http_response_code(400);
-            echo json_encode([
-                'error'   => 'Notifications must be 0 or 1',
             ]);
             exit();
         }

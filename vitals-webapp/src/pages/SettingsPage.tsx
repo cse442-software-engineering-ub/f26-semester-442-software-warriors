@@ -481,7 +481,7 @@ const SettingsPage = () => {
           <div className="settings-preference-row settings-security-row settings-notifications">
             <div className="settings-field">
               <h2 id="notifications-heading">NOTIFICATION PREFERENCES</h2>
-              <p>Send reminders and important account updates to your email address.</p>
+              <p>Send blood pressure and appointment reminders to your email address.</p>
             </div>
             <div className="settings-permission-list">
               <div className="settings-permission-row">
@@ -492,7 +492,7 @@ const SettingsPage = () => {
                   className="settings-permission-switch settings-field"
                   type="button"
                   role="switch"
-                  aria-label="Email Notifications"
+                  aria-label="Email Notifications Button"
                   aria-checked={emailNotifications}
                   onClick={() => {
                     setEmailNotifications((current) => {

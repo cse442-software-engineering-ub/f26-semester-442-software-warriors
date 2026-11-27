@@ -137,7 +137,7 @@ const HomePage = () => {
                 className="mb-3 text-xl font-bold text-gray-900"
                 id="home-meds-title"
               >
-                Medication Schedule
+                Medication Schedule For Today
               </h2>
               <Link className="home-see-all" to="/medications">
                 See all
